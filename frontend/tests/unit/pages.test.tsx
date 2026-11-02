@@ -1,0 +1,878 @@
+/** Экраны целиком: настоящий роутер и компоненты, сеть подменена таблицей маршрутов. */
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { routeTree } from "@/app/router";
+import { useToasts } from "@/components/ui/toast";
+import { useLocale } from "@/i18n";
+import { useUndo } from "@/lib/undo";
+
+import { card, config } from "./fixtures";
+
+const USER = {
+  id: "u1",
+  email: "user@example.com",
+  display_name: "Анна",
+  locale: "ru",
+  totp_enabled: false,
+  created_at: "2026-01-01T00:00:00Z",
+};
+const SUMMARY = {
+  id: "b1",
+  project_id: "p1",
+  name: "Доска",
+  is_favorite: true,
+  column_count: 3,
+  card_count: 2,
+  colors: {
+    bg: "#000000",
+    surface: "#111111",
+    "surface-2": "#222222",
+    accent: "#333333",
+    text: "#FFFFFF",
+    border: "#444444",
+  },
+  last_opened_at: "2026-01-02T00:00:00Z",
+  updated_at: "2026-01-02T00:00:00Z",
+};
+const PROJECT = {
+  id: "p1",
+  name: "Проект",
+  description: "",
+  role: "owner",
+  version: 1,
+  created_at: "2026-01-01T00:00:00Z",
+  updated_at: "2026-01-01T00:00:00Z",
+  boards: [SUMMARY],
+};
+const BOARD = {
+  id: "b1",
+  project_id: "p1",
+  name: "Доска",
+  description: "",
+  version: 3,
+  is_favorite: false,
+  role: "owner",
+  has_source_template: true,
+  source_template_name: "Шаблон",
+  created_at: "2026-01-01T00:00:00Z",
+  updated_at: "2026-01-01T00:00:00Z",
+  config: {
+    ...config,
+    views: [{ key: "k", name: "Канбан", type: "kanban", is_default: true }, ...config.views!],
+  },
+  warnings: [],
+};
+const TEMPLATE_DATA = {
+  format: "kanbanly.board-template",
+  version: 1,
+  meta: { name: "Пресет А", description: "Описание пресета" },
+  ...config,
+  sample_cards: [{ key: "s1", column: "todo", title: "Пример", values: { epic: "a" } }],
+};
+const CARD = card({ id: "c1", title: "Первая" });
+const DETAIL = {
+  ...CARD,
+  checklists: [
+    {
+      id: "l1",
+      title: "Шаги",
+      position: "a0",
+      items: [{ id: "i1", text: "Пункт", done: false, position: "a0" }],
+    },
+  ],
+  comments: [
+    {
+      id: "m1",
+      author_id: "u1",
+      author_name: "Анна",
+      body: "**Комментарий**",
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    },
+  ],
+  attachments: [
+    { id: "a1", name: "Макет", url: "https://example.com/a", created_at: "2026-01-01T00:00:00Z" },
+  ],
+};
+
+type Handler = (body: unknown, url: URL) => unknown;
+const calls: { method: string; path: string; body: unknown; headers: Record<string, string> }[] =
+  [];
+let routes: Record<string, Handler>;
+
+function defaultRoutes(): Record<string, Handler> {
+  return {
+    "GET /auth/csrf": () => ({ csrf_token: "t" }),
+    "GET /auth/me": () => USER,
+    "PATCH /auth/me": () => USER,
+    "GET /projects": () => ({ items: [PROJECT], next_cursor: null }),
+    "POST /projects": () => ({ ...PROJECT, id: "p2", boards: [] }),
+    "GET /projects/p1": () => PROJECT,
+    "DELETE /projects/p1": () => ({ ok: true }),
+    "GET /boards/b1": () => BOARD,
+    "PATCH /boards/b1": () => ({ ...BOARD, name: "Новое имя" }),
+    "PUT /boards/b1/config": () => ({ ...BOARD, version: 4 }),
+    "POST /boards/b1/reset": () => BOARD,
+    "POST /boards/b1/views": () => ({ id: "v" }),
+    "GET /boards/b1/template": () => TEMPLATE_DATA,
+    "GET /boards/b1/cards": () => ({
+      items: [CARD, card({ id: "c2", title: "Вторая", column: "done" })],
+      next_cursor: null,
+    }),
+    "POST /boards/b1/cards": () => card({ id: "c3", title: "Новая" }),
+    "GET /cards/c1": () => DETAIL,
+    "GET /cards/c1/activity": () => ({
+      items: [
+        {
+          id: "e1",
+          actor_name: "Анна",
+          action: "moved",
+          data: { source: "todo", target: "done" },
+          created_at: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "e2",
+          actor_name: "Анна",
+          action: "created",
+          data: {},
+          created_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+      next_cursor: null,
+    }),
+    "PATCH /cards/c1": () => ({ ...CARD, title: "Изменена" }),
+    "DELETE /cards/c1": () => ({ ok: true }),
+    "POST /cards/c1/restore": () => CARD,
+    "POST /cards/c1/comments": () => ({}),
+    "POST /cards/c1/checklists": () => ({}),
+    "POST /cards/c1/attachments": () => ({}),
+    "POST /checklists/l1/items": () => ({}),
+    "PATCH /checklist-items/i1": () => ({}),
+    "GET /presets": () => [{ key: "a", data: TEMPLATE_DATA }],
+    "GET /templates": () => ({
+      items: [
+        {
+          id: "t1",
+          name: "Мой",
+          description: "",
+          version: 1,
+          created_at: "",
+          updated_at: "",
+          data: { ...TEMPLATE_DATA, meta: { name: "Мой" } },
+        },
+      ],
+      next_cursor: null,
+    }),
+    "POST /templates/from-board": () => ({ id: "t2" }),
+    "POST /templates/t1/duplicate": () => ({}),
+    "DELETE /templates/t1": () => ({ ok: true }),
+    "PATCH /templates/t1": () => ({}),
+    "POST /templates/import/preview": () => ({
+      valid: true,
+      name: "Импорт",
+      errors: [],
+      warnings: ["Неизвестное поле"],
+      counts: { columns: 2, dimensions: 1, fields: 0, cards: 3 },
+    }),
+    "POST /templates/import": () => ({}),
+    "POST /projects/p1/boards": () => BOARD,
+    "GET /trash": () => [
+      {
+        type: "board",
+        id: "b9",
+        name: "Удалённая",
+        deleted_at: "2026-01-01T00:00:00Z",
+        purge_at: "2026-02-01T00:00:00Z",
+      },
+    ],
+    "POST /boards/b9/restore": () => BOARD,
+    "GET /search": () => [
+      { type: "card", id: "c1", board_id: "b1", title: "Найдено", subtitle: "Доска" },
+    ],
+    "GET /auth/sessions": () => [
+      {
+        id: "s1",
+        created_at: "2026-01-01T00:00:00Z",
+        last_seen_at: "2026-01-01T00:00:00Z",
+        user_agent: "Chrome",
+        ip: "::1",
+        current: true,
+      },
+      {
+        id: "s2",
+        created_at: "2026-01-01T00:00:00Z",
+        last_seen_at: "2026-01-01T00:00:00Z",
+        user_agent: "Firefox",
+        ip: "::1",
+        current: false,
+      },
+    ],
+    "DELETE /auth/sessions/s2": () => ({ ok: true }),
+    "POST /auth/logout": () => ({ ok: true }),
+    "POST /auth/logout-all": () => ({ ok: true }),
+    "POST /auth/password": () => ({ ok: true }),
+    "POST /auth/password-strength": () => ({ breached: true }),
+    "POST /auth/2fa/setup": () => ({ secret: "JBSWY3DP", uri: "otpauth://x" }),
+    "POST /auth/2fa/enable": () => ({ recovery_codes: ["AAAAA-BBBBB"] }),
+    "POST /auth/2fa/disable": () => ({ ok: true }),
+    "DELETE /auth/me": () => ({ ok: true }),
+    "POST /auth/login": () => USER,
+    "POST /auth/register": () => USER,
+    "POST /auth/password-reset/request": () => ({ ok: true }),
+    "POST /auth/password-reset/confirm": () => ({ ok: true }),
+    "GET /backups": () => ({
+      snapshots: [
+        {
+          id: "n1",
+          filename: "x.gz",
+          reason: "before_replace",
+          size: 1,
+          created_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+      events: [{ action: "backup.imported", created_at: "2026-01-01T00:00:00Z", meta: {} }],
+    }),
+    "POST /import/backup/preview": () => ({
+      valid: true,
+      encrypted: false,
+      password_required: false,
+      counts: { projects: 1, boards: 2, cards: 3, templates: 4 },
+      conflicts: [{ type: "project", name: "Проект" }],
+      warnings: [],
+      errors: [],
+    }),
+    "POST /import/backup": () => ({ mode: "copy", counts: {}, warnings: [], snapshot_id: null }),
+    "GET /export/backup": () => ({ format: "kanbanly.backup" }),
+  };
+}
+
+function problem(status: number, code: string, message: string, details?: unknown) {
+  return () => {
+    throw { status, body: { error: { code, message, details } } };
+  };
+}
+
+beforeEach(() => {
+  routes = defaultRoutes();
+  calls.length = 0;
+  useToasts.setState({ items: [] });
+  useUndo.getState().clear();
+  useLocale.setState({ locale: "ru" });
+  document.cookie = "kanbanly_csrf=t";
+  URL.createObjectURL = () => "blob:x";
+  URL.revokeObjectURL = () => undefined;
+  HTMLAnchorElement.prototype.click = () => undefined;
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.releasePointerCapture = () => undefined;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string, init: RequestInit = {}) => {
+      const url = new URL(input, "http://localhost");
+      const path = url.pathname.replace("/api/v1", "");
+      const method = init.method ?? "GET";
+      const text = typeof init.body === "string" ? init.body : undefined;
+      const body = text ? (JSON.parse(text.startsWith("{") ? text : "{}") as unknown) : undefined;
+      calls.push({ method, path, body, headers: (init.headers ?? {}) as Record<string, string> });
+      const handler = routes[`${method} ${path}`];
+      if (!handler) throw new Error(`Нет маршрута: ${method} ${path}`);
+      try {
+        return new Response(JSON.stringify(handler(body, url)), { status: 200 });
+      } catch (error) {
+        const failure = error as { status: number; body: unknown };
+        return new Response(JSON.stringify(failure.body), { status: failure.status });
+      }
+    }),
+  );
+});
+
+function renderAt(path: string) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const router = createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: [path] }),
+  });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
+  return router;
+}
+
+const sent = (method: string, path: string) =>
+  calls.find((call) => call.method === method && call.path === path);
+
+describe("авторизация", () => {
+  it("анонима ведёт на вход", async () => {
+    routes["GET /auth/me"] = problem(401, "unauthorized", "Войдите");
+    renderAt("/");
+    expect(await screen.findByRole("heading", { name: "Вход" })).toBeInTheDocument();
+  });
+
+  it("вход просит второй фактор и показывает ошибки", async () => {
+    const user = userEvent.setup();
+    routes["GET /auth/me"] = problem(401, "unauthorized", "Войдите");
+    routes["POST /auth/login"] = problem(401, "totp_required", "Нужен код");
+    const router = renderAt("/login");
+    await user.type(await screen.findByLabelText("Email"), "a@example.com");
+    await user.type(screen.getByLabelText("Пароль"), "password-123");
+    await user.click(screen.getByRole("button", { name: "Войти" }));
+    const code = await screen.findByLabelText("Код из приложения");
+    await user.click(screen.getByRole("button", { name: "Использовать резервный код" }));
+    expect(screen.getByLabelText("Резервный код")).toBeInTheDocument();
+    expect(code).toBeTruthy();
+
+    routes["POST /auth/login"] = problem(401, "invalid_second_factor", "Неверный код");
+    await user.type(screen.getByLabelText("Резервный код"), "AAAAA");
+    await user.click(screen.getByRole("button", { name: "Войти" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Неверный код");
+
+    routes["POST /auth/login"] = () => USER;
+    await user.click(screen.getByRole("button", { name: "Войти" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/"));
+  });
+
+  it("регистрация показывает утечку и ошибку сервера", async () => {
+    const user = userEvent.setup();
+    routes["GET /auth/me"] = problem(401, "unauthorized", "Войдите");
+    routes["POST /auth/register"] = problem(422, "breached_password", "Пароль в утечках");
+    renderAt("/register");
+    await user.type(await screen.findByLabelText("Как вас зовут"), "Анна");
+    await user.type(screen.getByLabelText("Email"), "a@example.com");
+    await user.type(screen.getByLabelText("Пароль"), "password1234");
+    expect(await screen.findByText("Этот пароль есть в списках утечек")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Создать аккаунт" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Пароль в утечках");
+  });
+
+  it("сброс пароля: запрос и подтверждение", async () => {
+    const user = userEvent.setup();
+    routes["GET /auth/me"] = problem(401, "unauthorized", "Войдите");
+    renderAt("/forgot-password");
+    await user.type(await screen.findByLabelText("Email"), "a@example.com");
+    await user.click(screen.getByRole("button", { name: "Отправить ссылку" }));
+    expect(await screen.findByRole("status")).toBeInTheDocument();
+  });
+
+  it("новый пароль по ссылке", async () => {
+    const user = userEvent.setup();
+    routes["GET /auth/me"] = problem(401, "unauthorized", "Войдите");
+    renderAt("/reset-password?token=abc");
+    await user.type(await screen.findByLabelText("Новый пароль"), "fresh-password-1");
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Пароль обновлён");
+    expect(sent("POST", "/auth/password-reset/confirm")?.body).toMatchObject({ token: "abc" });
+  });
+});
+
+describe("главная и проект", () => {
+  it("показывает проекты, избранное и недавние", async () => {
+    renderAt("/");
+    expect(await screen.findByRole("heading", { name: "Избранное" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Недавние доски" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Проект" })).toBeInTheDocument();
+    expect(screen.getAllByText("2 карточки").length).toBeGreaterThan(0);
+  });
+
+  it("создаёт проект", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/");
+    await user.click(await screen.findByRole("button", { name: "Новый проект" }));
+    await user.type(screen.getByLabelText("Название проекта"), "Новый");
+    await user.click(screen.getByRole("button", { name: "Создать" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/projects/p2"));
+    expect(sent("POST", "/projects")?.body).toEqual({ name: "Новый" });
+  });
+
+  it("пустое состояние зовёт к действию", async () => {
+    routes["GET /projects"] = () => ({ items: [], next_cursor: null });
+    renderAt("/");
+    expect(await screen.findByText("Здесь появятся ваши проекты")).toBeInTheDocument();
+  });
+
+  it("ошибка загрузки предлагает повторить", async () => {
+    routes["GET /projects"] = problem(500, "boom", "Ошибка");
+    renderAt("/");
+    expect(await screen.findByRole("button", { name: "Повторить" })).toBeInTheDocument();
+  });
+
+  it("мастер проводит по шагам и создаёт доску из пресета", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/projects/p1");
+    await user.click(await screen.findByRole("button", { name: "Новая доска" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(await within(dialog).findByRole("button", { name: /Пресет А/ }));
+    await user.click(within(dialog).getByRole("button", { name: "Продолжить" }));
+    await user.click(within(dialog).getByRole("button", { name: /Мята/ }));
+    await user.click(within(dialog).getByRole("button", { name: "Продолжить" }));
+    await user.click(within(dialog).getByRole("button", { name: "Клиент + дедлайн" }));
+    await user.click(within(dialog).getByRole("button", { name: "Продолжить" }));
+    await user.click(within(dialog).getByRole("button", { name: "Создать доску" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/boards/b1"));
+    const body = sent("POST", "/projects/p1/boards")?.body as {
+      template: { theme: { tokens: { accent: string } }; fields: unknown[] };
+    };
+    expect(body.template.theme.tokens.accent).toBe("#0B7A5E");
+    expect(body.template.fields).toHaveLength(3);
+  });
+
+  it("пустая доска с колонками из строки и загрузка файла с ошибкой", async () => {
+    const user = userEvent.setup();
+    renderAt("/projects/p1");
+    await user.click(await screen.findByRole("button", { name: "Новая доска" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Из файла JSON" }));
+    const input = within(dialog).getByLabelText("Из файла JSON");
+    await user.upload(input, new File(["{bad"], "x.json", { type: "application/json" }));
+    expect(await within(dialog).findByRole("alert")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Мой шаблон" }));
+    await user.click(await within(dialog).findByRole("button", { name: "Мой" }));
+    await user.click(within(dialog).getByRole("button", { name: "Пустая доска" }));
+    await user.type(within(dialog).getByLabelText("Название доски"), "Пустая");
+    await user.click(within(dialog).getByRole("button", { name: "Продолжить" }));
+    await user.click(within(dialog).getByRole("button", { name: "Продолжить" }));
+    await user.type(within(dialog).getByLabelText("Колонки"), "Раз, Два, Три");
+    await user.click(within(dialog).getByRole("button", { name: "Продолжить" }));
+    await user.click(within(dialog).getByRole("button", { name: "Создать доску" }));
+    await waitFor(() => expect(sent("POST", "/projects/p1/boards")).toBeTruthy());
+    const body = sent("POST", "/projects/p1/boards")?.body as {
+      template: { columns: { name: string; kind: string }[] };
+    };
+    expect(body.template.columns.map((column) => column.kind)).toEqual([
+      "todo",
+      "in_progress",
+      "done",
+    ]);
+  });
+
+  it("удаляет проект с возможностью отмены", async () => {
+    const user = userEvent.setup();
+    renderAt("/projects/p1");
+    await user.click(await screen.findByRole("button", { name: "Удалить проект" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Удалить проект" }));
+    await waitFor(() => expect(sent("DELETE", "/projects/p1")).toBeTruthy());
+  });
+});
+
+describe("доска", () => {
+  const openCard = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(await screen.findByText("Первая"));
+    await screen.findByTestId("card-form");
+    await screen.findByText("Шаги");
+  };
+
+  it("редактирует карточку с If-Match", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await openCard(user);
+    const form = screen.getByTestId("card-form");
+    await user.clear(within(form).getByLabelText("Название"));
+    await user.type(within(form).getByLabelText("Название"), "Изменена");
+    await user.click(within(form).getByRole("button", { name: "Просмотр" }));
+    await user.selectOptions(within(form).getByLabelText("Веха"), "m2");
+    await user.click(within(form).getByRole("button", { name: "Сохранить" }));
+    await waitFor(() => expect(sent("PATCH", "/cards/c1")).toBeTruthy());
+    const call = sent("PATCH", "/cards/c1")!;
+    expect(call.headers["If-Match"]).toBe('"1"');
+    expect(call.body).toMatchObject({ title: "Изменена", values: { ms: ["m2"] } });
+  });
+
+  it("сообщает о конфликте версий", async () => {
+    const user = userEvent.setup();
+    routes["PATCH /cards/c1"] = problem(409, "version_conflict", "Конфликт");
+    renderAt("/boards/b1");
+    await openCard(user);
+    await user.click(
+      within(screen.getByTestId("card-form")).getByRole("button", { name: "Сохранить" }),
+    );
+    expect(
+      await screen.findByText("Карточку уже изменили. Показана свежая версия."),
+    ).toBeInTheDocument();
+  });
+
+  it("показывает чек-лист, комментарии, ссылки, историю и добавляет новое", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await openCard(user);
+    expect(screen.getByText("Комментарий").tagName).toBe("STRONG");
+    expect(screen.getByRole("link", { name: "Макет" })).toHaveAttribute(
+      "rel",
+      "noopener noreferrer",
+    );
+    expect(await screen.findByText(/переместил\(а\): todo → done/)).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Пункт" }));
+    await waitFor(() => expect(sent("PATCH", "/checklist-items/i1")?.body).toEqual({ done: true }));
+    await user.type(screen.getByLabelText("Новый пункт"), "Ещё{Enter}");
+    await waitFor(() => expect(sent("POST", "/checklists/l1/items")).toBeTruthy());
+    await user.type(screen.getByLabelText("Новый чек-лист"), "Этапы{Enter}");
+    await waitFor(() => expect(sent("POST", "/cards/c1/checklists")).toBeTruthy());
+    await user.type(screen.getByLabelText("Написать комментарий"), "Привет");
+    await user.click(screen.getByRole("button", { name: "Отправить" }));
+    await waitFor(() => expect(sent("POST", "/cards/c1/comments")).toBeTruthy());
+    await user.type(screen.getAllByLabelText("Название").at(-1)!, "Файл");
+    await user.type(screen.getByLabelText("https://…"), "https://example.com/f{Enter}");
+    await waitFor(() => expect(sent("POST", "/cards/c1/attachments")).toBeTruthy());
+  });
+
+  it("удаление карточки с отменой из toast", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await openCard(user);
+    await user.click(
+      within(screen.getByTestId("card-form")).getByRole("button", { name: "Удалить" }),
+    );
+    await waitFor(() => expect(sent("DELETE", "/cards/c1")).toBeTruthy());
+    await user.click(await screen.findByRole("button", { name: "Отменить" }));
+    await waitFor(() => expect(sent("POST", "/cards/c1/restore")).toBeTruthy());
+  });
+
+  it("создаёт новую карточку клавишей N", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await screen.findByText("Первая");
+    await user.keyboard("n");
+    const form = await screen.findByTestId("card-form");
+    await user.type(within(form).getByLabelText("Название"), "Новая");
+    await user.click(within(form).getByRole("button", { name: "Сохранить" }));
+    await waitFor(() => expect(sent("POST", "/boards/b1/cards")).toBeTruthy());
+  });
+
+  it("переименовывает доску, меняет представление, сохраняет вид и шаблон", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    const name = await screen.findByLabelText("Название доски");
+    await user.clear(name);
+    await user.type(name, "Новое имя{Enter}");
+    await waitFor(() => expect(sent("PATCH", "/boards/b1")?.headers["If-Match"]).toBe('"3"'));
+
+    await user.click(screen.getByRole("button", { name: "Таблица" }));
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Сохранить вид" }));
+    await user.type(await screen.findByLabelText("Название представления"), "Мой вид");
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Сохранить" }));
+    await waitFor(() =>
+      expect(sent("POST", "/boards/b1/views")?.body).toMatchObject({ name: "Мой вид" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "В избранное" }));
+    await waitFor(() => expect(sent("PATCH", "/boards/b1")).toBeTruthy());
+  });
+
+  it("меню экспорта и сброс двойным нажатием", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await screen.findByText("Первая");
+    await user.click(screen.getByRole("button", { name: "Экспорт JSON" }));
+    await waitFor(() => expect(sent("GET", "/boards/b1/template")).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: "Сброс" }));
+    await user.click(screen.getByRole("button", { name: "Точно?" }));
+    await waitFor(() => expect(sent("POST", "/boards/b1/reset")?.body).toEqual({ cards: true }));
+    expect(await screen.findByText("Доска сброшена к шаблону")).toBeInTheDocument();
+  });
+
+  it("зритель не видит конструктор и кнопок правки", async () => {
+    const user = userEvent.setup();
+    routes["GET /boards/b1"] = () => ({ ...BOARD, role: "viewer" });
+    renderAt("/boards/b1");
+    await user.click(await screen.findByText("Первая").catch(() => document.body));
+    expect(screen.queryByRole("button", { name: "Конструктор" })).toBeNull();
+  });
+
+  it("ошибка доски: 404 показан как ошибка с повтором", async () => {
+    routes["GET /boards/b1"] = problem(404, "not_found", "Не найдено");
+    renderAt("/boards/b1");
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+  });
+
+  it("конструктор: правка, отмена, применение и ошибки по путям", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await screen.findByText("Первая");
+    await user.click(screen.getByRole("button", { name: "Конструктор" }));
+    const panel = await screen.findByTestId("constructor");
+    expect(within(panel).getByRole("button", { name: "Применить" })).toBeDisabled();
+    const name = within(panel).getAllByLabelText("Название")[0]!;
+    await user.clear(name);
+    await user.type(name, "Очередь");
+    expect(screen.getByText("Есть несохранённые изменения")).toBeInTheDocument();
+    expect(document.querySelector(".kb-col-name")).toHaveTextContent("Очередь");
+    await user.click(within(panel).getByRole("button", { name: "Отменить шаг" }));
+    await user.click(within(panel).getByRole("button", { name: "Вернуть шаг" }));
+
+    routes["PUT /boards/b1/config"] = problem(422, "validation_error", "Ошибка", [
+      { path: "columns[0].name", message: "обязательное поле" },
+    ]);
+    await user.click(within(panel).getByRole("button", { name: "Применить" }));
+    expect(await within(panel).findByRole("alert")).toHaveTextContent("columns[0].name");
+
+    routes["PUT /boards/b1/config"] = () => ({ ...BOARD, version: 4 });
+    await user.click(within(panel).getByRole("button", { name: "Применить" }));
+    expect(await screen.findByText("Настройки применены")).toBeInTheDocument();
+    expect(sent("PUT", "/boards/b1/config")?.headers["If-Match"]).toBe('"3"');
+
+    await user.click(within(panel).getByRole("tab", { name: "Шаблон и экспорт" }));
+    await user.click(await within(panel).findByRole("button", { name: "Скачать JSON" }));
+    await user.click(within(panel).getByRole("button", { name: "Сохранить как шаблон" }));
+    await waitFor(() => expect(sent("POST", "/templates/from-board")).toBeTruthy());
+    await user.click(within(panel).getByRole("button", { name: "Сбросить к шаблону" }));
+    await waitFor(() => expect(sent("POST", "/boards/b1/reset")?.body).toEqual({ cards: false }));
+
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    await user.click(within(panel).getByRole("button", { name: "Закрыть конструктор" }));
+    await waitFor(() => expect(screen.queryByTestId("constructor")).toBeNull());
+  });
+});
+
+describe("шаблоны", () => {
+  it("галерея, импорт с превью и действия над шаблоном", async () => {
+    const user = userEvent.setup();
+    renderAt("/templates");
+    expect(await screen.findByRole("heading", { name: "Пресет А" })).toBeInTheDocument();
+    expect((await screen.findAllByTestId("template-thumbnail")).length).toBe(2);
+
+    await user.click(
+      screen.getByRole("button", { name: "Скачать пример шаблона со всеми функциями" }),
+    );
+    await waitFor(() =>
+      expect(calls.some((call) => call.path === "/templates/example")).toBe(true),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Мой: меню" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Дублировать" }));
+    await waitFor(() => expect(sent("POST", "/templates/t1/duplicate")).toBeTruthy());
+
+    await user.click(screen.getByRole("button", { name: "Мой: меню" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Переименовать" }));
+    const name = await screen.findByLabelText("Название");
+    await user.clear(name);
+    await user.type(name, "Другой{Enter}");
+    await waitFor(() => expect(sent("PATCH", "/templates/t1")?.body).toEqual({ name: "Другой" }));
+
+    await user.click(screen.getByRole("button", { name: "Мой: меню" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Удалить" }));
+    await waitFor(() => expect(sent("DELETE", "/templates/t1")).toBeTruthy());
+  });
+
+  it("загружает файл: превью, предупреждения, подтверждение", async () => {
+    const user = userEvent.setup();
+    renderAt("/templates");
+    await screen.findByRole("heading", { name: "Пресет А" });
+    const file = new File(
+      [
+        JSON.stringify({
+          format: "kanbanly.board-template",
+          version: 1,
+          meta: { name: "Импорт" },
+          columns: [{ key: "a", name: "A" }],
+        }),
+      ],
+      "t.json",
+    );
+    await user.upload(screen.getAllByLabelText("Загрузить шаблон")[0]!, file);
+    expect(await screen.findByTestId("import-counts")).toHaveTextContent("колонок 2");
+    expect(screen.getByText("Предупреждения: 1")).toBeInTheDocument();
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Загрузить шаблон" }),
+    );
+    expect(await screen.findByText("Шаблон добавлен в библиотеку")).toBeInTheDocument();
+  });
+
+  it("показывает ошибки сервера с путями", async () => {
+    const user = userEvent.setup();
+    routes["POST /templates/import/preview"] = () => ({
+      valid: false,
+      errors: [{ path: "columns[3].color", message: "неверный формат цвета" }],
+    });
+    renderAt("/templates");
+    await screen.findByRole("heading", { name: "Пресет А" });
+    const file = new File(
+      [
+        JSON.stringify({
+          format: "kanbanly.board-template",
+          version: 1,
+          meta: { name: "И" },
+          columns: [{ key: "a", name: "A" }],
+        }),
+      ],
+      "t.json",
+    );
+    await user.upload(screen.getAllByLabelText("Загрузить шаблон")[0]!, file);
+    expect(await screen.findByText("columns[3].color:")).toBeInTheDocument();
+  });
+
+  it("создаёт доску из шаблона в выбранном проекте", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/templates");
+    const [first] = await screen.findAllByRole("button", { name: "Создать доску" });
+    await user.click(first!);
+    const dialog = await screen.findByRole("dialog");
+    await screen.findByRole("option", { name: "Проект" });
+    await user.click(within(dialog).getByRole("button", { name: "Создать" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/boards/b1"));
+  });
+});
+
+describe("корзина", () => {
+  it("восстанавливает объект", async () => {
+    const user = userEvent.setup();
+    renderAt("/trash");
+    expect(await screen.findByText("Удалённая")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Восстановить" }));
+    await waitFor(() => expect(sent("POST", "/boards/b9/restore")).toBeTruthy());
+    expect(await screen.findByText("Восстановлено")).toBeInTheDocument();
+  });
+
+  it("пустое состояние", async () => {
+    routes["GET /trash"] = () => [];
+    renderAt("/trash");
+    expect(await screen.findByText("Корзина пуста")).toBeInTheDocument();
+  });
+});
+
+describe("профиль", () => {
+  it("меняет данные, пароль, включает и отключает 2FA", async () => {
+    const user = userEvent.setup();
+    renderAt("/profile");
+    await user.clear(await screen.findByLabelText("Как вас зовут"));
+    await user.type(screen.getByLabelText("Как вас зовут"), "Новое");
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+    await waitFor(() => expect(sent("PATCH", "/auth/me")).toBeTruthy());
+    await user.selectOptions(screen.getByLabelText("Язык интерфейса"), "en");
+    expect(useLocale.getState().locale).toBe("en");
+    act(() => useLocale.setState({ locale: "ru" }));
+
+    await user.click(screen.getByRole("tab", { name: "Безопасность" }));
+    await user.type(await screen.findByLabelText("Текущий пароль"), "old-password-1");
+    await user.type(screen.getByLabelText("Новый пароль"), "new-password-12");
+    await user.click(screen.getByRole("button", { name: "Сменить пароль" }));
+    expect(await screen.findByText("Пароль изменён, другие сессии завершены")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Включить 2FA" }));
+    expect(await screen.findByTestId("totp-secret")).toHaveTextContent("JBSWY3DP");
+    await user.type(screen.getByLabelText("Код подтверждения"), "123456");
+    await user.click(screen.getByRole("button", { name: "Включить 2FA" }));
+    expect(await screen.findByText(/AAAAA-BBBBB/)).toBeInTheDocument();
+  });
+
+  it("отключает 2FA, если она включена", async () => {
+    const user = userEvent.setup();
+    routes["GET /auth/me"] = () => ({ ...USER, totp_enabled: true });
+    renderAt("/profile");
+    await user.click(await screen.findByRole("tab", { name: "Безопасность" }));
+    await user.type(await screen.findByLabelText("Пароль"), "password-123");
+    await user.click(screen.getByRole("button", { name: "Отключить 2FA" }));
+    await waitFor(() => expect(sent("POST", "/auth/2fa/disable")).toBeTruthy());
+  });
+
+  it("управляет сессиями", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/profile");
+    await user.click(await screen.findByRole("tab", { name: "Сессии" }));
+    expect(await screen.findByText("Текущая")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Завершить" }));
+    await waitFor(() => expect(sent("DELETE", "/auth/sessions/s2")).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: "Выйти на всех устройствах" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+  });
+
+  it("удаляет аккаунт только с паролем", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/profile");
+    await user.click(await screen.findByRole("tab", { name: "Удаление аккаунта" }));
+    const button = await screen.findByRole("button", { name: "Удалить аккаунт и все данные" });
+    expect(button).toBeDisabled();
+    await user.type(screen.getByLabelText("Пароль"), "password-123");
+    await user.click(button);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+  });
+
+  it("бэкап: экспорт, превью с конфликтами, замена требует слово", async () => {
+    const user = userEvent.setup();
+    renderAt("/profile");
+    await user.click(await screen.findByRole("tab", { name: "Данные и бэкапы" }));
+    await user.selectOptions(await screen.findByLabelText("Что выгрузить"), "project:p1");
+    await user.click(screen.getByRole("switch", { name: "Сжать (.json.gz)" }));
+    await user.click(screen.getByRole("button", { name: "Скачать бэкап" }));
+    await waitFor(() => expect(calls.some((call) => call.path === "/export/backup")).toBe(true));
+    expect(await screen.findByText(/Автоснимок/)).toBeInTheDocument();
+
+    await user.upload(screen.getByLabelText("Выбрать файл бэкапа"), new File(["{}"], "b.json"));
+    expect(await screen.findByTestId("backup-preview")).toHaveTextContent("досок 2");
+    expect(screen.getByText(/Конфликты: Проект/)).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "Заменить существующие" }));
+    const restore = screen.getByRole("button", { name: "Восстановить" });
+    expect(restore).toBeDisabled();
+    await user.type(screen.getByLabelText("Введите слово ЗАМЕНИТЬ"), "ЗАМЕНИТЬ");
+    await user.click(restore);
+    await waitFor(() => expect(sent("POST", "/import/backup")).toBeTruthy());
+    expect(await screen.findByText("Данные восстановлены")).toBeInTheDocument();
+  });
+
+  it("бэкап: зашифрованный файл просит пароль, ошибка показана", async () => {
+    const user = userEvent.setup();
+    routes["POST /import/backup/preview"] = () => ({
+      valid: false,
+      encrypted: true,
+      password_required: true,
+      errors: [{ path: "", message: "Неверный пароль или файл повреждён" }],
+    });
+    renderAt("/profile");
+    await user.click(await screen.findByRole("tab", { name: "Данные и бэкапы" }));
+    await user.upload(
+      await screen.findByLabelText("Выбрать файл бэкапа"),
+      new File(["{}"], "b.json"),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("Неверный пароль");
+    await user.type(screen.getByLabelText("Пароль бэкапа"), "secret-1");
+    await user.click(screen.getByRole("button", { name: "Продолжить" }));
+    await waitFor(() => expect(calls.at(-1)?.headers["X-Backup-Password"]).toBe("secret-1"));
+  });
+});
+
+describe("оболочка", () => {
+  it("палитра находит результаты и выполняет команды", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/");
+    await screen.findByRole("heading", { name: "Проекты" });
+    await user.keyboard("{Control>}k{/Control}");
+    const input = await screen.findByRole("combobox");
+    await user.type(input, "найд");
+    expect(await screen.findByRole("option", { name: /Найдено/ })).toBeInTheDocument();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(router.state.location.pathname).toBe("/boards/b1"));
+  });
+
+  it("палитра: стрелки и пустой результат", async () => {
+    const user = userEvent.setup();
+    routes["GET /search"] = () => [];
+    const router = renderAt("/");
+    await screen.findByRole("heading", { name: "Проекты" });
+    await user.keyboard("/");
+    await screen.findByRole("combobox");
+    await user.keyboard("{ArrowDown}{ArrowDown}{ArrowUp}{Enter}");
+    await waitFor(() => expect(router.state.location.pathname).toBe("/templates"));
+    await user.keyboard("/");
+    await user.type(await screen.findByRole("combobox"), "абракадабра");
+    expect(await screen.findByText("Ничего не найдено")).toBeInTheDocument();
+  });
+
+  it("шпаргалка по ?", async () => {
+    const user = userEvent.setup();
+    renderAt("/");
+    await screen.findByRole("heading", { name: "Проекты" });
+    await user.keyboard("?");
+    expect(await screen.findByRole("heading", { name: "Горячие клавиши" })).toBeInTheDocument();
+  });
+
+  it("выход завершает сессию", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/");
+    await user.click(await screen.findByRole("button", { name: "Выйти" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+  });
+});

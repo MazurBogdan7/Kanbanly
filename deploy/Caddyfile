@@ -1,0 +1,5 @@
+{$KANBANLY_DOMAIN} {
+	encode gzip
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains"
+	reverse_proxy web:8080
+}

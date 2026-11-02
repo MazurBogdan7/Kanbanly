@@ -1,0 +1,217 @@
+/* Дизайн-система приложения. Все цвета и размеры — только отсюда. */
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: var(--app-canvas);
+  --color-panel: var(--app-panel);
+  --color-raised: var(--app-raised);
+  --color-line: var(--app-line);
+  --color-line-strong: var(--app-line-strong);
+  --color-ink: var(--app-ink);
+  --color-ink-soft: var(--app-ink-soft);
+  --color-brand: var(--app-brand);
+  --color-brand-hover: var(--app-brand-hover);
+  --color-brand-ink: var(--app-brand-ink);
+  --color-brand-soft: var(--app-brand-soft);
+  --color-danger: var(--app-danger);
+  --color-danger-soft: var(--app-danger-soft);
+  --color-success: var(--app-success);
+  --color-warning: var(--app-warning);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-panel: 0 1px 2px rgb(16 24 40 / 6%), 0 8px 24px rgb(16 24 40 / 8%);
+  --shadow-pop: 0 4px 12px rgb(16 24 40 / 12%), 0 24px 48px rgb(16 24 40 / 16%);
+  --font-sans: Inter, system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root {
+  --app-canvas: #f6f7f9;
+  --app-panel: #ffffff;
+  --app-raised: #f0f2f5;
+  --app-line: #e3e6eb;
+  --app-line-strong: #c9cfd8;
+  --app-ink: #1a1f2b;
+  --app-ink-soft: #566072;
+  --app-brand: #3b5bdb;
+  --app-brand-hover: #2f4ac0;
+  --app-brand-ink: #ffffff;
+  --app-brand-soft: #e7ecff;
+  --app-danger: #b42318;
+  --app-danger-soft: #fee9e7;
+  --app-success: #136b3c;
+  --app-warning: #855400;
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --app-canvas: #0f1218;
+    --app-panel: #161a22;
+    --app-raised: #1e232d;
+    --app-line: #2a303c;
+    --app-line-strong: #3d4554;
+    --app-ink: #e8ebf1;
+    --app-ink-soft: #a1abbc;
+    --app-brand: #91a7ff;
+    --app-brand-hover: #b2c1ff;
+    --app-brand-ink: #10152a;
+    --app-brand-soft: #232c52;
+    --app-danger: #ff9b92;
+    --app-danger-soft: #3b1b18;
+    --app-success: #6fd6a0;
+    --app-warning: #f0c060;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --app-canvas: #0f1218;
+  --app-panel: #161a22;
+  --app-raised: #1e232d;
+  --app-line: #2a303c;
+  --app-line-strong: #3d4554;
+  --app-ink: #e8ebf1;
+  --app-ink-soft: #a1abbc;
+  --app-brand: #91a7ff;
+  --app-brand-hover: #b2c1ff;
+  --app-brand-ink: #10152a;
+  --app-brand-soft: #232c52;
+  --app-danger: #ff9b92;
+  --app-danger-soft: #3b1b18;
+  --app-success: #6fd6a0;
+  --app-warning: #f0c060;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--app-canvas);
+  color: var(--app-ink);
+  font: 14px/1.45 var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--app-brand);
+  outline-offset: 2px;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* WCAG 2.5.8: строки с чекбоксами дают цель не меньше 24 px. */
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]) {
+  min-height: 24px;
+}
+
+.prose-card {
+  overflow-wrap: anywhere;
+}
+
+.prose-card > * + * {
+  margin-top: 8px;
+}
+
+.prose-card a {
+  color: var(--app-brand);
+  text-decoration: underline;
+}
+
+.prose-card ul {
+  list-style: disc;
+  padding-left: 20px;
+}
+
+.prose-card ol {
+  list-style: decimal;
+  padding-left: 20px;
+}
+
+.prose-card code {
+  background: var(--app-raised);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.prose-card pre {
+  background: var(--app-raised);
+  border-radius: 6px;
+  padding: 8px;
+  overflow-x: auto;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    transform: translateY(6px) scale(0.98);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
+
+.anim-fade {
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+
+.anim-pop {
+  animation: pop-in var(--dur-base) var(--ease-out);
+}
+
+.anim-drawer {
+  animation: slide-in-right var(--dur-slow) var(--ease-out);
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--app-raised) 25%,
+    var(--app-line) 50%,
+    var(--app-raised) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

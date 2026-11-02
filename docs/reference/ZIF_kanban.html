@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZIF — Канбан</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0A0A0A;--abyss:#111111;--obsidian:#1A1714;--shadow:#2A2520;--stone:#3D362E;
+  --bronze:#5C4F3C;--agold:#8B7441;--gold:#C9A84C;--bgold:#E2C45E;--holy:#F5E6A3;
+  --blood:#8B2020;--ember:#C44B2F;--ice:#5B8FA8;--poison:#4A7A3D;--crystal:#6B5BA8;
+  --text:#E8DFC8;--muted:#9A8C72;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--void);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}
+header{padding:20px 20px 12px;border-bottom:1px solid var(--shadow);background:linear-gradient(180deg,#14110d,var(--void))}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;justify-content:space-between}
+h1{font-family:"Cormorant SC",serif;color:var(--gold);margin:0;font-size:26px;letter-spacing:.08em}
+h1 small{display:block;font:500 12px Inter,sans-serif;color:var(--muted);letter-spacing:0;margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,select,input,textarea{font:inherit;color:var(--text);background:var(--obsidian);border:1px solid var(--stone);border-radius:6px;padding:7px 10px}
+button{cursor:pointer}
+button:hover{border-color:var(--gold);color:var(--bgold)}
+button.primary{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:600}
+button.primary:hover{background:var(--bgold);color:#1a1408}
+.ms-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.ms{flex:1 1 180px;background:var(--abyss);border:1px solid var(--shadow);border-radius:8px;padding:8px 10px}
+.ms b{font-size:12px;color:var(--gold)}
+.ms span{float:right;font-size:12px;color:var(--muted)}
+.bar{height:5px;background:var(--shadow);border-radius:3px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.filters input{flex:1 1 200px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--stone);background:transparent;color:var(--muted);cursor:pointer}
+.chip.on{background:var(--shadow);color:var(--holy);border-color:var(--agold)}
+main{display:flex;gap:12px;padding:16px;overflow-x:auto;align-items:flex-start;min-height:calc(100vh - 250px)}
+.col{flex:1 0 260px;background:var(--abyss);border:1px solid var(--shadow);border-radius:10px;display:flex;flex-direction:column;max-height:calc(100vh - 40px)}
+.col h2{margin:0;padding:12px 14px;font:700 16px "Cormorant SC",serif;letter-spacing:.06em;color:var(--gold);border-bottom:1px solid var(--shadow);display:flex;justify-content:space-between}
+.col h2 em{font:500 12px Inter;color:var(--muted);font-style:normal}
+.list{padding:10px;overflow-y:auto;flex:1;min-height:80px}
+.list.over{background:#16130f;outline:1px dashed var(--agold);outline-offset:-6px}
+.card{background:var(--obsidian);border:1px solid var(--shadow);border-left:3px solid var(--c,var(--agold));border-radius:7px;padding:9px 10px;margin-bottom:8px;cursor:grab}
+.card:hover{border-color:var(--stone);border-left-color:var(--c,var(--agold))}
+.card.drag{opacity:.4}
+.card .t{font-weight:600;font-size:13px;color:var(--text)}
+.card .d{font-size:12px;color:var(--muted);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.tag{font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--shadow);color:var(--muted);white-space:nowrap}
+.tag.ms1{color:#1a1408;background:var(--gold)}
+.tag.ms2{color:var(--holy);background:#4d3f22}
+.tag.ms3{color:var(--text);background:var(--stone)}
+.tag.ms4{color:var(--muted);background:#221e19}
+.tag.who{color:var(--holy);background:#2b2216;border:1px solid var(--bronze)}
+.col[data-s=done] .card{opacity:.65}
+.col[data-s=done] .card .t{text-decoration:line-through;text-decoration-color:var(--bronze)}
+.empty{color:var(--bronze);font-size:12px;text-align:center;padding:16px 0}
+dialog{background:var(--abyss);color:var(--text);border:1px solid var(--agold);border-radius:12px;padding:0;width:min(560px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+.dlg{padding:18px;display:grid;gap:10px}
+.dlg h3{margin:0;font-family:"Cormorant SC",serif;color:var(--gold)}
+.dlg label{font-size:12px;color:var(--muted);display:grid;gap:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dlg textarea{min-height:110px;resize:vertical}
+.dlg .row{display:flex;gap:8px;justify-content:space-between;margin-top:4px}
+.danger{border-color:var(--blood);color:#e38b8b}
+.danger:hover{border-color:var(--ember);color:#ffb0a0}
+.legend{font-size:12px;color:var(--muted);padding:0 16px 20px}
+@media (max-width:600px){
+  header{padding:16px}
+  main{padding:12px 16px}
+  .col{flex-basis:84vw}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>ZIF<small>Канбан по дизайн-документу v1.00 · Roguelike-арканоид про Сизифа</small></h1>
+    <div class="actions">
+      <button class="primary" id="addBtn">+ Задача</button>
+      <button id="expBtn">Экспорт JSON</button>
+      <button id="impBtn">Импорт</button>
+      <button id="resetBtn" class="danger">Сброс</button>
+      <input type="file" id="impFile" accept=".json" hidden>
+    </div>
+  </div>
+  <div class="ms-row" id="msRow"></div>
+  <div class="filters">
+    <input id="q" placeholder="Поиск по задачам…">
+    <select id="fMs"><option value="">Все вехи</option></select>
+    <select id="fType"><option value="">Все типы</option></select>
+    <select id="fWho"><option value="">Все исполнители</option></select>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+<main id="board"></main>
+<div class="legend">Перетаскивай карточки между колонками. Клик по карточке — редактирование. Изменения сохраняются в этом браузере; для передачи SERGO — «Экспорт JSON» → «Импорт».</div>
+
+<dialog id="dlg">
+  <form class="dlg" method="dialog" id="form">
+    <h3 id="dlgTitle">Задача</h3>
+    <label>Название<input name="title" required></label>
+    <label>Описание<textarea name="desc"></textarea></label>
+    <div class="grid2">
+      <label>Эпик<select name="epic"></select></label>
+      <label>Веха<select name="ms"></select></label>
+      <label>Тип<select name="type"></select></label>
+      <label>Исполнитель<select name="who"></select></label>
+      <label>Статус<select name="status"></select></label>
+    </div>
+    <div class="row">
+      <button type="button" class="danger" id="delBtn">Удалить</button>
+      <span style="display:flex;gap:8px">
+        <button type="button" id="cancelBtn">Отмена</button>
+        <button class="primary" value="save">Сохранить</button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const COLS=[["backlog","Бэклог"],["todo","К работе"],["doing","В работе"],["review","Проверка"],["done","Готово"]];
+const MS={1:"M1 · Вертикальный срез",2:"M2 · Альфа",3:"M3 · Бета",4:"M4 · Релиз"};
+const MS_HINT={1:"Пустыня целиком: бросок, враги, предметы, магазин, босс Ламия",2:"Биомы 1–3, хаб, мета-прогрессия, сохранения",3:"Все биомы, Арес, сюжет, баланс",4:"Полировка, локализация, эндгейм"};
+const TYPES=["Код","Геймдизайн","Арт","Звук","Нарратив","UI","Продакшн"];
+const WHO=["—","Богдан","SERGO"];
+const EPICS={
+ core:["Валун и бросок","#C9A84C"],
+ hero:["Сизиф","#E2C45E"],
+ enemy:["Враги и бой","#8B2020"],
+ boss:["Боссы","#C44B2F"],
+ level:["Уровни и генерация","#5C8A3D"],
+ items:["Предметы и синергии","#6B5BA8"],
+ eco:["Экономика и мета","#B8843A"],
+ hub:["Хаб","#8AB86A"],
+ ui:["UI / HUD","#5B8FA8"],
+ sys:["Меню, сохранения, настройки","#A0C8D8"],
+ feel:["Камера и game feel","#D4A85C"],
+ narr:["Нарратив","#8E80CC"],
+ art:["Арт","#C8C0E8"],
+ audio:["Звук и музыка","#4A7A3D"],
+ prod:["Продакшн","#9A8C72"]
+};
+// [status, epic, ms, type, title, desc]
+const SEED=[
+// ---- уже сделано
+["done","level",1,"Код","Первый уровень (прототип)","Собран первый игровой уровень."],
+["done","core",1,"Код","Базовая физика валуна","Отскоки, инерция, столкновения — первая версия."],
+["done","hero",1,"Код","Базовая физика и движение Сизифа","Перемещение персонажа, коллизии."],
+["done","art",1,"Арт","Базовая анимация","Первые анимации персонажа/валуна."],
+["done","sys",1,"Код","Консоль разработчика","Внутриигровая консоль."],
+["done","sys",1,"UI","Главное меню","Первая версия главного меню."],
+
+// ---- к работе (следующий спринт)
+["todo","core",1,"Геймдизайн","Решить механику возврата валуна","В ГДД два варианта: скатывается в безопасную зону (4.1, 4.5) и возвращается к Сизифу (7.1.4 Валун). Зафиксировать базу: скатывание; возврат в руку — только через предмет."],
+["todo","level",1,"Геймдизайн","Решить: комнаты или открытые зоны","2.5.1 описывает уровень как зоны без комнат (стены, холмы, вода), а 3.2/8.3 — как цепочку комнат 8–12 на биом. Выбрать модель — от неё зависит генератор, карта, сохранения."],
+["todo","core",1,"Код","Фокусировка: накопление силы броска","Зажатие кнопки копит силу, кривая силы от времени, максимум, отмена. Скорость Сизифа при фокусировке снижается."],
+["todo","core",1,"Код","Прицеливание мышью и стиком","Направление броска от позиции курсора / правого стика. Мёртвая зона и чувствительность для геймпада."],
+["todo","core",1,"Код","Линия-подсказка траектории","Предпросмотр полёта с учётом 1–2 отскоков. Отключается в настройках доступности."],
+["todo","hero",1,"Код","Dash с кулдауном и i-frames","Рывок в направлении движения, короткий кулдаун, неуязвимость на время рывка."],
+["todo","hero",1,"Код","Здоровье, урон, смерть","HP без авто-регена, получение урона, кадры неуязвимости после удара, смерть → конец забега."],
+["todo","enemy",1,"Код","Базовый ИИ врага","Конечный автомат (idle/преследование/атака/смерть), навигация, получение урона от валуна."],
+
+// ---- валун и бросок
+["backlog","core",1,"Код","Лимит отскоков и затухание скорости","Базово 3–5 отскоков, угол падения = углу отражения, потеря скорости на каждом отскоке. Параметры вынести в конфиг."],
+["backlog","core",1,"Код","Скатывание валуна под уклоном","Валун подвержен «силе тяжести» склона и скатывается к безопасной зоне, где его подбирает Сизиф."],
+["backlog","core",1,"Код","Подбор валуна","Сизиф подбирает валун при контакте/по кнопке. Пока валун в полёте — Сизиф не может атаковать."],
+["backlog","core",1,"Код","Пробивание мелких, отскок от крупных","Мелкие враги — валун проходит насквозь с уроном; крупные и стены — отскок. Флаг размера у врага."],
+["backlog","core",1,"Код","Урон валуна от скорости","Урон = f(скорость, сила броска, модификаторы). Крит при максимальной фокусировке."],
+["backlog","core",1,"Код","Поверхность: песок","Пустыня: валун вязнет, меньше отскоков, быстрее теряет скорость."],
+["backlog","core",2,"Код","Поверхность: кристаллы","Непредсказуемый угол отражения (рандом в диапазоне). Для Кристального замка."],
+["backlog","core",3,"Код","Поверхность: лёд","Тундра: валун скользит дальше, больше отскоков; Сизиф теряет сцепление."],
+["backlog","core",1,"Геймдизайн","Тюнинг веса броска","Плейтест и подбор параметров: масса, сила, затухание, чтобы бросок ощущался тяжёлым."],
+["backlog","core",2,"Код","Рост уклона и скорости по этажам","Угол наклона карты и скорость валуна увеличиваются с прогрессом (кривая сложности 3.2.1)."],
+
+// ---- сизиф
+["backlog","hero",1,"Код","Доработать движение: 8 направлений","Постоянная скорость, без ускорения и инерции, отзывчивое управление; нормализация диагоналей."],
+["backlog","hero",1,"Код","Конечный автомат состояний Сизифа","idle / ходьба / фокусировка / бросок / dash / урон / смерть — под анимации и блокировки ввода."],
+
+// ---- враги
+["backlog","enemy",1,"Код","Спавн врагов по паттернам","Враги появляются при входе в зону по заранее заданным паттернам; волны."],
+["backlog","enemy",1,"Код","Нокбэк по массе","Откидывание при ударе зависит от массы врага."],
+["backlog","enemy",1,"Код","Пустынные скорпионы","Быстрые, ядовитые, атакуют и отступают."],
+["backlog","enemy",1,"Геймдизайн","Мини-босс пустыни (туториал)","В 8.3.1 комната 5 — мини-босс пустыни, но кто это — не описано. Придумать и задизайнить."],
+["backlog","enemy",1,"Код","Мини-босс пустыни","Реализация по дизайну: проверка движения, броска, рикошетов и dash."],
+["backlog","enemy",2,"Код","Тени","Базовые враги подножия: медленные, атакуют числом, появляются из темноты."],
+["backlog","enemy",2,"Код","Жрецы Аида","Дальнобойные кастеры тёмной магии; приоритетная цель."],
+["backlog","enemy",2,"Код","Шахтёры-призраки","Появляются из стен, хаотичные, много урона, мало HP."],
+["backlog","enemy",2,"Код","Кристальные големы","Медленные, бронированные, отражают первый удар. Телепортация через кристаллы."],
+["backlog","enemy",2,"Код","Мини-босс: Эмпуса","Телепортируется, атакует сериями."],
+["backlog","enemy",2,"Код","Мини-босс: Кербер-младший","Три головы — три паттерна атак."],
+["backlog","enemy",3,"Код","Ожившие деревья и нимфы","Оазис: контроль пространства корнями, средний темп."],
+["backlog","enemy",3,"Код","Ледяные волки","Стайное поведение, быстрые, опасны группой."],
+["backlog","enemy",3,"Код","Мини-босс: Титан-осколок","Огромный, медленный, разрушительный."],
+["backlog","enemy",3,"Геймдизайн","Комбинации врагов поздних этажей","Опасные сочетания ранее встреченных врагов, элитные варианты."],
+
+// ---- боссы
+["backlog","boss",1,"Код","Фреймворк боссов","Фазы, паттерны атак, полоса HP босса, закрытие арены, флэшбэк до/после."],
+["backlog","boss",1,"Код","Ламия — босс пустыни","Змееподобная, быстрая, ядовитая, призывает миньонов."],
+["backlog","boss",2,"Код","Минотавр — босс подножия","Чарджи, ломает стены, создаёт хаос."],
+["backlog","boss",2,"Код","Танатос-тень — Храм Аида","Отпечаток бога смерти, личная история с Сизифом."],
+["backlog","boss",2,"Код","Горгона-королева — Шахты","Окаменяющий взгляд, волны миньонов."],
+["backlog","boss",2,"Код","Ледяная гарпия — Кристальный замок","Летает, контролирует пространство."],
+["backlog","boss",3,"Код","Нимфа-мать — босс оазиса","Защитница рощи, призывает природу."],
+["backlog","boss",3,"Код","Борей — босс тундры","Контроль арены льдом и вьюгой."],
+["backlog","boss",3,"Код","Арес — финальный босс (3 фазы)","Воин (парирования) → Бог (оружие с неба, ускорение) → Ярость (арена рушится)."],
+["backlog","boss",4,"Геймдизайн","Секретные опциональные боссы","Дизайн и реализация секретных боссов, включая босса Царства теней."],
+
+// ---- уровни
+["backlog","level",1,"Код","Генератор уровня биома","Сборка уровня из готовых блоков с ручными ключевыми зонами. Обязательный набор: спавн, бой, подземелье с сокровищницей, магазин, босс, секрет."],
+["backlog","level",1,"Код","Закрытие выхода до зачистки","Тропа в следующую зону открывается только после убийства всех врагов; вернуться назад нельзя."],
+["backlog","level",1,"Код","Разрушаемые объекты","Ящики, колонны, статуи, стены-преграды: целое/разрушенное состояние, дроп валюты."],
+["backlog","level",1,"Геймдизайн","Туториальные комнаты пустыни 1–5","Движение → бросок → рикошеты → dash → мини-босс. Подсказки репликами валуна и маркерами на полу."],
+["backlog","level",1,"Код","Безопасная зона в начале комнаты","Стартовая зона, куда скатывается валун; враги туда не заходят (или ограниченно)."],
+["backlog","level",2,"Код","Карта этажа и выбор пути","Видно тип награды следующей зоны (предмет/магазин/босс/событие), но не содержимое."],
+["backlog","level",2,"Код","Секретные зоны","Открываются разрушением определённых стен или условием. Редкие предметы, лор."],
+["backlog","level",2,"Код","Развилка трёх путей","Необратимый выбор Храм Аида / Шахты / Кристальный замок на 3-м биоме."],
+["backlog","level",2,"Код","Ловушки шахт","Обвалы, нестабильные проходы, ядовитый туман."],
+["backlog","level",2,"Код","Типы зон: элитный бой, событие, лечение","Помимо обычного боя, магазина и сундука."],
+["backlog","level",3,"Геймдизайн","Наполнение всех биомов","Пустыня 8, подножие 10, развилка 10, оазис 10, тундра 12 + вершина. Полный забег 40–60 мин."],
+["backlog","level",4,"Код","Комнаты испытаний","Арены с модификаторами (больше врагов, таймер, без лечения) и повышенной наградой."],
+["backlog","level",4,"Код","Царство теней","Секретный биом после первого прохождения: свои враги, босс, лор о прошлом валуна."],
+["backlog","level",4,"Код","Испытание Олимпа","Эндгейм: проклятия-модификаторы сложности за особые награды."],
+
+// ---- предметы
+["backlog","items",1,"Код","Архитектура предметов","Предметы как модификаторы валуна/броска/Сизифа, стакинг, порядок применения, data-driven (ресурсы)."],
+["backlog","items",1,"Геймдизайн","Первые 10 предметов","Набор для вертикального среза, минимум 2–3 заметные синергии."],
+["backlog","items",1,"Код","Пьедесталы и сундуки","Закрытый / открытый / пустой; выдача предмета или валюты."],
+["backlog","items",2,"Код","Модификаторы валуна","Доп. отскоки, огненный/ледяной/молниевый след, притяжение врагов, взрыв при возврате."],
+["backlog","items",2,"Код","Алтари со сделками","Обмен (HP на силу, скорость на урон); предложения зависят от состояния игрока."],
+["backlog","items",2,"Код","Пул предметов с разблокировкой","Магазины и сундуки берут только из разблокированного пула."],
+["backlog","items",3,"Геймдизайн","Расширить до 40+ предметов","Неочевидные синергии, предметы, уникальные для каждого пути развилки."],
+
+// ---- экономика
+["backlog","eco",1,"Код","Оболы","Дроп с врагов и объектов, счётчик, сгорают при смерти."],
+["backlog","eco",1,"Код","Магазин","Случайный ассортимент из пула, лечение за оболы. Стойка, полки."],
+["backlog","eco",1,"Код","Лечение только через источники","Предметы, зоны лечения, события — без авто-регена."],
+["backlog","eco",2,"Код","Мета-валюта (Души / Эфир)","Начисляется за убийства, боссов, квесты; сохраняется между забегами."],
+["backlog","eco",3,"Геймдизайн","Баланс экономики","2–3 покупки за уровень; ощутимый мета-апгрейд каждые 2–4 забега. Баланс-таблица."],
+
+// ---- хаб
+["backlog","hub",2,"Геймдизайн","Название и концепт хаба","В ГДД два названия: «Храм Персефоны» (2.5) и «Подножие вечности» (8.2). Выбрать одно."],
+["backlog","hub",2,"Код","Сцена хаба","Возврат после смерти, старт нового забега."],
+["backlog","hub",2,"Код","Постоянные улучшения","Трата мета-валюты на апгрейды и разблокировку предметов."],
+["backlog","hub",3,"Код","Стартовые бонусы","Выбор бонуса перед забегом после разблокировки."],
+["backlog","hub",3,"Код","Оживление хаба","Очаг, появление спасённых NPC, удобства по мере прогресса."],
+["backlog","hub",3,"Код","Украшения хаба с бафами","Собираются в забегах, дают пассивные бонусы."],
+["backlog","hub",3,"Код","Кодекс / собранный лор","Просмотр найденных фрагментов истории."],
+
+// ---- UI
+["backlog","ui",1,"UI","HUD: здоровье","Полоса или сердца в углу, стилизация под античность."],
+["backlog","ui",1,"UI","HUD: индикатор фокусировки","Круговая шкала вокруг Сизифа или у края экрана."],
+["backlog","ui",1,"UI","HUD: счётчик оболов","Появляется при изменении значения."],
+["backlog","ui",1,"UI","Подсказки взаимодействия","Над объектами при приближении (сундук, алтарь, NPC, магазин)."],
+["backlog","ui",1,"UI","Экран смерти / итоги забега","Статистика, заработанная мета-валюта, кнопка в хаб."],
+["backlog","ui",2,"UI","HUD: иконки предметов","Компактная полоска, разворачивается по нажатию."],
+["backlog","ui",2,"UI","Окно диалога","Портрет, текст, варианты ответа, индикатор выбора."],
+["backlog","ui",2,"UI","Экран карты этажа","Иконки зон (бой, магазин, босс, событие, ?), линии путей, маркер позиции."],
+["backlog","ui",2,"UI","Визуальный стиль UI","Каменные текстуры, золотые акценты, греческий читаемый шрифт, органичные формы."],
+
+// ---- системы
+["backlog","sys",1,"Код","Меню паузы","Продолжить, инвентарь, карта, настройки, сдаться."],
+["backlog","sys",1,"Код","Расширить консоль под отладку","Спавн врагов, выдача предметов/валюты, god mode, телепорт в зону, перезапуск генерации по seed."],
+["backlog","sys",2,"Код","Инвентарь в паузе","Собранные предметы и их эффекты."],
+["backlog","sys",2,"Код","Автосохранение забега","Сохранение при входе в новую зону; после «Продолжить» сейв стирается (анти save-scum)."],
+["backlog","sys",2,"Код","Сохранение мета-прогресса","Валюта, разблокировки, прогресс NPC пишутся мгновенно."],
+["backlog","sys",2,"Код","Пункты главного меню","«Продолжить» (если есть сейв), «Хаб», «Настройки», «Выход»."],
+["backlog","sys",2,"Код","Настройки графики и звука","Разрешение, оконный режим, масштаб UI; громкость музыки, звуков, голоса."],
+["backlog","sys",2,"Код","Управление и геймпад","Переназначение клавиш, поддержка геймпада, чувствительность прицеливания, вибрация."],
+["backlog","sys",3,"Код","Настройки доступности","Траектория вкл/выкл, тряска экрана вкл/выкл, фильтры для дальтоников."],
+
+// ---- game feel
+["backlog","feel",1,"Код","Камера: мягкое следование","Сглаживание за Сизифом, вид сверху с наклоном."],
+["backlog","feel",1,"Код","Камера: оттяжка при броске","Камера смещается, охватывая траекторию валуна."],
+["backlog","feel",1,"Код","Тряска экрана","При ударах; отключается в настройках."],
+["backlog","feel",1,"Код","Hitstop и вспышки при ударе","Короткая заморозка кадра, белая вспышка врага — «хруст и откат» из 2.8."],
+["backlog","feel",1,"Код","Камера: фиксация на арене босса","Показывает всё пространство арены."],
+["backlog","feel",2,"Код","Камера: зум под размер зоны","Большие зоны — отдаление, тесные — приближение."],
+["backlog","feel",2,"Код","Динамическое 2D-освещение","Свет от валуна и эффектов, мерцающие факелы, тени врагов."],
+
+// ---- нарратив
+["backlog","narr",1,"Нарратив","Реплики валуна в туториале","Подсказки к механикам голосом Петроса."],
+["backlog","narr",2,"Код","Система диалогов","Data-driven диалоги, условия по прогрессу, ветки ответов."],
+["backlog","narr",2,"Нарратив","Пул цитат валуна","Досократики, стоики, трагики; триггеры: вход в зону, смерть, босс, предмет."],
+["backlog","narr",2,"Нарратив","Катсцена: интро","Пробуждение у подножия, первая реплика валуна."],
+["backlog","narr",3,"Нарратив","Квестовые линии NPC","Тантал (торговец), Иксион, Данаиды, Ахиллес — диалоги и квесты."],
+["backlog","narr",3,"Нарратив","Прописать Ахиллеса","В ГДД только «бывший герой» — нужна роль, характер, квест."],
+["backlog","narr",3,"Нарратив","Тени философов","Гераклит, Диоген, Пифагор: подсказки, загадки, квесты."],
+["backlog","narr",3,"Нарратив","Флэшбэки биомов","Коринф, цепи, Персефона, шахты, Олимп, семья, Арес — до и после боссов."],
+["backlog","narr",3,"Нарратив","Катсцены: перед Аресом и финал","Полноценная сцена перед боем, финал и эпилог."],
+["backlog","narr",4,"Геймдизайн","Решение по сыну Сизифа","Опциональная семейная линия — делать или нет."],
+
+// ---- арт
+["backlog","art",1,"Арт","Сизиф: полный спрайт-шит","idle, ходьба 8 направлений, фокусировка, бросок, урон, смерть."],
+["backlog","art",1,"Арт","Валун: спрайты и эффекты","Вращение, полёт, след, искры при отскоке."],
+["backlog","art",1,"Арт","Эффекты Сизифа","Аура фокусировки, след dash."],
+["backlog","art",1,"Арт","Тайлсет пустыни","Песок, скалы, кости, сухие кусты, руины."],
+["backlog","art",1,"Арт","Враги пустыни + Ламия","Скорпионы, мини-босс, Ламия — полные спрайт-шиты."],
+["backlog","art",1,"Арт","Разрушаемые и интерактивные объекты","Ящики, колонны, статуи; двери, сундуки, алтари, магазин — все состояния."],
+["backlog","art",1,"Арт","Боевые VFX","Удар по врагу, отскок, смерть врага, крит."],
+["backlog","art",1,"Арт","Интерфейсные VFX","Появление предмета, получение валюты, лечение, красная виньетка урона."],
+["backlog","art",2,"Арт","Тайлсеты подножия и развилки","Подножие, Храм Аида, Шахты, Кристальный замок."],
+["backlog","art",2,"Арт","Враги и боссы биомов 2–3","Тени, жрецы, шахтёры, големы, мини-боссы, Минотавр, 3 босса развилки."],
+["backlog","art",2,"Арт","Портреты валуна","Нейтральный, раздражённый, философский, удивлённый."],
+["backlog","art",2,"Арт","Хаб: окружение","Площадка, очаг, состояния развития."],
+["backlog","art",2,"Арт","UI-арт","Кнопки (hover/pressed/disabled), фоны, рамки, шрифт, иконки карты."],
+["backlog","art",3,"Арт","Тайлсеты оазиса, тундры, вершины","Плюс средовые VFX: снег, туман, вода, блики кристаллов, пыль по биомам."],
+["backlog","art",3,"Арт","Враги и боссы биомов 4–6","Деревья, нимфы, волки, Титан-осколок, Нимфа-мать, Борей, Арес (несколько фаз)."],
+["backlog","art",3,"Арт","NPC","5–8 проклятых, торговец: idle, диалог, эмоции + портреты."],
+["backlog","art",3,"Арт","Арт катсцен","Пиксельные ролики: интро, флэшбэки, Арес, финал."],
+["backlog","art",4,"Арт","Скины Сизифа и валуна","Царский, мрамор, обсидиан, кристалл, золотые прожилки."],
+
+// ---- звук
+["backlog","audio",1,"Код","Аудио-менеджер и шины","Шины музыки / SFX / голоса, пул звуков, вариации."],
+["backlog","audio",1,"Звук","SFX Сизифа и валуна","Шаги, фокусировка, бросок, dash, урон, смерть; гул полёта, хруст, звон отскока, подбор."],
+["backlog","audio",1,"Звук","SFX врагов пустыни и UI","Появление, атака, урон, смерть; навигация по меню, выбор, пауза."],
+["backlog","audio",1,"Звук","Трек пустыни","Медленный stoner doom, пустынный гул."],
+["backlog","audio",2,"Звук","SFX окружения","Разрушение, сундук, дверь, алтарь, покупка."],
+["backlog","audio",2,"Код","Пространственное аудио","Позиционирование звуков врагов и событий."],
+["backlog","audio",2,"Звук","Треки подножия, развилки, хаба, меню","Хаб — меланхолия с надеждой; меню — минималистичная главная тема."],
+["backlog","audio",3,"Код","Адаптивная музыка и динамический микс","Интенсивность от числа врагов, спад после зачистки; низкое HP — сердцебиение; пауза — затихание."],
+["backlog","audio",3,"Звук","Треки оазиса, тундры, вершины, боссов","Оазис — акустика; Арес — многочастная композиция под фазы."],
+["backlog","audio",4,"Звук","Голос валуна и NPC","Низкий голос с каменным эхом."],
+
+// ---- продакшн
+["backlog","prod",1,"Продакшн","Экспорт билдов","Сборки под Windows (и Linux), версионирование."],
+["backlog","prod",1,"Продакшн","Плейтест вертикального среза","5+ внешних тестеров, сбор фидбэка по ощущению броска."],
+["backlog","prod",2,"Геймдизайн","Баланс-таблица","Урон, HP, скорость, цены, шансы дропа — в одной таблице."],
+["backlog","prod",4,"Продакшн","Локализация RU / EN","Вынос строк, перевод, выбор языка в настройках."],
+["backlog","prod",4,"Продакшн","Оптимизация и багфикс","Профилирование, стабильный FPS в хаосе боя."],
+["backlog","prod",4,"Продакшн","Страница Steam и трейлер","Скриншоты, капсулы, трейлер, демо."]
+];
+
+const KEY="zif-kanban-v1";
+let tasks=[];
+function seed(){return SEED.map((r,i)=>({id:"t"+(i+1),status:r[0],epic:r[1],ms:r[2],type:r[3],title:r[4],desc:r[5],who:"—"}))}
+function load(){try{const s=localStorage.getItem(KEY);if(s){tasks=JSON.parse(s);return}}catch(e){}tasks=seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(tasks))}catch(e){}}
+const st={q:"",ms:"",type:"",who:"",epics:new Set()};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function fill(sel,arr,first){sel.innerHTML=(first?`<option value="">${first}</option>`:"")+arr.map(([v,l])=>`<option value="${v}">${esc(l)}</option>`).join("")}
+fill($("#fMs"),Object.entries(MS),"Все вехи");
+fill($("#fType"),TYPES.map(t=>[t,t]),"Все типы");
+fill($("#fWho"),WHO.map(w=>[w,w==="—"?"Не назначено":w]),"Все исполнители");
+const f=$("#form");
+fill(f.epic,Object.entries(EPICS).map(([k,v])=>[k,v[0]]));
+fill(f.ms,Object.entries(MS));
+fill(f.type,TYPES.map(t=>[t,t]));
+fill(f.who,WHO.map(w=>[w,w]));
+fill(f.status,COLS);
+
+function chips(){
+  $("#chips").innerHTML=Object.entries(EPICS).map(([k,[n,c]])=>`<button class="chip ${st.epics.has(k)?"on":""}" data-e="${k}" style="border-left:3px solid ${c}">${n}</button>`).join("");
+}
+$("#chips").onclick=e=>{const k=e.target.dataset.e;if(!k)return;st.epics.has(k)?st.epics.delete(k):st.epics.add(k);render()};
+
+function pass(t){
+  if(st.ms&&String(t.ms)!==st.ms)return false;
+  if(st.type&&t.type!==st.type)return false;
+  if(st.who&&t.who!==st.who)return false;
+  if(st.epics.size&&!st.epics.has(t.epic))return false;
+  if(st.q){const q=st.q.toLowerCase();if(!(t.title+" "+t.desc).toLowerCase().includes(q))return false}
+  return true;
+}
+
+function render(){
+  chips();
+  $("#msRow").innerHTML=Object.entries(MS).map(([k,n])=>{
+    const all=tasks.filter(t=>String(t.ms)===k),d=all.filter(t=>t.status==="done").length,p=all.length?Math.round(d/all.length*100):0;
+    return `<div class="ms" title="${esc(MS_HINT[k])}"><b>${n}</b><span>${d}/${all.length}</span><div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(MS_HINT[k])}</div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join("");
+  $("#board").innerHTML=COLS.map(([s,n])=>{
+    const list=tasks.filter(t=>t.status===s&&pass(t));
+    return `<section class="col" data-s="${s}"><h2>${n}<em>${list.length}</em></h2><div class="list" data-s="${s}">${
+      list.length?list.map(card).join(""):'<div class="empty">Пусто</div>'}</div></section>`}).join("");
+}
+function card(t){
+  const [en,ec]=EPICS[t.epic]||["—","#8B7441"];
+  return `<div class="card" draggable="true" data-id="${t.id}" style="--c:${ec}">
+    <div class="t">${esc(t.title)}</div>${t.desc?`<div class="d">${esc(t.desc)}</div>`:""}
+    <div class="meta"><span class="tag ms${t.ms}">M${t.ms}</span><span class="tag">${esc(en)}</span><span class="tag">${esc(t.type)}</span>${t.who&&t.who!=="—"?`<span class="tag who">${esc(t.who)}</span>`:""}</div></div>`;
+}
+
+// drag & drop
+let dragId=null;
+$("#board").addEventListener("dragstart",e=>{const c=e.target.closest(".card");if(!c)return;dragId=c.dataset.id;c.classList.add("drag");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",dragId)}catch(_){}});
+$("#board").addEventListener("dragend",e=>{const c=e.target.closest(".card");if(c)c.classList.remove("drag");document.querySelectorAll(".over").forEach(x=>x.classList.remove("over"))});
+$("#board").addEventListener("dragover",e=>{const l=e.target.closest(".list");if(!l)return;e.preventDefault();document.querySelectorAll(".over").forEach(x=>x!==l&&x.classList.remove("over"));l.classList.add("over")});
+$("#board").addEventListener("drop",e=>{const l=e.target.closest(".list");if(!l||!dragId)return;e.preventDefault();
+  const t=tasks.find(x=>x.id===dragId);const target=e.target.closest(".card");
+  t.status=l.dataset.s;
+  tasks=tasks.filter(x=>x!==t);
+  if(target&&target.dataset.id!==t.id){const i=tasks.findIndex(x=>x.id===target.dataset.id);tasks.splice(i,0,t)}else tasks.push(t);
+  dragId=null;save();render()});
+
+// edit
+let editing=null;
+function openDlg(t){
+  editing=t;$("#dlgTitle").textContent=t?"Задача":"Новая задача";
+  const v=t||{title:"",desc:"",epic:"core",ms:1,type:"Код",who:"—",status:"backlog"};
+  for(const k of ["title","desc","epic","ms","type","who","status"])f[k].value=v[k];
+  $("#delBtn").style.visibility=t?"visible":"hidden";$("#dlg").showModal();
+}
+$("#board").addEventListener("click",e=>{const c=e.target.closest(".card");if(c)openDlg(tasks.find(x=>x.id===c.dataset.id))});
+$("#addBtn").onclick=()=>openDlg(null);
+$("#cancelBtn").onclick=()=>$("#dlg").close();
+f.addEventListener("submit",()=>{
+  const v={title:f.title.value.trim(),desc:f.desc.value.trim(),epic:f.epic.value,ms:+f.ms.value,type:f.type.value,who:f.who.value,status:f.status.value};
+  if(!v.title)return;
+  if(editing)Object.assign(editing,v);else tasks.push({id:"t"+Date.now(),...v});
+  save();render();
+});
+$("#delBtn").onclick=()=>{if(editing){tasks=tasks.filter(x=>x!==editing);save();render()}$("#dlg").close()};
+
+// filters
+$("#q").oninput=e=>{st.q=e.target.value;render()};
+$("#fMs").onchange=e=>{st.ms=e.target.value;render()};
+$("#fType").onchange=e=>{st.type=e.target.value;render()};
+$("#fWho").onchange=e=>{st.who=e.target.value;render()};
+
+// io
+$("#expBtn").onclick=()=>{const b=new Blob([JSON.stringify(tasks,null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="zif_kanban.json";a.click();URL.revokeObjectURL(a.href)};
+$("#impBtn").onclick=()=>$("#impFile").click();
+$("#impFile").onchange=e=>{const fl=e.target.files[0];if(!fl)return;fl.text().then(s=>{try{const d=JSON.parse(s);if(Array.isArray(d)){tasks=d;save();render()}}catch(_){}});e.target.value=""};
+$("#resetBtn").onclick=()=>{const b=$("#resetBtn");if(b.dataset.arm){tasks=seed();save();render();b.textContent="Сброс";delete b.dataset.arm}else{b.dataset.arm=1;b.textContent="Точно сбросить?";setTimeout(()=>{b.textContent="Сброс";delete b.dataset.arm},3000)}};
+
+load();render();
+</script>
+</body>
+</html>

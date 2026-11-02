@@ -1,0 +1,121 @@
+{
+  "$schema": "https://kanbanly.local/schemas/board-template.v1.json",
+  "format": "kanbanly.board-template",
+  "version": 1,
+  "meta": {
+    "name": "Контент-план",
+    "description": "Редакционная доска: каналы, форматы и даты публикации в журнальной типографике.",
+    "author": "Kanbanly",
+    "tags": ["контент", "обе темы"]
+  },
+  "theme": {
+    "mode": "both",
+    "density": "comfortable",
+    "tokens": {
+      "bg": "#FAF7FF",
+      "surface": "#F1ECFA",
+      "surface-2": "#FFFFFF",
+      "border": "#E0D8F0",
+      "border-strong": "#C8BCE2",
+      "muted-strong": "#7A6F94",
+      "accent": "#6A32C9",
+      "accent-hover": "#5425A8",
+      "accent-soft": "#E6DAFB",
+      "accent-dim": "#9B7BDA",
+      "danger": "#C2185B",
+      "danger-hover": "#9C1149",
+      "text": "#231A36",
+      "text-muted": "#5A4F73"
+    },
+    "alt_tokens": {
+      "bg": "#15101F",
+      "surface": "#1E1730",
+      "surface-2": "#281F3F",
+      "border": "#3A2E57",
+      "border-strong": "#524273",
+      "muted-strong": "#9385B5",
+      "accent": "#C4A6FF",
+      "accent-hover": "#D8C4FF",
+      "accent-soft": "#E6DAFB",
+      "accent-dim": "#8F6FD6",
+      "danger": "#FF6FA5",
+      "danger-hover": "#FF97BF",
+      "text": "#EFE9FB",
+      "text-muted": "#B6A9D3"
+    },
+    "header_background": { "type": "radial-gradient", "stops": ["{surface}", "{bg}"] },
+    "board_background": { "type": "color", "value": "{bg}" }
+  },
+  "typography": {
+    "board_title": { "font": "Playfair Display", "weight": 700, "size": 30, "color": "{text}" },
+    "board_subtitle": { "font": "IBM Plex Sans", "weight": 400, "size": 13, "color": "{text-muted}" },
+    "column_title": { "font": "Playfair Display", "weight": 700, "size": 16, "color": "{accent}" },
+    "card_title": { "font": "IBM Plex Sans", "weight": 600, "size": 14, "color": "{text}" },
+    "card_body": { "font": "IBM Plex Sans", "weight": 400, "size": 12, "line_clamp": 2, "color": "{text-muted}" },
+    "badge": { "font": "IBM Plex Sans", "weight": 500, "size": 11 },
+    "base": { "font": "IBM Plex Sans", "size": 14, "line_height": 1.5 }
+  },
+  "layout": {
+    "header": {
+      "subtitle": "Что выходит, где и когда",
+      "widgets": [
+        { "type": "filter_chips", "dimension": "channel", "multi": true, "chip_style": "dot" },
+        { "type": "legend", "dimension": "format" }
+      ]
+    },
+    "column": { "min_width": 270, "radius": 8, "header_style": "flat-with-divider", "show_count": true, "empty_text": "Пока пусто" },
+    "card": {
+      "radius": 8,
+      "padding": [10, 12],
+      "gap": 8,
+      "shadow": "sm",
+      "hover": "border",
+      "accent": { "source": "dimension:channel", "style": "background-tint", "width": 3 },
+      "face": ["cover", "title", "description", "due_date", "badges"],
+      "badges": [
+        { "dimension": "channel", "display": "name", "style": "dot" },
+        { "dimension": "format", "display": "icon+name", "style": "neutral" }
+      ]
+    },
+    "editor": { "type": "drawer", "fields_grid": 1, "fields": ["title", "description", "channel", "format", "status"] }
+  },
+  "columns": [
+    { "key": "ideas", "name": "Идеи", "kind": "backlog" },
+    { "key": "writing", "name": "Пишем", "kind": "in_progress" },
+    { "key": "editing", "name": "Редактура", "kind": "review" },
+    { "key": "scheduled", "name": "Запланировано", "kind": "todo" },
+    { "key": "published", "name": "Вышло", "kind": "done", "card_style": { "opacity": 0.8 } }
+  ],
+  "dimensions": [
+    {
+      "key": "channel",
+      "name": "Канал",
+      "type": "multi_select",
+      "values": [
+        { "key": "blog", "name": "Блог", "color": "#6A32C9" },
+        { "key": "tg", "name": "Telegram", "color": "#1C7ED6" },
+        { "key": "yt", "name": "YouTube", "color": "#C92A2A" }
+      ]
+    },
+    {
+      "key": "format",
+      "name": "Формат",
+      "type": "select",
+      "default": "article",
+      "values": [
+        { "key": "article", "name": "Статья", "icon": "📝" },
+        { "key": "video", "name": "Видео", "icon": "🎬" },
+        { "key": "post", "name": "Пост", "icon": "💬" }
+      ]
+    }
+  ],
+  "views": [
+    { "key": "board", "name": "Поток", "type": "kanban", "is_default": true },
+    { "key": "table", "name": "Календарь публикаций", "type": "table", "group_by": "format", "sort": { "by": "due_date", "direction": "asc" } }
+  ],
+  "sample_cards": [
+    { "key": "s1", "column": "ideas", "title": "Разбор кейса клиента", "description": "Как сократили онбординг вдвое.", "values": { "channel": ["blog"], "format": "article" } },
+    { "key": "s2", "column": "writing", "title": "Анонс релиза", "description": "Короткий пост с тремя главными изменениями.", "values": { "channel": ["tg", "blog"], "format": "post" } },
+    { "key": "s3", "column": "published", "title": "Интервью с основателем", "description": "Выпуск о первых годах команды.", "values": { "channel": ["yt"], "format": "video" } }
+  ]
+}

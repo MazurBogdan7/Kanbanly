@@ -1,0 +1,95 @@
+{
+  "$schema": "https://kanbanly.local/schemas/board-template.v1.json",
+  "format": "kanbanly.board-template",
+  "version": 1,
+  "meta": {
+    "name": "Личные задачи",
+    "description": "Мягкая тёплая доска на каждый день: просторно, без лишних настроек.",
+    "author": "Kanbanly",
+    "tags": ["личное", "светлая тема"]
+  },
+  "theme": {
+    "mode": "light",
+    "density": "spacious",
+    "tokens": {
+      "bg": "#FBF3E9",
+      "surface": "#F6E9D8",
+      "surface-2": "#FFFDF9",
+      "border": "#EBD9C2",
+      "border-strong": "#D9BFA0",
+      "muted-strong": "#8C7355",
+      "accent": "#9A3E22",
+      "accent-hover": "#7E2F17",
+      "accent-soft": "#F8DDCF",
+      "accent-dim": "#B2714F",
+      "danger": "#B3261E",
+      "danger-hover": "#8C1D18",
+      "text": "#3B2A1E",
+      "text-muted": "#6B5642"
+    },
+    "header_background": { "type": "linear-gradient", "angle": 135, "stops": ["#FDEBD8", "#FBF3E9"] },
+    "board_background": { "type": "color", "value": "{bg}" }
+  },
+  "typography": {
+    "board_title": { "font": "Lora", "weight": 700, "size": 28, "color": "{accent}" },
+    "board_subtitle": { "font": "Nunito", "weight": 500, "size": 13, "color": "{text-muted}" },
+    "column_title": { "font": "Lora", "weight": 600, "size": 17, "color": "{text}" },
+    "card_title": { "font": "Nunito", "weight": 700, "size": 14, "color": "{text}" },
+    "card_body": { "font": "Nunito", "weight": 400, "size": 13, "line_clamp": 3, "color": "{text-muted}" },
+    "badge": { "font": "Nunito", "weight": 700, "size": 11 },
+    "base": { "font": "Nunito", "size": 15, "line_height": 1.5 }
+  },
+  "layout": {
+    "header": {
+      "subtitle": "По одному делу за раз",
+      "widgets": [
+        { "type": "filter_chips", "dimension": "area", "multi": true, "chip_style": "filled" }
+      ]
+    },
+    "footer_note": "Сделанное приятно перетаскивать вправо.",
+    "column": { "min_width": 300, "radius": 18, "header_style": "pill", "show_count": false, "show_wip": false, "empty_text": "Здесь пока спокойно" },
+    "card": {
+      "radius": 14,
+      "padding": [14, 16],
+      "gap": 12,
+      "shadow": "md",
+      "border": false,
+      "hover": "lift",
+      "accent": { "source": "dimension:area", "style": "dot", "width": 8 },
+      "face": ["title", "description", "due_date", "checklist_progress", "badges"],
+      "badges": [
+        { "dimension": "area", "display": "icon+name", "style": "filled", "radius": 999, "size": "md" }
+      ]
+    },
+    "editor": { "type": "modal", "fields_grid": 1, "fields": ["title", "description", "area", "status"] }
+  },
+  "columns": [
+    { "key": "inbox", "name": "Входящие", "kind": "backlog", "icon": "📥" },
+    { "key": "today", "name": "Сегодня", "kind": "in_progress", "icon": "☀️", "wip_limit": 3 },
+    { "key": "done", "name": "Сделано", "kind": "done", "icon": "🌿", "card_style": { "opacity": 0.75, "title_strikethrough": true, "strikethrough_color": "{muted-strong}" } }
+  ],
+  "dimensions": [
+    {
+      "key": "area",
+      "name": "Сфера",
+      "type": "select",
+      "default": "home",
+      "values": [
+        { "key": "home", "name": "Дом", "icon": "🏠", "color": "#A8541F", "badge": { "bg": "#F3D7BE", "fg": "#5A2A0B" } },
+        { "key": "work", "name": "Работа", "icon": "💼", "color": "#2F6B5B", "badge": { "bg": "#CBE6DC", "fg": "#123B30" } },
+        { "key": "health", "name": "Здоровье", "icon": "🌱", "color": "#7A6A1D", "badge": { "bg": "#EAE1B2", "fg": "#3C330A" } }
+      ]
+    }
+  ],
+  "rules": [
+    { "key": "done-date", "type": "set_completed_on_kind", "column_kind": "done" }
+  ],
+  "views": [
+    { "key": "board", "name": "Доска", "type": "kanban", "is_default": true }
+  ],
+  "sample_cards": [
+    { "key": "s1", "column": "inbox", "title": "Записаться к врачу", "description": "Плановый осмотр весной.", "values": { "area": "health" } },
+    { "key": "s2", "column": "today", "title": "Разобрать почту", "values": { "area": "work" }, "checklists": [ { "title": "Шаги", "items": [ { "text": "Ответить на важное", "done": true }, { "text": "Отписаться от лишнего" } ] } ] },
+    { "key": "s3", "column": "done", "title": "Полить цветы", "values": { "area": "home" } }
+  ]
+}

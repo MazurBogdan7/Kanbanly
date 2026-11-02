@@ -1,0 +1,30 @@
+# Сервер: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d --build
+# Наружу открыт только Caddy (80/443), остальное видно лишь внутри сети Compose.
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    environment:
+      KANBANLY_DOMAIN: ${KANBANLY_DOMAIN:?Укажите KANBANLY_DOMAIN в .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+
+  db:
+    restart: unless-stopped
+
+  api:
+    restart: unless-stopped
+
+  web:
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:

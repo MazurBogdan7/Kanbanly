@@ -1,0 +1,3248 @@
+{
+  "$id": "https://kanbanly.local/schemas/backup.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ActionsWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "actions",
+          "title": "Type",
+          "type": "string"
+        },
+        "add_card": {
+          "default": true,
+          "title": "Add Card",
+          "type": "boolean"
+        },
+        "export": {
+          "default": true,
+          "title": "Export",
+          "type": "boolean"
+        },
+        "import": {
+          "default": true,
+          "title": "Import",
+          "type": "boolean"
+        },
+        "reset": {
+          "default": true,
+          "title": "Reset",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "ActionsWidget",
+      "type": "object"
+    },
+    "BackupAttachment": {
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "maxLength": 1950,
+          "title": "Url",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "url",
+        "created_at"
+      ],
+      "title": "BackupAttachment",
+      "type": "object"
+    },
+    "BackupBoard": {
+      "additionalProperties": true,
+      "properties": {
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "project_source_id": {
+          "format": "uuid",
+          "title": "Project Source Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200000,
+          "title": "Description",
+          "type": "string"
+        },
+        "is_favorite": {
+          "default": false,
+          "title": "Is Favorite",
+          "type": "boolean"
+        },
+        "source_template": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Template"
+        },
+        "config": {
+          "$ref": "#/$defs/BoardConfig"
+        },
+        "cards": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupCard"
+          },
+          "maxItems": 50000,
+          "title": "Cards",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "project_source_id",
+        "name",
+        "config",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "BackupBoard",
+      "type": "object"
+    },
+    "BackupCard": {
+      "additionalProperties": true,
+      "properties": {
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "column": {
+          "maxLength": 64,
+          "title": "Column",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200000,
+          "title": "Description",
+          "type": "string"
+        },
+        "position": {
+          "pattern": "^[0-9A-Za-z]{2,128}$",
+          "title": "Position",
+          "type": "string"
+        },
+        "due_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due Date"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completed At"
+        },
+        "cover_url": {
+          "anyOf": [
+            {
+              "maxLength": 1950,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cover Url"
+        },
+        "values": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "default": {},
+          "maxProperties": 30,
+          "title": "Values",
+          "type": "object"
+        },
+        "fields": {
+          "additionalProperties": true,
+          "default": {},
+          "maxProperties": 100,
+          "title": "Fields",
+          "type": "object"
+        },
+        "checklists": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupChecklist"
+          },
+          "maxItems": 100,
+          "title": "Checklists",
+          "type": "array"
+        },
+        "comments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupComment"
+          },
+          "maxItems": 5000,
+          "title": "Comments",
+          "type": "array"
+        },
+        "attachments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupAttachment"
+          },
+          "maxItems": 500,
+          "title": "Attachments",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "column",
+        "title",
+        "position",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "BackupCard",
+      "type": "object"
+    },
+    "BackupChecklist": {
+      "additionalProperties": true,
+      "properties": {
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "items": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupChecklistItem"
+          },
+          "maxItems": 1000,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "BackupChecklist",
+      "type": "object"
+    },
+    "BackupChecklistItem": {
+      "additionalProperties": true,
+      "properties": {
+        "text": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "done": {
+          "default": false,
+          "title": "Done",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "BackupChecklistItem",
+      "type": "object"
+    },
+    "BackupComment": {
+      "additionalProperties": true,
+      "properties": {
+        "author_name": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Author Name",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 20000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "body",
+        "created_at"
+      ],
+      "title": "BackupComment",
+      "type": "object"
+    },
+    "BackupData": {
+      "additionalProperties": true,
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/BackupProfile",
+          "default": {
+            "email": "",
+            "display_name": "",
+            "locale": "ru"
+          }
+        },
+        "projects": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupProject"
+          },
+          "maxItems": 2000,
+          "title": "Projects",
+          "type": "array"
+        },
+        "boards": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupBoard"
+          },
+          "maxItems": 10000,
+          "title": "Boards",
+          "type": "array"
+        },
+        "templates": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupTemplate"
+          },
+          "maxItems": 5000,
+          "title": "Templates",
+          "type": "array"
+        }
+      },
+      "title": "BackupData",
+      "type": "object"
+    },
+    "BackupProfile": {
+      "additionalProperties": true,
+      "properties": {
+        "email": {
+          "default": "",
+          "maxLength": 254,
+          "title": "Email",
+          "type": "string"
+        },
+        "display_name": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "locale": {
+          "default": "ru",
+          "maxLength": 8,
+          "title": "Locale",
+          "type": "string"
+        }
+      },
+      "title": "BackupProfile",
+      "type": "object"
+    },
+    "BackupProject": {
+      "additionalProperties": true,
+      "properties": {
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200000,
+          "title": "Description",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "name",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "BackupProject",
+      "type": "object"
+    },
+    "BackupScope": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "default": "account",
+          "enum": [
+            "account",
+            "project",
+            "board"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        }
+      },
+      "title": "BackupScope",
+      "type": "object"
+    },
+    "BackupTemplate": {
+      "additionalProperties": true,
+      "properties": {
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200000,
+          "title": "Description",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/BoardTemplate"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "name",
+        "data",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "BackupTemplate",
+      "type": "object"
+    },
+    "BadgeConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "dimension": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Dimension",
+          "type": "string"
+        },
+        "display": {
+          "default": "name",
+          "enum": [
+            "name",
+            "short",
+            "icon",
+            "icon+name"
+          ],
+          "title": "Display",
+          "type": "string"
+        },
+        "style": {
+          "default": "neutral",
+          "enum": [
+            "per-value",
+            "neutral",
+            "outlined",
+            "filled",
+            "dot"
+          ],
+          "title": "Style",
+          "type": "string"
+        },
+        "radius": {
+          "anyOf": [
+            {
+              "maximum": 999,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Radius"
+        },
+        "size": {
+          "default": "sm",
+          "enum": [
+            "sm",
+            "md"
+          ],
+          "title": "Size",
+          "type": "string"
+        },
+        "hide_values": {
+          "default": [],
+          "items": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Hide Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "dimension"
+      ],
+      "title": "BadgeConfig",
+      "type": "object"
+    },
+    "BadgeStyleOverride": {
+      "additionalProperties": true,
+      "properties": {
+        "bg": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bg"
+        },
+        "fg": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fg"
+        },
+        "border": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Border"
+        }
+      },
+      "title": "BadgeStyleOverride",
+      "type": "object"
+    },
+    "BoardConfig": {
+      "additionalProperties": true,
+      "description": "Всё, что настраивается в конструкторе доски (шаблон без meta и карточек).",
+      "properties": {
+        "theme": {
+          "$ref": "#/$defs/Theme",
+          "default": {
+            "mode": "light",
+            "tokens": {},
+            "alt_tokens": {},
+            "density": "comfortable",
+            "header_background": null,
+            "board_background": null,
+            "alt_header_background": null,
+            "alt_board_background": null
+          }
+        },
+        "typography": {
+          "$ref": "#/$defs/Typography",
+          "default": {
+            "board_title": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "board_subtitle": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "column_title": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "card_title": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "card_body": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "badge": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "base": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            }
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/Layout",
+          "default": {
+            "header": {
+              "subtitle": "",
+              "widgets": []
+            },
+            "footer_note": "",
+            "board": {
+              "swimlanes": null
+            },
+            "column": {
+              "collapsible": false,
+              "empty_text": "Пусто",
+              "fixed_width": null,
+              "header_style": "flat-with-divider",
+              "min_width": 280,
+              "radius": 10,
+              "show_count": true,
+              "show_wip": true
+            },
+            "card": {
+              "accent": {
+                "source": "none",
+                "style": "left-border",
+                "width": 3
+              },
+              "badges": [],
+              "border": true,
+              "custom_text": "",
+              "face": [
+                "title",
+                "description",
+                "badges"
+              ],
+              "gap": 8,
+              "hover": "border",
+              "padding": [
+                10,
+                12
+              ],
+              "radius": 8,
+              "shadow": "none"
+            },
+            "editor": {
+              "fields": [],
+              "fields_grid": 1,
+              "type": "drawer"
+            }
+          }
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/$defs/ColumnTemplate"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Columns",
+          "type": "array"
+        },
+        "dimensions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DimensionTemplate"
+          },
+          "maxItems": 30,
+          "title": "Dimensions",
+          "type": "array"
+        },
+        "fields": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/FieldTemplate"
+          },
+          "maxItems": 100,
+          "title": "Fields",
+          "type": "array"
+        },
+        "rules": {
+          "default": [],
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "highlight_wip_exceeded": "#/$defs/HighlightWipRule",
+                "set_completed_on_kind": "#/$defs/SetCompletedRule",
+                "warn_missing_required": "#/$defs/WarnMissingRule"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/SetCompletedRule"
+              },
+              {
+                "$ref": "#/$defs/HighlightWipRule"
+              },
+              {
+                "$ref": "#/$defs/WarnMissingRule"
+              }
+            ]
+          },
+          "maxItems": 50,
+          "title": "Rules",
+          "type": "array"
+        },
+        "views": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ViewTemplate"
+          },
+          "maxItems": 50,
+          "title": "Views",
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns"
+      ],
+      "title": "BoardConfig",
+      "type": "object"
+    },
+    "BoardLayout": {
+      "additionalProperties": true,
+      "properties": {
+        "swimlanes": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Swimlanes"
+        }
+      },
+      "title": "BoardLayout",
+      "type": "object"
+    },
+    "BoardTemplate": {
+      "additionalProperties": true,
+      "properties": {
+        "theme": {
+          "$ref": "#/$defs/Theme",
+          "default": {
+            "mode": "light",
+            "tokens": {},
+            "alt_tokens": {},
+            "density": "comfortable",
+            "header_background": null,
+            "board_background": null,
+            "alt_header_background": null,
+            "alt_board_background": null
+          }
+        },
+        "typography": {
+          "$ref": "#/$defs/Typography",
+          "default": {
+            "board_title": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "board_subtitle": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "column_title": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "card_title": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "card_body": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "badge": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            },
+            "base": {
+              "case": null,
+              "color": null,
+              "font": null,
+              "letter_spacing": null,
+              "line_clamp": null,
+              "line_height": null,
+              "size": null,
+              "weight": null
+            }
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/Layout",
+          "default": {
+            "header": {
+              "subtitle": "",
+              "widgets": []
+            },
+            "footer_note": "",
+            "board": {
+              "swimlanes": null
+            },
+            "column": {
+              "collapsible": false,
+              "empty_text": "Пусто",
+              "fixed_width": null,
+              "header_style": "flat-with-divider",
+              "min_width": 280,
+              "radius": 10,
+              "show_count": true,
+              "show_wip": true
+            },
+            "card": {
+              "accent": {
+                "source": "none",
+                "style": "left-border",
+                "width": 3
+              },
+              "badges": [],
+              "border": true,
+              "custom_text": "",
+              "face": [
+                "title",
+                "description",
+                "badges"
+              ],
+              "gap": 8,
+              "hover": "border",
+              "padding": [
+                10,
+                12
+              ],
+              "radius": 8,
+              "shadow": "none"
+            },
+            "editor": {
+              "fields": [],
+              "fields_grid": 1,
+              "type": "drawer"
+            }
+          }
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/$defs/ColumnTemplate"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Columns",
+          "type": "array"
+        },
+        "dimensions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DimensionTemplate"
+          },
+          "maxItems": 30,
+          "title": "Dimensions",
+          "type": "array"
+        },
+        "fields": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/FieldTemplate"
+          },
+          "maxItems": 100,
+          "title": "Fields",
+          "type": "array"
+        },
+        "rules": {
+          "default": [],
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "highlight_wip_exceeded": "#/$defs/HighlightWipRule",
+                "set_completed_on_kind": "#/$defs/SetCompletedRule",
+                "warn_missing_required": "#/$defs/WarnMissingRule"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/SetCompletedRule"
+              },
+              {
+                "$ref": "#/$defs/HighlightWipRule"
+              },
+              {
+                "$ref": "#/$defs/WarnMissingRule"
+              }
+            ]
+          },
+          "maxItems": 50,
+          "title": "Rules",
+          "type": "array"
+        },
+        "views": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ViewTemplate"
+          },
+          "maxItems": 50,
+          "title": "Views",
+          "type": "array"
+        },
+        "$schema": {
+          "default": "https://kanbanly.local/schemas/board-template.v1.json",
+          "maxLength": 200,
+          "title": "$Schema",
+          "type": "string"
+        },
+        "format": {
+          "const": "kanbanly.board-template",
+          "default": "kanbanly.board-template",
+          "title": "Format",
+          "type": "string"
+        },
+        "version": {
+          "const": 1,
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "meta": {
+          "$ref": "#/$defs/TemplateMeta"
+        },
+        "sample_cards": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SampleCard"
+          },
+          "maxItems": 5000,
+          "title": "Sample Cards",
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "meta"
+      ],
+      "title": "BoardTemplate",
+      "type": "object"
+    },
+    "CardAccent": {
+      "additionalProperties": true,
+      "properties": {
+        "source": {
+          "default": "none",
+          "pattern": "^(none|column|dimension:[A-Za-z0-9_-]+|field:[A-Za-z0-9_-]+)$",
+          "title": "Source",
+          "type": "string"
+        },
+        "style": {
+          "default": "left-border",
+          "enum": [
+            "left-border",
+            "top-border",
+            "background-tint",
+            "dot",
+            "full-border"
+          ],
+          "title": "Style",
+          "type": "string"
+        },
+        "width": {
+          "default": 3,
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Width",
+          "type": "integer"
+        }
+      },
+      "title": "CardAccent",
+      "type": "object"
+    },
+    "CardLayout": {
+      "additionalProperties": true,
+      "properties": {
+        "radius": {
+          "default": 8,
+          "maximum": 32,
+          "minimum": 0,
+          "title": "Radius",
+          "type": "integer"
+        },
+        "padding": {
+          "default": [
+            10,
+            12
+          ],
+          "items": {
+            "maximum": 48,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Padding",
+          "type": "array"
+        },
+        "gap": {
+          "default": 8,
+          "maximum": 48,
+          "minimum": 0,
+          "title": "Gap",
+          "type": "integer"
+        },
+        "shadow": {
+          "default": "none",
+          "enum": [
+            "none",
+            "sm",
+            "md"
+          ],
+          "title": "Shadow",
+          "type": "string"
+        },
+        "border": {
+          "default": true,
+          "title": "Border",
+          "type": "boolean"
+        },
+        "hover": {
+          "default": "border",
+          "enum": [
+            "none",
+            "border",
+            "lift",
+            "glow"
+          ],
+          "title": "Hover",
+          "type": "string"
+        },
+        "accent": {
+          "$ref": "#/$defs/CardAccent",
+          "default": {
+            "source": "none",
+            "style": "left-border",
+            "width": 3
+          }
+        },
+        "face": {
+          "default": [
+            "title",
+            "description",
+            "badges"
+          ],
+          "items": {
+            "enum": [
+              "title",
+              "description",
+              "badges",
+              "fields",
+              "cover",
+              "assignees",
+              "due_date",
+              "checklist_progress",
+              "comments_count",
+              "custom_text"
+            ],
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Face",
+          "type": "array"
+        },
+        "badges": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BadgeConfig"
+          },
+          "maxItems": 20,
+          "title": "Badges",
+          "type": "array"
+        },
+        "custom_text": {
+          "default": "",
+          "maxLength": 300,
+          "title": "Custom Text",
+          "type": "string"
+        }
+      },
+      "title": "CardLayout",
+      "type": "object"
+    },
+    "ColorBackground": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "const": "color",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 48,
+          "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "title": "ColorBackground",
+      "type": "object"
+    },
+    "ColumnCardStyle": {
+      "additionalProperties": true,
+      "properties": {
+        "opacity": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0.1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Opacity"
+        },
+        "title_strikethrough": {
+          "default": false,
+          "title": "Title Strikethrough",
+          "type": "boolean"
+        },
+        "strikethrough_color": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strikethrough Color"
+        },
+        "mute_badges": {
+          "default": false,
+          "title": "Mute Badges",
+          "type": "boolean"
+        },
+        "accent_style": {
+          "anyOf": [
+            {
+              "enum": [
+                "left-border",
+                "top-border",
+                "background-tint",
+                "dot",
+                "full-border"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accent Style"
+        }
+      },
+      "title": "ColumnCardStyle",
+      "type": "object"
+    },
+    "ColumnLayout": {
+      "additionalProperties": true,
+      "properties": {
+        "min_width": {
+          "default": 280,
+          "maximum": 800,
+          "minimum": 120,
+          "title": "Min Width",
+          "type": "integer"
+        },
+        "fixed_width": {
+          "anyOf": [
+            {
+              "maximum": 800,
+              "minimum": 120,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fixed Width"
+        },
+        "radius": {
+          "default": 10,
+          "maximum": 32,
+          "minimum": 0,
+          "title": "Radius",
+          "type": "integer"
+        },
+        "header_style": {
+          "default": "flat-with-divider",
+          "enum": [
+            "flat-with-divider",
+            "pill",
+            "color-bar"
+          ],
+          "title": "Header Style",
+          "type": "string"
+        },
+        "show_count": {
+          "default": true,
+          "title": "Show Count",
+          "type": "boolean"
+        },
+        "show_wip": {
+          "default": true,
+          "title": "Show Wip",
+          "type": "boolean"
+        },
+        "collapsible": {
+          "default": false,
+          "title": "Collapsible",
+          "type": "boolean"
+        },
+        "empty_text": {
+          "default": "Пусто",
+          "maxLength": 300,
+          "title": "Empty Text",
+          "type": "string"
+        }
+      },
+      "title": "ColumnLayout",
+      "type": "object"
+    },
+    "ColumnTemplate": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "default": "custom",
+          "enum": [
+            "backlog",
+            "todo",
+            "in_progress",
+            "review",
+            "done",
+            "custom"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Icon"
+        },
+        "wip_limit": {
+          "anyOf": [
+            {
+              "maximum": 999,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wip Limit"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "maximum": 800,
+              "minimum": 120,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        },
+        "collapsed": {
+          "default": false,
+          "title": "Collapsed",
+          "type": "boolean"
+        },
+        "empty_text": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Empty Text"
+        },
+        "header_style": {
+          "anyOf": [
+            {
+              "enum": [
+                "flat-with-divider",
+                "pill",
+                "color-bar"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Header Style"
+        },
+        "card_style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColumnCardStyle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "key",
+        "name"
+      ],
+      "title": "ColumnTemplate",
+      "type": "object"
+    },
+    "DimensionTemplate": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "default": "select",
+          "enum": [
+            "select",
+            "multi_select",
+            "ordered_select",
+            "user"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "ordered": {
+          "default": false,
+          "title": "Ordered",
+          "type": "boolean"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        },
+        "empty_value": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Empty Value"
+        },
+        "hide_empty": {
+          "default": false,
+          "title": "Hide Empty",
+          "type": "boolean"
+        },
+        "roles": {
+          "default": [],
+          "items": {
+            "enum": [
+              "accent",
+              "badge",
+              "filter_select",
+              "filter_chips",
+              "progress",
+              "swimlanes",
+              "table_group",
+              "legend"
+            ],
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Roles",
+          "type": "array"
+        },
+        "values": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DimensionValueTemplate"
+          },
+          "maxItems": 200,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "key",
+        "name"
+      ],
+      "title": "DimensionTemplate",
+      "type": "object"
+    },
+    "DimensionValueTemplate": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "short": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Short"
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hint"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Icon"
+        },
+        "badge": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BadgeStyleOverride"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "key",
+        "name"
+      ],
+      "title": "DimensionValueTemplate",
+      "type": "object"
+    },
+    "EditorLayout": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "default": "drawer",
+          "enum": [
+            "modal",
+            "drawer"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "fields_grid": {
+          "default": 1,
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Fields Grid",
+          "type": "integer"
+        },
+        "fields": {
+          "default": [],
+          "items": {
+            "maxLength": 64,
+            "type": "string"
+          },
+          "maxItems": 120,
+          "title": "Fields",
+          "type": "array"
+        }
+      },
+      "title": "EditorLayout",
+      "type": "object"
+    },
+    "FieldTemplate": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "text",
+            "long_text",
+            "number",
+            "date",
+            "date_range",
+            "checkbox",
+            "url",
+            "rating",
+            "progress",
+            "checklist",
+            "attachment_link"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "default": {
+          "default": null,
+          "title": "Default"
+        },
+        "validation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FieldValidation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "show_on_face": {
+          "default": false,
+          "title": "Show On Face",
+          "type": "boolean"
+        },
+        "format": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Format"
+        }
+      },
+      "required": [
+        "key",
+        "name",
+        "type"
+      ],
+      "title": "FieldTemplate",
+      "type": "object"
+    },
+    "FieldValidation": {
+      "additionalProperties": true,
+      "properties": {
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "regex": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Regex"
+        },
+        "max_length": {
+          "anyOf": [
+            {
+              "maximum": 20000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Length"
+        }
+      },
+      "title": "FieldValidation",
+      "type": "object"
+    },
+    "FilterBarWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "filter_bar",
+          "title": "Type",
+          "type": "string"
+        },
+        "search": {
+          "default": true,
+          "title": "Search",
+          "type": "boolean"
+        },
+        "selects": {
+          "default": [],
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Selects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "FilterBarWidget",
+      "type": "object"
+    },
+    "FilterChipsWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "filter_chips",
+          "title": "Type",
+          "type": "string"
+        },
+        "dimension": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Dimension",
+          "type": "string"
+        },
+        "multi": {
+          "default": true,
+          "title": "Multi",
+          "type": "boolean"
+        },
+        "chip_style": {
+          "default": "left-border-color",
+          "enum": [
+            "left-border-color",
+            "filled",
+            "dot"
+          ],
+          "title": "Chip Style",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "dimension"
+      ],
+      "title": "FilterChipsWidget",
+      "type": "object"
+    },
+    "HeaderLayout": {
+      "additionalProperties": true,
+      "properties": {
+        "subtitle": {
+          "default": "",
+          "maxLength": 300,
+          "title": "Subtitle",
+          "type": "string"
+        },
+        "widgets": {
+          "default": [],
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "actions": "#/$defs/ActionsWidget",
+                "filter_bar": "#/$defs/FilterBarWidget",
+                "filter_chips": "#/$defs/FilterChipsWidget",
+                "legend": "#/$defs/LegendWidget",
+                "note": "#/$defs/NoteWidget",
+                "progress_by_dimension": "#/$defs/ProgressWidget",
+                "stats": "#/$defs/StatsWidget",
+                "title": "#/$defs/TitleWidget"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TitleWidget"
+              },
+              {
+                "$ref": "#/$defs/ActionsWidget"
+              },
+              {
+                "$ref": "#/$defs/ProgressWidget"
+              },
+              {
+                "$ref": "#/$defs/FilterBarWidget"
+              },
+              {
+                "$ref": "#/$defs/FilterChipsWidget"
+              },
+              {
+                "$ref": "#/$defs/StatsWidget"
+              },
+              {
+                "$ref": "#/$defs/NoteWidget"
+              },
+              {
+                "$ref": "#/$defs/LegendWidget"
+              }
+            ]
+          },
+          "maxItems": 20,
+          "title": "Widgets",
+          "type": "array"
+        }
+      },
+      "title": "HeaderLayout",
+      "type": "object"
+    },
+    "HighlightWipRule": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "highlight_wip_exceeded",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "type"
+      ],
+      "title": "HighlightWipRule",
+      "type": "object"
+    },
+    "ImageBackground": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "const": "image",
+          "title": "Type",
+          "type": "string"
+        },
+        "url": {
+          "maxLength": 1950,
+          "title": "Url",
+          "type": "string"
+        },
+        "overlay": {
+          "default": "#000000",
+          "maxLength": 48,
+          "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+          "title": "Overlay",
+          "type": "string"
+        },
+        "overlay_opacity": {
+          "default": 0.4,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Overlay Opacity",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "url"
+      ],
+      "title": "ImageBackground",
+      "type": "object"
+    },
+    "Layout": {
+      "additionalProperties": true,
+      "properties": {
+        "header": {
+          "$ref": "#/$defs/HeaderLayout",
+          "default": {
+            "subtitle": "",
+            "widgets": []
+          }
+        },
+        "footer_note": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Footer Note",
+          "type": "string"
+        },
+        "board": {
+          "$ref": "#/$defs/BoardLayout",
+          "default": {
+            "swimlanes": null
+          }
+        },
+        "column": {
+          "$ref": "#/$defs/ColumnLayout",
+          "default": {
+            "min_width": 280,
+            "fixed_width": null,
+            "radius": 10,
+            "header_style": "flat-with-divider",
+            "show_count": true,
+            "show_wip": true,
+            "collapsible": false,
+            "empty_text": "Пусто"
+          }
+        },
+        "card": {
+          "$ref": "#/$defs/CardLayout",
+          "default": {
+            "radius": 8,
+            "padding": [
+              10,
+              12
+            ],
+            "gap": 8,
+            "shadow": "none",
+            "border": true,
+            "hover": "border",
+            "accent": {
+              "source": "none",
+              "style": "left-border",
+              "width": 3
+            },
+            "face": [
+              "title",
+              "description",
+              "badges"
+            ],
+            "badges": [],
+            "custom_text": ""
+          }
+        },
+        "editor": {
+          "$ref": "#/$defs/EditorLayout",
+          "default": {
+            "type": "drawer",
+            "fields_grid": 1,
+            "fields": []
+          }
+        }
+      },
+      "title": "Layout",
+      "type": "object"
+    },
+    "LegendWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "legend",
+          "title": "Type",
+          "type": "string"
+        },
+        "dimension": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Dimension",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "dimension"
+      ],
+      "title": "LegendWidget",
+      "type": "object"
+    },
+    "LinearGradientBackground": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "const": "linear-gradient",
+          "title": "Type",
+          "type": "string"
+        },
+        "angle": {
+          "default": 180,
+          "maximum": 360,
+          "minimum": 0,
+          "title": "Angle",
+          "type": "number"
+        },
+        "stops": {
+          "items": {
+            "maxLength": 48,
+            "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Stops",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "stops"
+      ],
+      "title": "LinearGradientBackground",
+      "type": "object"
+    },
+    "NoteWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "note",
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 1000,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "title": "NoteWidget",
+      "type": "object"
+    },
+    "ProgressWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "progress_by_dimension",
+          "title": "Type",
+          "type": "string"
+        },
+        "dimension": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Dimension",
+          "type": "string"
+        },
+        "done_rule": {
+          "default": "column_kind:done",
+          "pattern": "^(column_kind:[a-z_]+|column:[A-Za-z0-9_-]+)$",
+          "title": "Done Rule",
+          "type": "string"
+        },
+        "show_hint": {
+          "default": true,
+          "title": "Show Hint",
+          "type": "boolean"
+        },
+        "show_counter": {
+          "default": true,
+          "title": "Show Counter",
+          "type": "boolean"
+        },
+        "bar_color": {
+          "default": "{accent}",
+          "maxLength": 48,
+          "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+          "title": "Bar Color",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "dimension"
+      ],
+      "title": "ProgressWidget",
+      "type": "object"
+    },
+    "RadialGradientBackground": {
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "const": "radial-gradient",
+          "title": "Type",
+          "type": "string"
+        },
+        "stops": {
+          "items": {
+            "maxLength": 48,
+            "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Stops",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "stops"
+      ],
+      "title": "RadialGradientBackground",
+      "type": "object"
+    },
+    "SampleCard": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "column": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Column",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 20000,
+          "title": "Description",
+          "type": "string"
+        },
+        "values": {
+          "default": {},
+          "maxProperties": 30,
+          "patternProperties": {
+            "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "title": "Values",
+          "type": "object"
+        },
+        "fields": {
+          "default": {},
+          "maxProperties": 100,
+          "patternProperties": {
+            "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$": {}
+          },
+          "title": "Fields",
+          "type": "object"
+        },
+        "due_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due Date"
+        },
+        "cover_url": {
+          "anyOf": [
+            {
+              "maxLength": 1950,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cover Url"
+        },
+        "checklists": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SampleChecklist"
+          },
+          "maxItems": 20,
+          "title": "Checklists",
+          "type": "array"
+        }
+      },
+      "required": [
+        "key",
+        "column",
+        "title"
+      ],
+      "title": "SampleCard",
+      "type": "object"
+    },
+    "SampleChecklist": {
+      "additionalProperties": true,
+      "properties": {
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "items": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SampleChecklistItem"
+          },
+          "maxItems": 200,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "SampleChecklist",
+      "type": "object"
+    },
+    "SampleChecklistItem": {
+      "additionalProperties": true,
+      "properties": {
+        "text": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "done": {
+          "default": false,
+          "title": "Done",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "SampleChecklistItem",
+      "type": "object"
+    },
+    "SetCompletedRule": {
+      "additionalProperties": true,
+      "description": "При переносе в колонку данного вида — проставить дату завершения.",
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "set_completed_on_kind",
+          "title": "Type",
+          "type": "string"
+        },
+        "column_kind": {
+          "default": "done",
+          "enum": [
+            "backlog",
+            "todo",
+            "in_progress",
+            "review",
+            "done",
+            "custom"
+          ],
+          "title": "Column Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "type"
+      ],
+      "title": "SetCompletedRule",
+      "type": "object"
+    },
+    "StatsWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "stats",
+          "title": "Type",
+          "type": "string"
+        },
+        "metrics": {
+          "default": [
+            "total",
+            "in_progress"
+          ],
+          "items": {
+            "enum": [
+              "total",
+              "in_progress",
+              "overdue",
+              "wip_exceeded"
+            ],
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Metrics",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "StatsWidget",
+      "type": "object"
+    },
+    "TemplateMeta": {
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Description",
+          "type": "string"
+        },
+        "author": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Author",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "maxLength": 40,
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "TemplateMeta",
+      "type": "object"
+    },
+    "Theme": {
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "default": "light",
+          "enum": [
+            "light",
+            "dark",
+            "both"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "tokens": {
+          "default": {},
+          "maxProperties": 64,
+          "patternProperties": {
+            "^[a-z][a-z0-9-]{0,39}$": {
+              "maxLength": 9,
+              "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+              "type": "string"
+            }
+          },
+          "title": "Tokens",
+          "type": "object"
+        },
+        "alt_tokens": {
+          "default": {},
+          "maxProperties": 64,
+          "patternProperties": {
+            "^[a-z][a-z0-9-]{0,39}$": {
+              "maxLength": 9,
+              "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+              "type": "string"
+            }
+          },
+          "title": "Alt Tokens",
+          "type": "object"
+        },
+        "density": {
+          "default": "comfortable",
+          "enum": [
+            "compact",
+            "comfortable",
+            "spacious"
+          ],
+          "title": "Density",
+          "type": "string"
+        },
+        "header_background": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "color": "#/$defs/ColorBackground",
+                  "image": "#/$defs/ImageBackground",
+                  "linear-gradient": "#/$defs/LinearGradientBackground",
+                  "radial-gradient": "#/$defs/RadialGradientBackground"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColorBackground"
+                },
+                {
+                  "$ref": "#/$defs/LinearGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/RadialGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/ImageBackground"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Header Background"
+        },
+        "board_background": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "color": "#/$defs/ColorBackground",
+                  "image": "#/$defs/ImageBackground",
+                  "linear-gradient": "#/$defs/LinearGradientBackground",
+                  "radial-gradient": "#/$defs/RadialGradientBackground"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColorBackground"
+                },
+                {
+                  "$ref": "#/$defs/LinearGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/RadialGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/ImageBackground"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Board Background"
+        },
+        "alt_header_background": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "color": "#/$defs/ColorBackground",
+                  "image": "#/$defs/ImageBackground",
+                  "linear-gradient": "#/$defs/LinearGradientBackground",
+                  "radial-gradient": "#/$defs/RadialGradientBackground"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColorBackground"
+                },
+                {
+                  "$ref": "#/$defs/LinearGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/RadialGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/ImageBackground"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alt Header Background"
+        },
+        "alt_board_background": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "color": "#/$defs/ColorBackground",
+                  "image": "#/$defs/ImageBackground",
+                  "linear-gradient": "#/$defs/LinearGradientBackground",
+                  "radial-gradient": "#/$defs/RadialGradientBackground"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColorBackground"
+                },
+                {
+                  "$ref": "#/$defs/LinearGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/RadialGradientBackground"
+                },
+                {
+                  "$ref": "#/$defs/ImageBackground"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alt Board Background"
+        }
+      },
+      "title": "Theme",
+      "type": "object"
+    },
+    "TitleWidget": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "title",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "TitleWidget",
+      "type": "object"
+    },
+    "TypeRole": {
+      "additionalProperties": true,
+      "properties": {
+        "font": {
+          "anyOf": [
+            {
+              "maxLength": 40,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Font"
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "maximum": 900,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weight"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "maximum": 72,
+              "minimum": 8,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        },
+        "letter_spacing": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": -0.2,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Letter Spacing"
+        },
+        "line_height": {
+          "anyOf": [
+            {
+              "maximum": 3,
+              "minimum": 0.8,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Height"
+        },
+        "case": {
+          "anyOf": [
+            {
+              "enum": [
+                "as_is",
+                "upper",
+                "lower",
+                "capitalize"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Case"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\\{[a-z][a-z0-9-]{0,39}\\})$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
+        },
+        "line_clamp": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Clamp"
+        }
+      },
+      "title": "TypeRole",
+      "type": "object"
+    },
+    "Typography": {
+      "additionalProperties": true,
+      "properties": {
+        "board_title": {
+          "$ref": "#/$defs/TypeRole",
+          "default": {
+            "font": null,
+            "weight": null,
+            "size": null,
+            "letter_spacing": null,
+            "line_height": null,
+            "case": null,
+            "color": null,
+            "line_clamp": null
+          }
+        },
+        "board_subtitle": {
+          "$ref": "#/$defs/TypeRole",
+          "default": {
+            "font": null,
+            "weight": null,
+            "size": null,
+            "letter_spacing": null,
+            "line_height": null,
+            "case": null,
+            "color": null,
+            "line_clamp": null
+          }
+        },
+        "column_title": {
+          "$ref": "#/$defs/TypeRole",
+          "default": {
+            "font": null,
+            "weight": null,
+            "size": null,
+            "letter_spacing": null,
+            "line_height": null,
+            "case": null,
+            "color": null,
+            "line_clamp": null
+          }
+        },
+        "card_title": {
+          "$ref": "#/$defs/TypeRole",
+          "default": {
+            "font": null,
+            "weight": null,
+            "size": null,
+            "letter_spacing": null,
+            "line_height": null,
+            "case": null,
+            "color": null,
+            "line_clamp": null
+          }
+        },
+        "card_body": {
+          "$ref": "#/$defs/TypeRole",
+          "default": {
+            "font": null,
+            "weight": null,
+            "size": null,
+            "letter_spacing": null,
+            "line_height": null,
+            "case": null,
+            "color": null,
+            "line_clamp": null
+          }
+        },
+        "badge": {
+          "$ref": "#/$defs/TypeRole",
+          "default": {
+            "font": null,
+            "weight": null,
+            "size": null,
+            "letter_spacing": null,
+            "line_height": null,
+            "case": null,
+            "color": null,
+            "line_clamp": null
+          }
+        },
+        "base": {
+          "$ref": "#/$defs/TypeRole",
+          "default": {
+            "font": null,
+            "weight": null,
+            "size": null,
+            "letter_spacing": null,
+            "line_height": null,
+            "case": null,
+            "color": null,
+            "line_clamp": null
+          }
+        }
+      },
+      "title": "Typography",
+      "type": "object"
+    },
+    "ViewFilters": {
+      "additionalProperties": true,
+      "properties": {
+        "search": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Search",
+          "type": "string"
+        },
+        "dimensions": {
+          "default": {},
+          "maxProperties": 30,
+          "patternProperties": {
+            "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$": {
+              "items": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+                "type": "string"
+              },
+              "maxItems": 200,
+              "type": "array"
+            }
+          },
+          "title": "Dimensions",
+          "type": "object"
+        }
+      },
+      "title": "ViewFilters",
+      "type": "object"
+    },
+    "ViewSort": {
+      "additionalProperties": true,
+      "properties": {
+        "by": {
+          "pattern": "^(title|due_date|created_at|(dimension|field):[A-Za-z0-9_-]+)$",
+          "title": "By",
+          "type": "string"
+        },
+        "direction": {
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "title": "Direction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by"
+      ],
+      "title": "ViewSort",
+      "type": "object"
+    },
+    "ViewTemplate": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "default": "kanban",
+          "enum": [
+            "kanban",
+            "table",
+            "calendar",
+            "timeline"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "filters": {
+          "$ref": "#/$defs/ViewFilters",
+          "default": {
+            "search": "",
+            "dimensions": {}
+          }
+        },
+        "sort": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ViewSort"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "group_by": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group By"
+        },
+        "is_default": {
+          "default": false,
+          "title": "Is Default",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "key",
+        "name"
+      ],
+      "title": "ViewTemplate",
+      "type": "object"
+    },
+    "WarnMissingRule": {
+      "additionalProperties": true,
+      "properties": {
+        "key": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "warn_missing_required",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "type"
+      ],
+      "title": "WarnMissingRule",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "default": "https://kanbanly.local/schemas/backup.v1.json",
+      "maxLength": 200,
+      "title": "$Schema",
+      "type": "string"
+    },
+    "format": {
+      "const": "kanbanly.backup",
+      "default": "kanbanly.backup",
+      "title": "Format",
+      "type": "string"
+    },
+    "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "exported_at": {
+      "format": "date-time",
+      "title": "Exported At",
+      "type": "string"
+    },
+    "scope": {
+      "$ref": "#/$defs/BackupScope",
+      "default": {
+        "type": "account",
+        "id": null
+      }
+    },
+    "data": {
+      "$ref": "#/$defs/BackupData"
+    },
+    "checksum": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Checksum",
+      "type": "string"
+    }
+  },
+  "required": [
+    "exported_at",
+    "data",
+    "checksum"
+  ],
+  "title": "BackupDocument",
+  "type": "object"
+}

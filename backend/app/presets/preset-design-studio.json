@@ -1,0 +1,132 @@
+{
+  "$schema": "https://kanbanly.local/schemas/board-template.v1.json",
+  "format": "kanbanly.board-template",
+  "version": 1,
+  "meta": {
+    "name": "Дизайн-студия",
+    "description": "Светлая строгая доска студии: от брифа до передачи заказчику, с лимитами на дизайн и ревью.",
+    "author": "Kanbanly",
+    "tags": ["дизайн", "светлая тема"]
+  },
+  "theme": {
+    "mode": "light",
+    "density": "comfortable",
+    "tokens": {
+      "bg": "#F4F3EF",
+      "surface": "#FBFAF7",
+      "surface-2": "#FFFFFF",
+      "border": "#E3E0D8",
+      "border-strong": "#C7C2B5",
+      "muted-strong": "#857F70",
+      "accent": "#1F1F1F",
+      "accent-hover": "#000000",
+      "accent-soft": "#EDEBE4",
+      "accent-dim": "#6B675C",
+      "danger": "#B3261E",
+      "danger-hover": "#8C1D18",
+      "text": "#1F1F1F",
+      "text-muted": "#5E5A50"
+    },
+    "header_background": { "type": "color", "value": "{surface}" },
+    "board_background": { "type": "color", "value": "{bg}" }
+  },
+  "typography": {
+    "board_title": { "font": "Manrope", "weight": 800, "size": 22, "letter_spacing": -0.01, "color": "{text}" },
+    "board_subtitle": { "font": "Manrope", "weight": 500, "size": 12, "color": "{text-muted}" },
+    "column_title": { "font": "Manrope", "weight": 700, "size": 13, "case": "upper", "letter_spacing": 0.04, "color": "{text}" },
+    "card_title": { "font": "Manrope", "weight": 700, "size": 13, "color": "{text}" },
+    "card_body": { "font": "Manrope", "weight": 400, "size": 12, "line_clamp": 2, "color": "{text-muted}" },
+    "badge": { "font": "Manrope", "weight": 600, "size": 10.5 },
+    "base": { "font": "Manrope", "size": 14, "line_height": 1.45 }
+  },
+  "layout": {
+    "header": {
+      "subtitle": "Бриф → референсы → скетчи → дизайн → ревью → правки → передача",
+      "widgets": [
+        { "type": "stats", "metrics": ["total", "in_progress", "overdue", "wip_exceeded"] },
+        { "type": "filter_bar", "search": true, "selects": ["client", "platform"] },
+        { "type": "filter_chips", "dimension": "kind", "multi": true, "chip_style": "dot" }
+      ]
+    },
+    "column": { "min_width": 250, "radius": 12, "header_style": "flat-with-divider", "show_count": true, "show_wip": true, "empty_text": "Нет работ" },
+    "card": {
+      "radius": 10,
+      "padding": [12, 12],
+      "gap": 10,
+      "shadow": "sm",
+      "hover": "lift",
+      "accent": { "source": "dimension:client", "style": "top-border", "width": 3 },
+      "face": ["title", "description", "badges", "fields", "due_date"],
+      "badges": [
+        { "dimension": "kind", "display": "name", "style": "per-value", "radius": 999 },
+        { "dimension": "platform", "display": "name", "style": "outlined", "radius": 999 }
+      ]
+    },
+    "editor": { "type": "drawer", "fields_grid": 1, "fields": ["title", "description", "kind", "platform", "client", "figma", "deadline", "revisions", "status"] }
+  },
+  "columns": [
+    { "key": "brief", "name": "Бриф", "kind": "backlog" },
+    { "key": "refs", "name": "Референсы", "kind": "todo" },
+    { "key": "sketch", "name": "Скетчи", "kind": "todo" },
+    { "key": "design", "name": "Дизайн", "kind": "in_progress", "wip_limit": 4 },
+    { "key": "review", "name": "Ревью", "kind": "review", "wip_limit": 3 },
+    { "key": "fixes", "name": "Правки", "kind": "in_progress" },
+    { "key": "handoff", "name": "Передано", "kind": "done", "card_style": { "opacity": 0.7, "title_strikethrough": false, "mute_badges": true } }
+  ],
+  "dimensions": [
+    {
+      "key": "kind",
+      "name": "Тип работ",
+      "type": "select",
+      "default": "ui",
+      "values": [
+        { "key": "ui", "name": "UI", "color": "#2F6FED" },
+        { "key": "brand", "name": "Брендинг", "color": "#C2410C" },
+        { "key": "motion", "name": "Моушн", "color": "#7C3AED" },
+        { "key": "print", "name": "Полиграфия", "color": "#0F766E" }
+      ]
+    },
+    {
+      "key": "platform",
+      "name": "Платформа",
+      "type": "multi_select",
+      "values": [
+        { "key": "web", "name": "Веб" },
+        { "key": "ios", "name": "iOS" },
+        { "key": "android", "name": "Android" },
+        { "key": "social", "name": "Соцсети" }
+      ]
+    },
+    {
+      "key": "client",
+      "name": "Клиент",
+      "type": "select",
+      "default": "inhouse",
+      "values": [
+        { "key": "inhouse", "name": "Внутренний", "color": "#6B675C" },
+        { "key": "acme", "name": "Акме", "color": "#2F6FED" },
+        { "key": "north", "name": "Север", "color": "#0F766E" }
+      ]
+    }
+  ],
+  "fields": [
+    { "key": "figma", "name": "Figma", "type": "url", "show_on_face": true },
+    { "key": "deadline", "name": "Дедлайн", "type": "date", "show_on_face": true },
+    { "key": "revisions", "name": "Раунд правок", "type": "number", "default": 0, "validation": { "min": 0, "max": 20 }, "show_on_face": true }
+  ],
+  "rules": [
+    { "key": "done-date", "type": "set_completed_on_kind", "column_kind": "done" },
+    { "key": "wip", "type": "highlight_wip_exceeded" }
+  ],
+  "views": [
+    { "key": "board", "name": "Канбан", "type": "kanban", "is_default": true },
+    { "key": "clients", "name": "По клиентам", "type": "table", "group_by": "client" }
+  ],
+  "sample_cards": [
+    { "key": "s1", "column": "brief", "title": "Лендинг весенней кампании", "description": "Собрать цели и ограничения кампании.", "values": { "kind": "ui", "platform": ["web"], "client": "acme" } },
+    { "key": "s2", "column": "refs", "title": "Айдентика кофейни", "description": "Подборка референсов по упаковке.", "values": { "kind": "brand", "client": "north" } },
+    { "key": "s3", "column": "design", "title": "Экран оплаты", "description": "Новый поток оплаты с Apple Pay.", "values": { "kind": "ui", "platform": ["ios", "android"], "client": "acme" }, "fields": { "figma": "https://www.figma.com/file/example", "revisions": 1 } },
+    { "key": "s4", "column": "review", "title": "Анимация логотипа", "description": "Показать на внутреннем ревью.", "values": { "kind": "motion", "platform": ["social"], "client": "inhouse" } },
+    { "key": "s5", "column": "handoff", "title": "Буклет к выставке", "description": "Передано в типографию.", "values": { "kind": "print", "client": "north" } }
+  ]
+}

@@ -1,0 +1,236 @@
+{
+  "$schema": "https://kanbanly.local/schemas/board-template.v1.json",
+  "_comment": "Живая документация формата: здесь использована каждая опция. Поля _comment при импорте игнорируются.",
+  "format": "kanbanly.board-template",
+  "version": 1,
+  "meta": {
+    "_comment": "Описание шаблона для галереи.",
+    "name": "Пример со всеми функциями",
+    "description": "Демонстрирует все типы измерений и полей, виджеты, стили, правила и представления.",
+    "author": "Kanbanly",
+    "tags": ["пример", "документация"]
+  },
+  "theme": {
+    "_comment": "mode: light | dark | both. density: compact | comfortable | spacious. tokens — основная палитра, alt_tokens — вторая для both. Свои токены допустимы: ниже brand-pink.",
+    "mode": "both",
+    "density": "comfortable",
+    "tokens": {
+      "bg": "#F7F8FA", "surface": "#EEF0F4", "surface-2": "#FFFFFF", "border": "#DDE1E8", "border-strong": "#C2C8D3",
+      "muted-strong": "#6B7280", "accent": "#3B5BDB", "accent-hover": "#2F4AC0", "accent-soft": "#E3E9FF", "accent-dim": "#7C8FE0",
+      "danger": "#C92A2A", "danger-hover": "#A61E1E", "text": "#1A1F2B", "text-muted": "#555E6E", "brand-pink": "#D6336C"
+    },
+    "alt_tokens": {
+      "bg": "#10131A", "surface": "#171B24", "surface-2": "#1F2430", "border": "#2C3342", "border-strong": "#3E4759",
+      "muted-strong": "#8A94A7", "accent": "#91A7FF", "accent-hover": "#B2C1FF", "accent-soft": "#2A3560", "accent-dim": "#5C72C9",
+      "danger": "#FF8787", "danger-hover": "#FFA8A8", "text": "#E7EAF0", "text-muted": "#A5AEBF", "brand-pink": "#F783AC"
+    },
+    "header_background": { "_comment": "Типы фона: color, linear-gradient, radial-gradient, image.", "type": "image", "url": "https://images.example.com/header.jpg", "overlay": "{bg}", "overlay_opacity": 0.6 },
+    "board_background": { "type": "linear-gradient", "angle": 160, "stops": ["{bg}", "{surface}"] },
+    "alt_header_background": { "type": "color", "value": "{surface}" },
+    "alt_board_background": { "type": "radial-gradient", "stops": ["{surface}", "{bg}"] }
+  },
+  "typography": {
+    "_comment": "Роли: board_title, board_subtitle, column_title, card_title, card_body, badge, base. Шрифты — только из белого списка.",
+    "board_title": { "font": "Cormorant SC", "weight": 700, "size": 28, "letter_spacing": 0.04, "line_height": 1.1, "case": "as_is", "color": "{accent}" },
+    "board_subtitle": { "font": "Inter", "weight": 500, "size": 12, "color": "{text-muted}" },
+    "column_title": { "font": "Manrope", "weight": 700, "size": 13, "case": "upper", "letter_spacing": 0.05, "color": "{text}" },
+    "card_title": { "font": "Inter", "weight": 600, "size": 13, "case": "capitalize", "color": "{text}" },
+    "card_body": { "font": "Inter", "weight": 400, "size": 12, "line_clamp": 2, "case": "lower", "color": "{text-muted}" },
+    "badge": { "font": "JetBrains Mono", "weight": 500, "size": 10.5 },
+    "base": { "font": "Inter", "size": 14, "line_height": 1.45 }
+  },
+  "layout": {
+    "header": {
+      "_comment": "Порядок виджетов задаёт порядок в шапке; enabled=false оставляет виджет настроенным, но скрытым.",
+      "subtitle": "Каждая настройка формата в одной доске",
+      "widgets": [
+        { "type": "title", "enabled": true },
+        { "type": "actions", "add_card": true, "export": true, "import": true, "reset": true },
+        { "type": "progress_by_dimension", "dimension": "milestone", "done_rule": "column_kind:done", "show_hint": true, "show_counter": true, "bar_color": "{accent}" },
+        { "type": "progress_by_dimension", "dimension": "sprint", "done_rule": "column:done", "show_hint": false, "show_counter": true, "bar_color": "#2F9E44" },
+        { "type": "filter_bar", "search": true, "selects": ["milestone", "owner"] },
+        { "type": "filter_chips", "dimension": "epic", "multi": true, "chip_style": "left-border-color" },
+        { "type": "filter_chips", "dimension": "tags", "multi": true, "chip_style": "filled" },
+        { "type": "filter_chips", "dimension": "platform", "multi": false, "chip_style": "dot" },
+        { "type": "stats", "metrics": ["total", "in_progress", "overdue", "wip_exceeded"] },
+        { "type": "note", "text": "Заметка в шапке: сюда можно вынести договорённости команды." },
+        { "type": "legend", "dimension": "epic" },
+        { "type": "note", "enabled": false, "text": "Выключенный виджет не показывается." }
+      ]
+    },
+    "footer_note": "Подвал доски: текстовая заметка.",
+    "board": { "_comment": "swimlanes — дорожки по измерению.", "swimlanes": "platform" },
+    "column": {
+      "min_width": 260,
+      "fixed_width": 280,
+      "radius": 10,
+      "header_style": "flat-with-divider",
+      "show_count": true,
+      "show_wip": true,
+      "collapsible": true,
+      "empty_text": "Пусто"
+    },
+    "card": {
+      "_comment": "face — слоты лицевой стороны в порядке показа. shadow: none | sm | md. hover: none | border | lift | glow.",
+      "radius": 8,
+      "padding": [10, 12],
+      "gap": 8,
+      "shadow": "sm",
+      "border": true,
+      "hover": "lift",
+      "accent": { "source": "dimension:epic", "style": "left-border", "width": 3 },
+      "face": ["cover", "title", "description", "badges", "fields", "assignees", "due_date", "checklist_progress", "comments_count", "custom_text"],
+      "custom_text": "Свободный текст на карточке",
+      "badges": [
+        { "dimension": "milestone", "display": "short", "style": "per-value", "radius": 4, "size": "sm" },
+        { "dimension": "epic", "display": "name", "style": "neutral" },
+        { "dimension": "tags", "display": "icon", "style": "outlined", "hide_values": ["—"] },
+        { "dimension": "platform", "display": "icon+name", "style": "filled", "size": "md" },
+        { "dimension": "sprint", "display": "name", "style": "dot", "radius": 999 }
+      ]
+    },
+    "editor": { "_comment": "type: modal | drawer. fields_grid: 1 | 2.", "type": "drawer", "fields_grid": 2, "fields": ["title", "description", "epic", "milestone", "tags", "owner", "status"] }
+  },
+  "columns": [
+    { "_comment": "kind: backlog | todo | in_progress | review | done | custom.", "key": "backlog", "name": "Бэклог", "kind": "backlog", "icon": "📥", "color": "{muted-strong}" },
+    { "key": "todo", "name": "К работе", "kind": "todo", "width": 300, "empty_text": "Заберите задачу", "header_style": "pill", "card_style": { "accent_style": "top-border" } },
+    { "key": "doing", "name": "В работе", "kind": "in_progress", "color": "{accent}", "wip_limit": 3, "header_style": "color-bar", "card_style": { "accent_style": "background-tint" } },
+    { "key": "review", "name": "Проверка", "kind": "review", "wip_limit": 2, "card_style": { "accent_style": "dot" } },
+    { "key": "blocked", "name": "Заблокировано", "kind": "custom", "color": "{danger}", "collapsed": true, "card_style": { "accent_style": "full-border" } },
+    { "key": "done", "name": "Готово", "kind": "done", "card_style": { "opacity": 0.65, "title_strikethrough": true, "strikethrough_color": "{muted-strong}", "mute_badges": true } }
+  ],
+  "dimensions": [
+    {
+      "_comment": "type: select, multi_select, ordered_select, user. Роли: accent, badge, filter_select, filter_chips, progress, swimlanes, table_group, legend.",
+      "key": "epic",
+      "name": "Эпик",
+      "type": "select",
+      "required": true,
+      "default": "core",
+      "roles": ["accent", "badge", "filter_chips", "legend"],
+      "values": [
+        { "key": "core", "name": "Ядро", "short": "CORE", "hint": "Главная механика", "color": "#3B5BDB", "icon": "⚙️" },
+        { "key": "ui", "name": "Интерфейс", "short": "UI", "hint": "Экраны", "color": "{brand-pink}", "icon": "🎨" }
+      ]
+    },
+    {
+      "key": "milestone",
+      "name": "Веха",
+      "type": "select",
+      "ordered": true,
+      "required": true,
+      "default": "m1",
+      "roles": ["badge", "filter_select", "progress", "table_group"],
+      "values": [
+        { "key": "m1", "name": "M1 · Прототип", "short": "M1", "hint": "Первый играбельный срез", "badge": { "bg": "#3B5BDB", "fg": "#FFFFFF" } },
+        { "key": "m2", "name": "M2 · Релиз", "short": "M2", "hint": "Публичный выпуск", "badge": { "bg": "#E3E9FF", "fg": "#1A1F2B", "border": "#3B5BDB" } }
+      ]
+    },
+    {
+      "key": "sprint",
+      "name": "Спринт",
+      "type": "ordered_select",
+      "default": "s1",
+      "roles": ["badge", "progress"],
+      "values": [
+        { "key": "s1", "name": "Спринт 1", "short": "S1", "color": "#2F9E44" },
+        { "key": "s2", "name": "Спринт 2", "short": "S2", "color": "#E67700" }
+      ]
+    },
+    {
+      "key": "tags",
+      "name": "Теги",
+      "type": "multi_select",
+      "roles": ["badge", "filter_chips"],
+      "values": [
+        { "key": "bug", "name": "Баг", "icon": "🐞", "color": "{danger}" },
+        { "key": "idea", "name": "Идея", "icon": "💡", "color": "#E67700" }
+      ]
+    },
+    {
+      "key": "platform",
+      "name": "Платформа",
+      "type": "select",
+      "default": "none",
+      "empty_value": "none",
+      "hide_empty": true,
+      "roles": ["badge", "filter_chips", "swimlanes"],
+      "values": [
+        { "key": "none", "name": "—" },
+        { "key": "web", "name": "Веб", "icon": "🌐", "color": "#1C7ED6" },
+        { "key": "mobile", "name": "Мобильная", "icon": "📱", "color": "#0CA678" }
+      ]
+    },
+    {
+      "key": "owner",
+      "name": "Исполнитель",
+      "type": "user",
+      "default": "none",
+      "empty_value": "none",
+      "hide_empty": true,
+      "roles": ["filter_select"],
+      "values": [
+        { "key": "none", "name": "—" },
+        { "key": "anna", "name": "Анна" },
+        { "key": "ivan", "name": "Иван" }
+      ]
+    }
+  ],
+  "fields": [
+    { "_comment": "Типы: text, long_text, number, date, date_range, checkbox, url, rating, progress, checklist, attachment_link.", "key": "note", "name": "Заметка", "type": "text", "default": "", "validation": { "max_length": 200, "regex": "^[^<>]*$" }, "show_on_face": false },
+    { "key": "spec", "name": "Спецификация", "type": "long_text", "format": "markdown" },
+    { "key": "estimate", "name": "Оценка", "type": "number", "required": false, "default": 1, "validation": { "min": 0, "max": 100 }, "show_on_face": true, "format": "sp" },
+    { "key": "release", "name": "Дата выхода", "type": "date", "show_on_face": true, "format": "short" },
+    { "key": "window", "name": "Окно работ", "type": "date_range", "show_on_face": true },
+    { "key": "blocked", "name": "Заблокировано", "type": "checkbox", "show_on_face": true },
+    { "key": "link", "name": "Ссылка", "type": "url", "show_on_face": true },
+    { "key": "score", "name": "Оценка команды", "type": "rating", "validation": { "min": 0, "max": 5 }, "show_on_face": true },
+    { "key": "ready", "name": "Готовность", "type": "progress", "show_on_face": true },
+    { "key": "steps", "name": "Шаги", "type": "checklist", "show_on_face": true },
+    { "key": "doc", "name": "Документ", "type": "attachment_link", "show_on_face": true }
+  ],
+  "rules": [
+    { "_comment": "Только декларативные правила из фиксированного набора.", "key": "completed", "type": "set_completed_on_kind", "column_kind": "done", "enabled": true },
+    { "key": "wip", "type": "highlight_wip_exceeded" },
+    { "key": "missing", "type": "warn_missing_required", "enabled": true }
+  ],
+  "views": [
+    { "_comment": "type: kanban, table, calendar, timeline. Календарь и таймлайн — этап 2 продукта.", "key": "board", "name": "Канбан", "type": "kanban", "is_default": true },
+    { "key": "table", "name": "Таблица по вехам", "type": "table", "group_by": "milestone", "sort": { "by": "title", "direction": "asc" }, "filters": { "search": "", "dimensions": { "epic": ["core"] } } },
+    { "key": "calendar", "name": "Календарь", "type": "calendar", "sort": { "by": "due_date", "direction": "desc" } },
+    { "key": "timeline", "name": "Таймлайн", "type": "timeline", "sort": { "by": "dimension:milestone", "direction": "asc" } },
+    { "key": "fresh", "name": "Свежие", "type": "table", "sort": { "by": "created_at", "direction": "desc" } },
+    { "key": "by-score", "name": "По оценке", "type": "table", "sort": { "by": "field:estimate", "direction": "desc" } }
+  ],
+  "sample_cards": [
+    {
+      "_comment": "Карточка с каждым типом значения.",
+      "key": "all",
+      "column": "doing",
+      "title": "Карточка со всеми значениями",
+      "description": "Описание поддерживает **Markdown**: списки, ссылки, `код`.",
+      "values": { "epic": "core", "milestone": "m1", "sprint": "s1", "tags": ["bug", "idea"], "platform": "web", "owner": "anna" },
+      "fields": {
+        "note": "Короткий текст",
+        "spec": "## Заголовок\nТекст спецификации",
+        "estimate": 8,
+        "release": "2027-03-01",
+        "window": { "start": "2027-01-10", "end": "2027-02-20" },
+        "blocked": false,
+        "link": "https://example.com/spec",
+        "score": 4,
+        "ready": 60,
+        "steps": [ { "text": "Набросок", "done": true }, { "text": "Проверка", "done": false } ],
+        "doc": { "name": "Документ", "url": "https://example.com/doc.pdf" }
+      },
+      "due_date": "2027-02-28",
+      "cover_url": "https://images.example.com/cover.jpg",
+      "checklists": [ { "title": "Готовность", "items": [ { "text": "Код", "done": true }, { "text": "Тесты", "done": false } ] } ]
+    },
+    { "key": "todo", "column": "todo", "title": "Обычная задача", "description": "Значения по умолчанию подставятся сами.", "values": { "epic": "ui", "milestone": "m2", "platform": "mobile", "owner": "ivan" } },
+    { "key": "backlog", "column": "backlog", "title": "Идея в бэклоге", "values": { "epic": "ui", "milestone": "m2", "tags": ["idea"] } },
+    { "key": "review", "column": "review", "title": "На проверке", "values": { "epic": "core", "milestone": "m1", "sprint": "s2" } },
+    { "key": "blocked", "column": "blocked", "title": "Заблокированная", "values": { "epic": "core", "milestone": "m1" }, "fields": { "blocked": true } },
+    { "key": "done", "column": "done", "title": "Завершённая", "description": "В колонке «Готово» заголовок зачёркнут.", "values": { "epic": "core", "milestone": "m1" } }
+  ]
+}

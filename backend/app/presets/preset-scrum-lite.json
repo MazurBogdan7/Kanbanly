@@ -1,0 +1,116 @@
+{
+  "$schema": "https://kanbanly.local/schemas/board-template.v1.json",
+  "format": "kanbanly.board-template",
+  "version": 1,
+  "meta": {
+    "name": "Разработка (Scrum-lite)",
+    "description": "Плотная инженерная доска: спринты, приоритеты, оценка в стори-пойнтах.",
+    "author": "Kanbanly",
+    "tags": ["разработка", "тёмная тема"]
+  },
+  "theme": {
+    "mode": "dark",
+    "density": "compact",
+    "tokens": {
+      "bg": "#0D1117",
+      "surface": "#161B22",
+      "surface-2": "#1C2330",
+      "border": "#2B3442",
+      "border-strong": "#3D4757",
+      "muted-strong": "#7D8799",
+      "accent": "#58A6FF",
+      "accent-hover": "#79B8FF",
+      "accent-soft": "#CFE4FF",
+      "accent-dim": "#3B6EA8",
+      "danger": "#F85149",
+      "danger-hover": "#FF7B72",
+      "text": "#E6EDF3",
+      "text-muted": "#9AA7B6"
+    },
+    "header_background": { "type": "color", "value": "{surface}" },
+    "board_background": { "type": "color", "value": "{bg}" }
+  },
+  "typography": {
+    "board_title": { "font": "JetBrains Mono", "weight": 700, "size": 20, "color": "{text}" },
+    "board_subtitle": { "font": "Inter", "weight": 400, "size": 12, "color": "{text-muted}" },
+    "column_title": { "font": "JetBrains Mono", "weight": 600, "size": 12, "case": "upper", "letter_spacing": 0.05, "color": "{text-muted}" },
+    "card_title": { "font": "Inter", "weight": 500, "size": 13, "color": "{text}" },
+    "card_body": { "font": "Inter", "weight": 400, "size": 12, "line_clamp": 1, "color": "{text-muted}" },
+    "badge": { "font": "JetBrains Mono", "weight": 500, "size": 10 },
+    "base": { "font": "Inter", "size": 13, "line_height": 1.4 }
+  },
+  "layout": {
+    "header": {
+      "subtitle": "Текущий спринт и бэклог команды",
+      "widgets": [
+        { "type": "progress_by_dimension", "dimension": "sprint", "done_rule": "column_kind:done", "show_hint": false, "show_counter": true, "bar_color": "{accent}" },
+        { "type": "filter_bar", "search": true, "selects": ["sprint", "priority"] }
+      ]
+    },
+    "column": { "min_width": 240, "radius": 6, "header_style": "color-bar", "show_count": true, "show_wip": true, "empty_text": "—" },
+    "card": {
+      "radius": 4,
+      "padding": [7, 8],
+      "gap": 5,
+      "border": true,
+      "hover": "border",
+      "accent": { "source": "dimension:priority", "style": "left-border", "width": 2 },
+      "face": ["title", "badges", "fields", "checklist_progress", "comments_count"],
+      "badges": [
+        { "dimension": "priority", "display": "short", "style": "per-value", "radius": 3 },
+        { "dimension": "sprint", "display": "short", "style": "neutral", "radius": 3 }
+      ]
+    },
+    "editor": { "type": "drawer", "fields_grid": 2, "fields": ["title", "description", "priority", "sprint", "points", "status"] }
+  },
+  "columns": [
+    { "key": "backlog", "name": "Бэклог", "kind": "backlog", "color": "{muted-strong}" },
+    { "key": "todo", "name": "Готово к работе", "kind": "todo", "color": "{accent-dim}" },
+    { "key": "doing", "name": "В работе", "kind": "in_progress", "color": "{accent}", "wip_limit": 5 },
+    { "key": "review", "name": "Код-ревью", "kind": "review", "color": "#D29922", "wip_limit": 3 },
+    { "key": "done", "name": "Готово", "kind": "done", "color": "#3FB950", "card_style": { "opacity": 0.6 } }
+  ],
+  "dimensions": [
+    {
+      "key": "priority",
+      "name": "Приоритет",
+      "type": "ordered_select",
+      "required": true,
+      "default": "p2",
+      "values": [
+        { "key": "p0", "name": "Критичный", "short": "P0", "color": "#F85149", "badge": { "bg": "#F85149", "fg": "#160503" } },
+        { "key": "p1", "name": "Высокий", "short": "P1", "color": "#D29922", "badge": { "bg": "#D29922", "fg": "#1A1204" } },
+        { "key": "p2", "name": "Обычный", "short": "P2", "color": "#58A6FF", "badge": { "bg": "#21354F", "fg": "#CFE4FF" } },
+        { "key": "p3", "name": "Низкий", "short": "P3", "color": "#7D8799", "badge": { "bg": "#2B3442", "fg": "#C2CBD6" } }
+      ]
+    },
+    {
+      "key": "sprint",
+      "name": "Спринт",
+      "type": "ordered_select",
+      "default": "s1",
+      "values": [
+        { "key": "s1", "name": "Спринт 1", "short": "S1" },
+        { "key": "s2", "name": "Спринт 2", "short": "S2" }
+      ]
+    }
+  ],
+  "fields": [
+    { "key": "points", "name": "Оценка", "type": "number", "validation": { "min": 0, "max": 40 }, "show_on_face": true, "format": "sp" }
+  ],
+  "rules": [
+    { "key": "done-date", "type": "set_completed_on_kind", "column_kind": "done" },
+    { "key": "wip", "type": "highlight_wip_exceeded" },
+    { "key": "required", "type": "warn_missing_required" }
+  ],
+  "views": [
+    { "key": "board", "name": "Спринт", "type": "kanban", "is_default": true },
+    { "key": "table", "name": "Таблица", "type": "table", "group_by": "sprint", "sort": { "by": "dimension:priority", "direction": "asc" } }
+  ],
+  "sample_cards": [
+    { "key": "s1", "column": "todo", "title": "Настроить CI для веток", "description": "Линтеры и тесты на каждый PR.", "values": { "priority": "p1", "sprint": "s1" }, "fields": { "points": 3 } },
+    { "key": "s2", "column": "doing", "title": "Эндпоинт экспорта отчётов", "description": "Потоковая выдача CSV.", "values": { "priority": "p0", "sprint": "s1" }, "fields": { "points": 5 } },
+    { "key": "s3", "column": "review", "title": "Кэш прав доступа", "description": "Инвалидация при смене роли.", "values": { "priority": "p2", "sprint": "s1" }, "fields": { "points": 2 } },
+    { "key": "s4", "column": "backlog", "title": "Тёмная тема в письмах", "description": "Адаптация шаблонов.", "values": { "priority": "p3", "sprint": "s2" } }
+  ]
+}

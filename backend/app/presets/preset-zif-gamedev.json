@@ -1,0 +1,2250 @@
+{
+  "$schema": "https://kanbanly.local/schemas/board-template.v1.json",
+  "format": "kanbanly.board-template",
+  "version": 1,
+  "meta": {
+    "name": "ZIF — геймдев по ГДД",
+    "description": "Тёмно-золотая античная доска для разработки игры по дизайн-документу: эпики с цветом, вехи с прогрессом, типы работ, исполнители.",
+    "author": "Богдан",
+    "tags": [
+      "геймдев",
+      "тёмная тема"
+    ]
+  },
+  "theme": {
+    "mode": "dark",
+    "tokens": {
+      "bg": "#0A0A0A",
+      "surface": "#111111",
+      "surface-2": "#1A1714",
+      "border": "#2A2520",
+      "border-strong": "#3D362E",
+      "muted-strong": "#5C4F3C",
+      "accent-dim": "#8B7441",
+      "accent": "#C9A84C",
+      "accent-hover": "#E2C45E",
+      "accent-soft": "#F5E6A3",
+      "danger": "#8B2020",
+      "danger-hover": "#C44B2F",
+      "text": "#E8DFC8",
+      "text-muted": "#9A8C72"
+    },
+    "header_background": {
+      "type": "linear-gradient",
+      "angle": 180,
+      "stops": [
+        "#14110D",
+        "#0A0A0A"
+      ]
+    },
+    "board_background": {
+      "type": "color",
+      "value": "{bg}"
+    }
+  },
+  "typography": {
+    "board_title": {
+      "font": "Cormorant SC",
+      "weight": 700,
+      "size": 26,
+      "letter_spacing": 0.08,
+      "color": "{accent}"
+    },
+    "board_subtitle": {
+      "font": "Inter",
+      "weight": 500,
+      "size": 12,
+      "color": "{text-muted}"
+    },
+    "column_title": {
+      "font": "Cormorant SC",
+      "weight": 700,
+      "size": 16,
+      "letter_spacing": 0.06,
+      "case": "as_is",
+      "color": "{accent}"
+    },
+    "card_title": {
+      "font": "Inter",
+      "weight": 600,
+      "size": 13,
+      "color": "{text}"
+    },
+    "card_body": {
+      "font": "Inter",
+      "weight": 400,
+      "size": 12,
+      "line_clamp": 2,
+      "color": "{text-muted}"
+    },
+    "badge": {
+      "font": "Inter",
+      "weight": 400,
+      "size": 10.5
+    },
+    "base": {
+      "font": "Inter",
+      "size": 14,
+      "line_height": 1.45
+    }
+  },
+  "layout": {
+    "header": {
+      "subtitle": "Канбан по дизайн-документу v1.00 · Roguelike-арканоид про Сизифа",
+      "widgets": [
+        {
+          "type": "progress_by_dimension",
+          "dimension": "milestone",
+          "done_rule": "column_kind:done",
+          "show_hint": true,
+          "show_counter": true,
+          "bar_color": "{accent}"
+        },
+        {
+          "type": "filter_bar",
+          "search": true,
+          "selects": [
+            "milestone",
+            "work_type",
+            "assignee"
+          ]
+        },
+        {
+          "type": "filter_chips",
+          "dimension": "epic",
+          "multi": true,
+          "chip_style": "left-border-color"
+        }
+      ]
+    },
+    "footer_note": "Перетаскивай карточки между колонками. Клик по карточке — редактирование.",
+    "column": {
+      "min_width": 260,
+      "radius": 10,
+      "header_style": "flat-with-divider",
+      "show_count": true,
+      "empty_text": "Пусто"
+    },
+    "card": {
+      "radius": 7,
+      "padding": [
+        9,
+        10
+      ],
+      "gap": 8,
+      "accent": {
+        "source": "dimension:epic",
+        "style": "left-border",
+        "width": 3
+      },
+      "face": [
+        "title",
+        "description",
+        "badges"
+      ],
+      "badges": [
+        {
+          "dimension": "milestone",
+          "display": "short",
+          "style": "per-value"
+        },
+        {
+          "dimension": "epic",
+          "display": "name",
+          "style": "neutral"
+        },
+        {
+          "dimension": "work_type",
+          "style": "neutral"
+        },
+        {
+          "dimension": "assignee",
+          "style": "outlined",
+          "hide_values": [
+            "—"
+          ]
+        }
+      ]
+    },
+    "editor": {
+      "type": "modal",
+      "fields_grid": 2,
+      "fields": [
+        "title",
+        "description",
+        "epic",
+        "milestone",
+        "work_type",
+        "assignee",
+        "status"
+      ]
+    }
+  },
+  "columns": [
+    {
+      "key": "backlog",
+      "name": "Бэклог",
+      "kind": "backlog"
+    },
+    {
+      "key": "todo",
+      "name": "К работе",
+      "kind": "todo"
+    },
+    {
+      "key": "doing",
+      "name": "В работе",
+      "kind": "in_progress"
+    },
+    {
+      "key": "review",
+      "name": "Проверка",
+      "kind": "review"
+    },
+    {
+      "key": "done",
+      "name": "Готово",
+      "kind": "done",
+      "card_style": {
+        "opacity": 0.65,
+        "title_strikethrough": true,
+        "strikethrough_color": "{muted-strong}"
+      }
+    }
+  ],
+  "dimensions": [
+    {
+      "key": "epic",
+      "name": "Эпик",
+      "type": "select",
+      "required": true,
+      "default": "core",
+      "values": [
+        {
+          "key": "core",
+          "name": "Валун и бросок",
+          "color": "#C9A84C"
+        },
+        {
+          "key": "hero",
+          "name": "Сизиф",
+          "color": "#E2C45E"
+        },
+        {
+          "key": "enemy",
+          "name": "Враги и бой",
+          "color": "#8B2020"
+        },
+        {
+          "key": "boss",
+          "name": "Боссы",
+          "color": "#C44B2F"
+        },
+        {
+          "key": "level",
+          "name": "Уровни и генерация",
+          "color": "#5C8A3D"
+        },
+        {
+          "key": "items",
+          "name": "Предметы и синергии",
+          "color": "#6B5BA8"
+        },
+        {
+          "key": "eco",
+          "name": "Экономика и мета",
+          "color": "#B8843A"
+        },
+        {
+          "key": "hub",
+          "name": "Хаб",
+          "color": "#8AB86A"
+        },
+        {
+          "key": "ui",
+          "name": "UI / HUD",
+          "color": "#5B8FA8"
+        },
+        {
+          "key": "sys",
+          "name": "Меню, сохранения, настройки",
+          "color": "#A0C8D8"
+        },
+        {
+          "key": "feel",
+          "name": "Камера и game feel",
+          "color": "#D4A85C"
+        },
+        {
+          "key": "narr",
+          "name": "Нарратив",
+          "color": "#8E80CC"
+        },
+        {
+          "key": "art",
+          "name": "Арт",
+          "color": "#C8C0E8"
+        },
+        {
+          "key": "audio",
+          "name": "Звук и музыка",
+          "color": "#4A7A3D"
+        },
+        {
+          "key": "prod",
+          "name": "Продакшн",
+          "color": "#9A8C72"
+        }
+      ]
+    },
+    {
+      "key": "milestone",
+      "name": "Веха",
+      "type": "select",
+      "ordered": true,
+      "required": true,
+      "default": "m1",
+      "values": [
+        {
+          "key": "m1",
+          "name": "M1 · Вертикальный срез",
+          "short": "M1",
+          "hint": "Пустыня целиком: бросок, враги, предметы, магазин, босс Ламия",
+          "badge": {
+            "bg": "#C9A84C",
+            "fg": "#1A1408"
+          }
+        },
+        {
+          "key": "m2",
+          "name": "M2 · Альфа",
+          "short": "M2",
+          "hint": "Биомы 1–3, хаб, мета-прогрессия, сохранения",
+          "badge": {
+            "bg": "#4D3F22",
+            "fg": "#F5E6A3"
+          }
+        },
+        {
+          "key": "m3",
+          "name": "M3 · Бета",
+          "short": "M3",
+          "hint": "Все биомы, Арес, сюжет, баланс",
+          "badge": {
+            "bg": "#3D362E",
+            "fg": "#E8DFC8"
+          }
+        },
+        {
+          "key": "m4",
+          "name": "M4 · Релиз",
+          "short": "M4",
+          "hint": "Полировка, локализация, эндгейм",
+          "badge": {
+            "bg": "#221E19",
+            "fg": "#9A8C72"
+          }
+        }
+      ]
+    },
+    {
+      "key": "work_type",
+      "name": "Тип",
+      "type": "select",
+      "default": "code",
+      "values": [
+        {
+          "key": "code",
+          "name": "Код"
+        },
+        {
+          "key": "gd",
+          "name": "Геймдизайн"
+        },
+        {
+          "key": "art",
+          "name": "Арт"
+        },
+        {
+          "key": "sound",
+          "name": "Звук"
+        },
+        {
+          "key": "narr",
+          "name": "Нарратив"
+        },
+        {
+          "key": "ui",
+          "name": "UI"
+        },
+        {
+          "key": "prod",
+          "name": "Продакшн"
+        }
+      ]
+    },
+    {
+      "key": "assignee",
+      "name": "Исполнитель",
+      "type": "select",
+      "default": "none",
+      "values": [
+        {
+          "key": "none",
+          "name": "—"
+        },
+        {
+          "key": "bogdan",
+          "name": "Богдан"
+        },
+        {
+          "key": "sergo",
+          "name": "SERGO",
+          "badge": {
+            "bg": "#2B2216",
+            "fg": "#F5E6A3",
+            "border": "#5C4F3C"
+          }
+        }
+      ]
+    }
+  ],
+  "sample_cards": [
+    {
+      "key": "t1",
+      "column": "done",
+      "title": "Первый уровень (прототип)",
+      "description": "Собран первый игровой уровень.",
+      "values": {
+        "epic": "level",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t2",
+      "column": "done",
+      "title": "Базовая физика валуна",
+      "description": "Отскоки, инерция, столкновения — первая версия.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t3",
+      "column": "done",
+      "title": "Базовая физика и движение Сизифа",
+      "description": "Перемещение персонажа, коллизии.",
+      "values": {
+        "epic": "hero",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t4",
+      "column": "done",
+      "title": "Базовая анимация",
+      "description": "Первые анимации персонажа/валуна.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t5",
+      "column": "done",
+      "title": "Консоль разработчика",
+      "description": "Внутриигровая консоль.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t6",
+      "column": "done",
+      "title": "Главное меню",
+      "description": "Первая версия главного меню.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m1",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t7",
+      "column": "todo",
+      "title": "Решить механику возврата валуна",
+      "description": "В ГДД два варианта: скатывается в безопасную зону (4.1, 4.5) и возвращается к Сизифу (7.1.4 Валун). Зафиксировать базу: скатывание; возврат в руку — только через предмет.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t8",
+      "column": "todo",
+      "title": "Решить: комнаты или открытые зоны",
+      "description": "2.5.1 описывает уровень как зоны без комнат (стены, холмы, вода), а 3.2/8.3 — как цепочку комнат 8–12 на биом. Выбрать модель — от неё зависит генератор, карта, сохранения.",
+      "values": {
+        "epic": "level",
+        "milestone": "m1",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t9",
+      "column": "todo",
+      "title": "Фокусировка: накопление силы броска",
+      "description": "Зажатие кнопки копит силу, кривая силы от времени, максимум, отмена. Скорость Сизифа при фокусировке снижается.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t10",
+      "column": "todo",
+      "title": "Прицеливание мышью и стиком",
+      "description": "Направление броска от позиции курсора / правого стика. Мёртвая зона и чувствительность для геймпада.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t11",
+      "column": "todo",
+      "title": "Линия-подсказка траектории",
+      "description": "Предпросмотр полёта с учётом 1–2 отскоков. Отключается в настройках доступности.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t12",
+      "column": "todo",
+      "title": "Dash с кулдауном и i-frames",
+      "description": "Рывок в направлении движения, короткий кулдаун, неуязвимость на время рывка.",
+      "values": {
+        "epic": "hero",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t13",
+      "column": "todo",
+      "title": "Здоровье, урон, смерть",
+      "description": "HP без авто-регена, получение урона, кадры неуязвимости после удара, смерть → конец забега.",
+      "values": {
+        "epic": "hero",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t14",
+      "column": "todo",
+      "title": "Базовый ИИ врага",
+      "description": "Конечный автомат (idle/преследование/атака/смерть), навигация, получение урона от валуна.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t15",
+      "column": "backlog",
+      "title": "Лимит отскоков и затухание скорости",
+      "description": "Базово 3–5 отскоков, угол падения = углу отражения, потеря скорости на каждом отскоке. Параметры вынести в конфиг.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t16",
+      "column": "backlog",
+      "title": "Скатывание валуна под уклоном",
+      "description": "Валун подвержен «силе тяжести» склона и скатывается к безопасной зоне, где его подбирает Сизиф.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t17",
+      "column": "backlog",
+      "title": "Подбор валуна",
+      "description": "Сизиф подбирает валун при контакте/по кнопке. Пока валун в полёте — Сизиф не может атаковать.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t18",
+      "column": "backlog",
+      "title": "Пробивание мелких, отскок от крупных",
+      "description": "Мелкие враги — валун проходит насквозь с уроном; крупные и стены — отскок. Флаг размера у врага.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t19",
+      "column": "backlog",
+      "title": "Урон валуна от скорости",
+      "description": "Урон = f(скорость, сила броска, модификаторы). Крит при максимальной фокусировке.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t20",
+      "column": "backlog",
+      "title": "Поверхность: песок",
+      "description": "Пустыня: валун вязнет, меньше отскоков, быстрее теряет скорость.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t21",
+      "column": "backlog",
+      "title": "Поверхность: кристаллы",
+      "description": "Непредсказуемый угол отражения (рандом в диапазоне). Для Кристального замка.",
+      "values": {
+        "epic": "core",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t22",
+      "column": "backlog",
+      "title": "Поверхность: лёд",
+      "description": "Тундра: валун скользит дальше, больше отскоков; Сизиф теряет сцепление.",
+      "values": {
+        "epic": "core",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t23",
+      "column": "backlog",
+      "title": "Тюнинг веса броска",
+      "description": "Плейтест и подбор параметров: масса, сила, затухание, чтобы бросок ощущался тяжёлым.",
+      "values": {
+        "epic": "core",
+        "milestone": "m1",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t24",
+      "column": "backlog",
+      "title": "Рост уклона и скорости по этажам",
+      "description": "Угол наклона карты и скорость валуна увеличиваются с прогрессом (кривая сложности 3.2.1).",
+      "values": {
+        "epic": "core",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t25",
+      "column": "backlog",
+      "title": "Доработать движение: 8 направлений",
+      "description": "Постоянная скорость, без ускорения и инерции, отзывчивое управление; нормализация диагоналей.",
+      "values": {
+        "epic": "hero",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t26",
+      "column": "backlog",
+      "title": "Конечный автомат состояний Сизифа",
+      "description": "idle / ходьба / фокусировка / бросок / dash / урон / смерть — под анимации и блокировки ввода.",
+      "values": {
+        "epic": "hero",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t27",
+      "column": "backlog",
+      "title": "Спавн врагов по паттернам",
+      "description": "Враги появляются при входе в зону по заранее заданным паттернам; волны.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t28",
+      "column": "backlog",
+      "title": "Нокбэк по массе",
+      "description": "Откидывание при ударе зависит от массы врага.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t29",
+      "column": "backlog",
+      "title": "Пустынные скорпионы",
+      "description": "Быстрые, ядовитые, атакуют и отступают.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t30",
+      "column": "backlog",
+      "title": "Мини-босс пустыни (туториал)",
+      "description": "В 8.3.1 комната 5 — мини-босс пустыни, но кто это — не описано. Придумать и задизайнить.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m1",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t31",
+      "column": "backlog",
+      "title": "Мини-босс пустыни",
+      "description": "Реализация по дизайну: проверка движения, броска, рикошетов и dash.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t32",
+      "column": "backlog",
+      "title": "Тени",
+      "description": "Базовые враги подножия: медленные, атакуют числом, появляются из темноты.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t33",
+      "column": "backlog",
+      "title": "Жрецы Аида",
+      "description": "Дальнобойные кастеры тёмной магии; приоритетная цель.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t34",
+      "column": "backlog",
+      "title": "Шахтёры-призраки",
+      "description": "Появляются из стен, хаотичные, много урона, мало HP.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t35",
+      "column": "backlog",
+      "title": "Кристальные големы",
+      "description": "Медленные, бронированные, отражают первый удар. Телепортация через кристаллы.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t36",
+      "column": "backlog",
+      "title": "Мини-босс: Эмпуса",
+      "description": "Телепортируется, атакует сериями.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t37",
+      "column": "backlog",
+      "title": "Мини-босс: Кербер-младший",
+      "description": "Три головы — три паттерна атак.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t38",
+      "column": "backlog",
+      "title": "Ожившие деревья и нимфы",
+      "description": "Оазис: контроль пространства корнями, средний темп.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t39",
+      "column": "backlog",
+      "title": "Ледяные волки",
+      "description": "Стайное поведение, быстрые, опасны группой.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t40",
+      "column": "backlog",
+      "title": "Мини-босс: Титан-осколок",
+      "description": "Огромный, медленный, разрушительный.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t41",
+      "column": "backlog",
+      "title": "Комбинации врагов поздних этажей",
+      "description": "Опасные сочетания ранее встреченных врагов, элитные варианты.",
+      "values": {
+        "epic": "enemy",
+        "milestone": "m3",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t42",
+      "column": "backlog",
+      "title": "Фреймворк боссов",
+      "description": "Фазы, паттерны атак, полоса HP босса, закрытие арены, флэшбэк до/после.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t43",
+      "column": "backlog",
+      "title": "Ламия — босс пустыни",
+      "description": "Змееподобная, быстрая, ядовитая, призывает миньонов.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t44",
+      "column": "backlog",
+      "title": "Минотавр — босс подножия",
+      "description": "Чарджи, ломает стены, создаёт хаос.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t45",
+      "column": "backlog",
+      "title": "Танатос-тень — Храм Аида",
+      "description": "Отпечаток бога смерти, личная история с Сизифом.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t46",
+      "column": "backlog",
+      "title": "Горгона-королева — Шахты",
+      "description": "Окаменяющий взгляд, волны миньонов.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t47",
+      "column": "backlog",
+      "title": "Ледяная гарпия — Кристальный замок",
+      "description": "Летает, контролирует пространство.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t48",
+      "column": "backlog",
+      "title": "Нимфа-мать — босс оазиса",
+      "description": "Защитница рощи, призывает природу.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t49",
+      "column": "backlog",
+      "title": "Борей — босс тундры",
+      "description": "Контроль арены льдом и вьюгой.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t50",
+      "column": "backlog",
+      "title": "Арес — финальный босс (3 фазы)",
+      "description": "Воин (парирования) → Бог (оружие с неба, ускорение) → Ярость (арена рушится).",
+      "values": {
+        "epic": "boss",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t51",
+      "column": "backlog",
+      "title": "Секретные опциональные боссы",
+      "description": "Дизайн и реализация секретных боссов, включая босса Царства теней.",
+      "values": {
+        "epic": "boss",
+        "milestone": "m4",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t52",
+      "column": "backlog",
+      "title": "Генератор уровня биома",
+      "description": "Сборка уровня из готовых блоков с ручными ключевыми зонами. Обязательный набор: спавн, бой, подземелье с сокровищницей, магазин, босс, секрет.",
+      "values": {
+        "epic": "level",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t53",
+      "column": "backlog",
+      "title": "Закрытие выхода до зачистки",
+      "description": "Тропа в следующую зону открывается только после убийства всех врагов; вернуться назад нельзя.",
+      "values": {
+        "epic": "level",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t54",
+      "column": "backlog",
+      "title": "Разрушаемые объекты",
+      "description": "Ящики, колонны, статуи, стены-преграды: целое/разрушенное состояние, дроп валюты.",
+      "values": {
+        "epic": "level",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t55",
+      "column": "backlog",
+      "title": "Туториальные комнаты пустыни 1–5",
+      "description": "Движение → бросок → рикошеты → dash → мини-босс. Подсказки репликами валуна и маркерами на полу.",
+      "values": {
+        "epic": "level",
+        "milestone": "m1",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t56",
+      "column": "backlog",
+      "title": "Безопасная зона в начале комнаты",
+      "description": "Стартовая зона, куда скатывается валун; враги туда не заходят (или ограниченно).",
+      "values": {
+        "epic": "level",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t57",
+      "column": "backlog",
+      "title": "Карта этажа и выбор пути",
+      "description": "Видно тип награды следующей зоны (предмет/магазин/босс/событие), но не содержимое.",
+      "values": {
+        "epic": "level",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t58",
+      "column": "backlog",
+      "title": "Секретные зоны",
+      "description": "Открываются разрушением определённых стен или условием. Редкие предметы, лор.",
+      "values": {
+        "epic": "level",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t59",
+      "column": "backlog",
+      "title": "Развилка трёх путей",
+      "description": "Необратимый выбор Храм Аида / Шахты / Кристальный замок на 3-м биоме.",
+      "values": {
+        "epic": "level",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t60",
+      "column": "backlog",
+      "title": "Ловушки шахт",
+      "description": "Обвалы, нестабильные проходы, ядовитый туман.",
+      "values": {
+        "epic": "level",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t61",
+      "column": "backlog",
+      "title": "Типы зон: элитный бой, событие, лечение",
+      "description": "Помимо обычного боя, магазина и сундука.",
+      "values": {
+        "epic": "level",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t62",
+      "column": "backlog",
+      "title": "Наполнение всех биомов",
+      "description": "Пустыня 8, подножие 10, развилка 10, оазис 10, тундра 12 + вершина. Полный забег 40–60 мин.",
+      "values": {
+        "epic": "level",
+        "milestone": "m3",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t63",
+      "column": "backlog",
+      "title": "Комнаты испытаний",
+      "description": "Арены с модификаторами (больше врагов, таймер, без лечения) и повышенной наградой.",
+      "values": {
+        "epic": "level",
+        "milestone": "m4",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t64",
+      "column": "backlog",
+      "title": "Царство теней",
+      "description": "Секретный биом после первого прохождения: свои враги, босс, лор о прошлом валуна.",
+      "values": {
+        "epic": "level",
+        "milestone": "m4",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t65",
+      "column": "backlog",
+      "title": "Испытание Олимпа",
+      "description": "Эндгейм: проклятия-модификаторы сложности за особые награды.",
+      "values": {
+        "epic": "level",
+        "milestone": "m4",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t66",
+      "column": "backlog",
+      "title": "Архитектура предметов",
+      "description": "Предметы как модификаторы валуна/броска/Сизифа, стакинг, порядок применения, data-driven (ресурсы).",
+      "values": {
+        "epic": "items",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t67",
+      "column": "backlog",
+      "title": "Первые 10 предметов",
+      "description": "Набор для вертикального среза, минимум 2–3 заметные синергии.",
+      "values": {
+        "epic": "items",
+        "milestone": "m1",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t68",
+      "column": "backlog",
+      "title": "Пьедесталы и сундуки",
+      "description": "Закрытый / открытый / пустой; выдача предмета или валюты.",
+      "values": {
+        "epic": "items",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t69",
+      "column": "backlog",
+      "title": "Модификаторы валуна",
+      "description": "Доп. отскоки, огненный/ледяной/молниевый след, притяжение врагов, взрыв при возврате.",
+      "values": {
+        "epic": "items",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t70",
+      "column": "backlog",
+      "title": "Алтари со сделками",
+      "description": "Обмен (HP на силу, скорость на урон); предложения зависят от состояния игрока.",
+      "values": {
+        "epic": "items",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t71",
+      "column": "backlog",
+      "title": "Пул предметов с разблокировкой",
+      "description": "Магазины и сундуки берут только из разблокированного пула.",
+      "values": {
+        "epic": "items",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t72",
+      "column": "backlog",
+      "title": "Расширить до 40+ предметов",
+      "description": "Неочевидные синергии, предметы, уникальные для каждого пути развилки.",
+      "values": {
+        "epic": "items",
+        "milestone": "m3",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t73",
+      "column": "backlog",
+      "title": "Оболы",
+      "description": "Дроп с врагов и объектов, счётчик, сгорают при смерти.",
+      "values": {
+        "epic": "eco",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t74",
+      "column": "backlog",
+      "title": "Магазин",
+      "description": "Случайный ассортимент из пула, лечение за оболы. Стойка, полки.",
+      "values": {
+        "epic": "eco",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t75",
+      "column": "backlog",
+      "title": "Лечение только через источники",
+      "description": "Предметы, зоны лечения, события — без авто-регена.",
+      "values": {
+        "epic": "eco",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t76",
+      "column": "backlog",
+      "title": "Мета-валюта (Души / Эфир)",
+      "description": "Начисляется за убийства, боссов, квесты; сохраняется между забегами.",
+      "values": {
+        "epic": "eco",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t77",
+      "column": "backlog",
+      "title": "Баланс экономики",
+      "description": "2–3 покупки за уровень; ощутимый мета-апгрейд каждые 2–4 забега. Баланс-таблица.",
+      "values": {
+        "epic": "eco",
+        "milestone": "m3",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t78",
+      "column": "backlog",
+      "title": "Название и концепт хаба",
+      "description": "В ГДД два названия: «Храм Персефоны» (2.5) и «Подножие вечности» (8.2). Выбрать одно.",
+      "values": {
+        "epic": "hub",
+        "milestone": "m2",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t79",
+      "column": "backlog",
+      "title": "Сцена хаба",
+      "description": "Возврат после смерти, старт нового забега.",
+      "values": {
+        "epic": "hub",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t80",
+      "column": "backlog",
+      "title": "Постоянные улучшения",
+      "description": "Трата мета-валюты на апгрейды и разблокировку предметов.",
+      "values": {
+        "epic": "hub",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t81",
+      "column": "backlog",
+      "title": "Стартовые бонусы",
+      "description": "Выбор бонуса перед забегом после разблокировки.",
+      "values": {
+        "epic": "hub",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t82",
+      "column": "backlog",
+      "title": "Оживление хаба",
+      "description": "Очаг, появление спасённых NPC, удобства по мере прогресса.",
+      "values": {
+        "epic": "hub",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t83",
+      "column": "backlog",
+      "title": "Украшения хаба с бафами",
+      "description": "Собираются в забегах, дают пассивные бонусы.",
+      "values": {
+        "epic": "hub",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t84",
+      "column": "backlog",
+      "title": "Кодекс / собранный лор",
+      "description": "Просмотр найденных фрагментов истории.",
+      "values": {
+        "epic": "hub",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t85",
+      "column": "backlog",
+      "title": "HUD: здоровье",
+      "description": "Полоса или сердца в углу, стилизация под античность.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m1",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t86",
+      "column": "backlog",
+      "title": "HUD: индикатор фокусировки",
+      "description": "Круговая шкала вокруг Сизифа или у края экрана.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m1",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t87",
+      "column": "backlog",
+      "title": "HUD: счётчик оболов",
+      "description": "Появляется при изменении значения.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m1",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t88",
+      "column": "backlog",
+      "title": "Подсказки взаимодействия",
+      "description": "Над объектами при приближении (сундук, алтарь, NPC, магазин).",
+      "values": {
+        "epic": "ui",
+        "milestone": "m1",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t89",
+      "column": "backlog",
+      "title": "Экран смерти / итоги забега",
+      "description": "Статистика, заработанная мета-валюта, кнопка в хаб.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m1",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t90",
+      "column": "backlog",
+      "title": "HUD: иконки предметов",
+      "description": "Компактная полоска, разворачивается по нажатию.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m2",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t91",
+      "column": "backlog",
+      "title": "Окно диалога",
+      "description": "Портрет, текст, варианты ответа, индикатор выбора.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m2",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t92",
+      "column": "backlog",
+      "title": "Экран карты этажа",
+      "description": "Иконки зон (бой, магазин, босс, событие, ?), линии путей, маркер позиции.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m2",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t93",
+      "column": "backlog",
+      "title": "Визуальный стиль UI",
+      "description": "Каменные текстуры, золотые акценты, греческий читаемый шрифт, органичные формы.",
+      "values": {
+        "epic": "ui",
+        "milestone": "m2",
+        "work_type": "ui",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t94",
+      "column": "backlog",
+      "title": "Меню паузы",
+      "description": "Продолжить, инвентарь, карта, настройки, сдаться.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t95",
+      "column": "backlog",
+      "title": "Расширить консоль под отладку",
+      "description": "Спавн врагов, выдача предметов/валюты, god mode, телепорт в зону, перезапуск генерации по seed.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t96",
+      "column": "backlog",
+      "title": "Инвентарь в паузе",
+      "description": "Собранные предметы и их эффекты.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t97",
+      "column": "backlog",
+      "title": "Автосохранение забега",
+      "description": "Сохранение при входе в новую зону; после «Продолжить» сейв стирается (анти save-scum).",
+      "values": {
+        "epic": "sys",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t98",
+      "column": "backlog",
+      "title": "Сохранение мета-прогресса",
+      "description": "Валюта, разблокировки, прогресс NPC пишутся мгновенно.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t99",
+      "column": "backlog",
+      "title": "Пункты главного меню",
+      "description": "«Продолжить» (если есть сейв), «Хаб», «Настройки», «Выход».",
+      "values": {
+        "epic": "sys",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t100",
+      "column": "backlog",
+      "title": "Настройки графики и звука",
+      "description": "Разрешение, оконный режим, масштаб UI; громкость музыки, звуков, голоса.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t101",
+      "column": "backlog",
+      "title": "Управление и геймпад",
+      "description": "Переназначение клавиш, поддержка геймпада, чувствительность прицеливания, вибрация.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t102",
+      "column": "backlog",
+      "title": "Настройки доступности",
+      "description": "Траектория вкл/выкл, тряска экрана вкл/выкл, фильтры для дальтоников.",
+      "values": {
+        "epic": "sys",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t103",
+      "column": "backlog",
+      "title": "Камера: мягкое следование",
+      "description": "Сглаживание за Сизифом, вид сверху с наклоном.",
+      "values": {
+        "epic": "feel",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t104",
+      "column": "backlog",
+      "title": "Камера: оттяжка при броске",
+      "description": "Камера смещается, охватывая траекторию валуна.",
+      "values": {
+        "epic": "feel",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t105",
+      "column": "backlog",
+      "title": "Тряска экрана",
+      "description": "При ударах; отключается в настройках.",
+      "values": {
+        "epic": "feel",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t106",
+      "column": "backlog",
+      "title": "Hitstop и вспышки при ударе",
+      "description": "Короткая заморозка кадра, белая вспышка врага — «хруст и откат» из 2.8.",
+      "values": {
+        "epic": "feel",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t107",
+      "column": "backlog",
+      "title": "Камера: фиксация на арене босса",
+      "description": "Показывает всё пространство арены.",
+      "values": {
+        "epic": "feel",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t108",
+      "column": "backlog",
+      "title": "Камера: зум под размер зоны",
+      "description": "Большие зоны — отдаление, тесные — приближение.",
+      "values": {
+        "epic": "feel",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t109",
+      "column": "backlog",
+      "title": "Динамическое 2D-освещение",
+      "description": "Свет от валуна и эффектов, мерцающие факелы, тени врагов.",
+      "values": {
+        "epic": "feel",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t110",
+      "column": "backlog",
+      "title": "Реплики валуна в туториале",
+      "description": "Подсказки к механикам голосом Петроса.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m1",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t111",
+      "column": "backlog",
+      "title": "Система диалогов",
+      "description": "Data-driven диалоги, условия по прогрессу, ветки ответов.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t112",
+      "column": "backlog",
+      "title": "Пул цитат валуна",
+      "description": "Досократики, стоики, трагики; триггеры: вход в зону, смерть, босс, предмет.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m2",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t113",
+      "column": "backlog",
+      "title": "Катсцена: интро",
+      "description": "Пробуждение у подножия, первая реплика валуна.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m2",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t114",
+      "column": "backlog",
+      "title": "Квестовые линии NPC",
+      "description": "Тантал (торговец), Иксион, Данаиды, Ахиллес — диалоги и квесты.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m3",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t115",
+      "column": "backlog",
+      "title": "Прописать Ахиллеса",
+      "description": "В ГДД только «бывший герой» — нужна роль, характер, квест.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m3",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t116",
+      "column": "backlog",
+      "title": "Тени философов",
+      "description": "Гераклит, Диоген, Пифагор: подсказки, загадки, квесты.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m3",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t117",
+      "column": "backlog",
+      "title": "Флэшбэки биомов",
+      "description": "Коринф, цепи, Персефона, шахты, Олимп, семья, Арес — до и после боссов.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m3",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t118",
+      "column": "backlog",
+      "title": "Катсцены: перед Аресом и финал",
+      "description": "Полноценная сцена перед боем, финал и эпилог.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m3",
+        "work_type": "narr",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t119",
+      "column": "backlog",
+      "title": "Решение по сыну Сизифа",
+      "description": "Опциональная семейная линия — делать или нет.",
+      "values": {
+        "epic": "narr",
+        "milestone": "m4",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t120",
+      "column": "backlog",
+      "title": "Сизиф: полный спрайт-шит",
+      "description": "idle, ходьба 8 направлений, фокусировка, бросок, урон, смерть.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t121",
+      "column": "backlog",
+      "title": "Валун: спрайты и эффекты",
+      "description": "Вращение, полёт, след, искры при отскоке.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t122",
+      "column": "backlog",
+      "title": "Эффекты Сизифа",
+      "description": "Аура фокусировки, след dash.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t123",
+      "column": "backlog",
+      "title": "Тайлсет пустыни",
+      "description": "Песок, скалы, кости, сухие кусты, руины.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t124",
+      "column": "backlog",
+      "title": "Враги пустыни + Ламия",
+      "description": "Скорпионы, мини-босс, Ламия — полные спрайт-шиты.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t125",
+      "column": "backlog",
+      "title": "Разрушаемые и интерактивные объекты",
+      "description": "Ящики, колонны, статуи; двери, сундуки, алтари, магазин — все состояния.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t126",
+      "column": "backlog",
+      "title": "Боевые VFX",
+      "description": "Удар по врагу, отскок, смерть врага, крит.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t127",
+      "column": "backlog",
+      "title": "Интерфейсные VFX",
+      "description": "Появление предмета, получение валюты, лечение, красная виньетка урона.",
+      "values": {
+        "epic": "art",
+        "milestone": "m1",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t128",
+      "column": "backlog",
+      "title": "Тайлсеты подножия и развилки",
+      "description": "Подножие, Храм Аида, Шахты, Кристальный замок.",
+      "values": {
+        "epic": "art",
+        "milestone": "m2",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t129",
+      "column": "backlog",
+      "title": "Враги и боссы биомов 2–3",
+      "description": "Тени, жрецы, шахтёры, големы, мини-боссы, Минотавр, 3 босса развилки.",
+      "values": {
+        "epic": "art",
+        "milestone": "m2",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t130",
+      "column": "backlog",
+      "title": "Портреты валуна",
+      "description": "Нейтральный, раздражённый, философский, удивлённый.",
+      "values": {
+        "epic": "art",
+        "milestone": "m2",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t131",
+      "column": "backlog",
+      "title": "Хаб: окружение",
+      "description": "Площадка, очаг, состояния развития.",
+      "values": {
+        "epic": "art",
+        "milestone": "m2",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t132",
+      "column": "backlog",
+      "title": "UI-арт",
+      "description": "Кнопки (hover/pressed/disabled), фоны, рамки, шрифт, иконки карты.",
+      "values": {
+        "epic": "art",
+        "milestone": "m2",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t133",
+      "column": "backlog",
+      "title": "Тайлсеты оазиса, тундры, вершины",
+      "description": "Плюс средовые VFX: снег, туман, вода, блики кристаллов, пыль по биомам.",
+      "values": {
+        "epic": "art",
+        "milestone": "m3",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t134",
+      "column": "backlog",
+      "title": "Враги и боссы биомов 4–6",
+      "description": "Деревья, нимфы, волки, Титан-осколок, Нимфа-мать, Борей, Арес (несколько фаз).",
+      "values": {
+        "epic": "art",
+        "milestone": "m3",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t135",
+      "column": "backlog",
+      "title": "NPC",
+      "description": "5–8 проклятых, торговец: idle, диалог, эмоции + портреты.",
+      "values": {
+        "epic": "art",
+        "milestone": "m3",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t136",
+      "column": "backlog",
+      "title": "Арт катсцен",
+      "description": "Пиксельные ролики: интро, флэшбэки, Арес, финал.",
+      "values": {
+        "epic": "art",
+        "milestone": "m3",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t137",
+      "column": "backlog",
+      "title": "Скины Сизифа и валуна",
+      "description": "Царский, мрамор, обсидиан, кристалл, золотые прожилки.",
+      "values": {
+        "epic": "art",
+        "milestone": "m4",
+        "work_type": "art",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t138",
+      "column": "backlog",
+      "title": "Аудио-менеджер и шины",
+      "description": "Шины музыки / SFX / голоса, пул звуков, вариации.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m1",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t139",
+      "column": "backlog",
+      "title": "SFX Сизифа и валуна",
+      "description": "Шаги, фокусировка, бросок, dash, урон, смерть; гул полёта, хруст, звон отскока, подбор.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m1",
+        "work_type": "sound",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t140",
+      "column": "backlog",
+      "title": "SFX врагов пустыни и UI",
+      "description": "Появление, атака, урон, смерть; навигация по меню, выбор, пауза.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m1",
+        "work_type": "sound",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t141",
+      "column": "backlog",
+      "title": "Трек пустыни",
+      "description": "Медленный stoner doom, пустынный гул.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m1",
+        "work_type": "sound",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t142",
+      "column": "backlog",
+      "title": "SFX окружения",
+      "description": "Разрушение, сундук, дверь, алтарь, покупка.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m2",
+        "work_type": "sound",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t143",
+      "column": "backlog",
+      "title": "Пространственное аудио",
+      "description": "Позиционирование звуков врагов и событий.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m2",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t144",
+      "column": "backlog",
+      "title": "Треки подножия, развилки, хаба, меню",
+      "description": "Хаб — меланхолия с надеждой; меню — минималистичная главная тема.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m2",
+        "work_type": "sound",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t145",
+      "column": "backlog",
+      "title": "Адаптивная музыка и динамический микс",
+      "description": "Интенсивность от числа врагов, спад после зачистки; низкое HP — сердцебиение; пауза — затихание.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m3",
+        "work_type": "code",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t146",
+      "column": "backlog",
+      "title": "Треки оазиса, тундры, вершины, боссов",
+      "description": "Оазис — акустика; Арес — многочастная композиция под фазы.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m3",
+        "work_type": "sound",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t147",
+      "column": "backlog",
+      "title": "Голос валуна и NPC",
+      "description": "Низкий голос с каменным эхом.",
+      "values": {
+        "epic": "audio",
+        "milestone": "m4",
+        "work_type": "sound",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t148",
+      "column": "backlog",
+      "title": "Экспорт билдов",
+      "description": "Сборки под Windows (и Linux), версионирование.",
+      "values": {
+        "epic": "prod",
+        "milestone": "m1",
+        "work_type": "prod",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t149",
+      "column": "backlog",
+      "title": "Плейтест вертикального среза",
+      "description": "5+ внешних тестеров, сбор фидбэка по ощущению броска.",
+      "values": {
+        "epic": "prod",
+        "milestone": "m1",
+        "work_type": "prod",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t150",
+      "column": "backlog",
+      "title": "Баланс-таблица",
+      "description": "Урон, HP, скорость, цены, шансы дропа — в одной таблице.",
+      "values": {
+        "epic": "prod",
+        "milestone": "m2",
+        "work_type": "gd",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t151",
+      "column": "backlog",
+      "title": "Локализация RU / EN",
+      "description": "Вынос строк, перевод, выбор языка в настройках.",
+      "values": {
+        "epic": "prod",
+        "milestone": "m4",
+        "work_type": "prod",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t152",
+      "column": "backlog",
+      "title": "Оптимизация и багфикс",
+      "description": "Профилирование, стабильный FPS в хаосе боя.",
+      "values": {
+        "epic": "prod",
+        "milestone": "m4",
+        "work_type": "prod",
+        "assignee": "none"
+      }
+    },
+    {
+      "key": "t153",
+      "column": "backlog",
+      "title": "Страница Steam и трейлер",
+      "description": "Скриншоты, капсулы, трейлер, демо.",
+      "values": {
+        "epic": "prod",
+        "milestone": "m4",
+        "work_type": "prod",
+        "assignee": "none"
+      }
+    }
+  ]
+}

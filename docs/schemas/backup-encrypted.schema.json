@@ -1,0 +1,89 @@
+{
+  "$id": "https://kanbanly.local/schemas/backup-encrypted.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "KdfParams": {
+      "additionalProperties": true,
+      "properties": {
+        "algorithm": {
+          "const": "scrypt",
+          "default": "scrypt",
+          "title": "Algorithm",
+          "type": "string"
+        },
+        "n": {
+          "maximum": 1048576,
+          "minimum": 2,
+          "title": "N",
+          "type": "integer"
+        },
+        "r": {
+          "maximum": 32,
+          "minimum": 1,
+          "title": "R",
+          "type": "integer"
+        },
+        "p": {
+          "maximum": 16,
+          "minimum": 1,
+          "title": "P",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "n",
+        "r",
+        "p"
+      ],
+      "title": "KdfParams",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "properties": {
+    "format": {
+      "const": "kanbanly.backup.encrypted",
+      "default": "kanbanly.backup.encrypted",
+      "title": "Format",
+      "type": "string"
+    },
+    "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "cipher": {
+      "const": "AES-256-GCM",
+      "default": "AES-256-GCM",
+      "title": "Cipher",
+      "type": "string"
+    },
+    "kdf_params": {
+      "$ref": "#/$defs/KdfParams"
+    },
+    "salt": {
+      "maxLength": 64,
+      "title": "Salt",
+      "type": "string"
+    },
+    "nonce": {
+      "maxLength": 64,
+      "title": "Nonce",
+      "type": "string"
+    },
+    "ciphertext": {
+      "maxLength": 100000000,
+      "title": "Ciphertext",
+      "type": "string"
+    }
+  },
+  "required": [
+    "kdf_params",
+    "salt",
+    "nonce",
+    "ciphertext"
+  ],
+  "title": "EncryptedBackup",
+  "type": "object"
+}
