@@ -22,6 +22,7 @@ import type { BoardConfig, CardOut, DimensionTemplate, FieldTemplate } from "@/l
 import { SafeMarkdown } from "@/lib/markdown";
 
 import { isConflict, keys, useCardDetail, useCreateCard, useDeleteCard } from "../boards/api";
+import { ColorSwatches, TagChip, TagPicker, useProjectTag } from "../workspace/tags";
 import { CardExtras } from "./CardExtras";
 
 interface Draft {
@@ -30,8 +31,61 @@ interface Draft {
   column: string;
   due_date: string;
   cover_url: string;
+  color: string | null;
+  tags: string[];
   values: Record<string, string[]>;
   fields: Record<string, unknown>;
+}
+
+function ReadOnlyTag({ id }: { id: string }) {
+  const tag = useProjectTag(id);
+  return tag ? <TagChip tag={tag} /> : null;
+}
+
+/** Цвет карточки и теги проекта. Цвет текста на карточке подбирается автоматически. */
+function Appearance({
+  projectId,
+  draft,
+  setDraft,
+  readOnly,
+}: {
+  projectId: string;
+  draft: Draft;
+  setDraft: (draft: Draft) => void;
+  readOnly?: boolean;
+}) {
+  const { t } = useT();
+  return (
+    <div className="grid gap-3 rounded-md border border-line p-3">
+      <div className="grid gap-1.5 text-sm">
+        <span className="font-medium">{t("tags.title")}</span>
+        {readOnly ? (
+          <div className="flex flex-wrap gap-1.5">
+            {draft.tags.length
+              ? draft.tags.map((id) => <ReadOnlyTag key={id} id={id} />)
+              : t("common.none")}
+          </div>
+        ) : (
+          <TagPicker
+            projectId={projectId}
+            value={draft.tags}
+            onChange={(tags) => setDraft({ ...draft, tags })}
+          />
+        )}
+      </div>
+      {!readOnly && (
+        <div className="grid gap-1.5 text-sm">
+          <span className="font-medium">{t("card.color")}</span>
+          <ColorSwatches
+            allowNone
+            label={t("card.color")}
+            value={draft.color}
+            onChange={(color) => setDraft({ ...draft, color })}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function defaultValues(config: BoardConfig): Record<string, string[]> {
@@ -102,13 +156,13 @@ function FieldInput({
               <Input
                 id={id}
                 type="date"
-                aria-label={`${field.name}: начало`}
+                aria-label={t("card.rangeStart", { name: field.name })}
                 value={range.start ?? ""}
                 onChange={(event) => update({ start: event.target.value })}
               />
               <Input
                 type="date"
-                aria-label={`${field.name}: конец`}
+                aria-label={t("card.rangeEnd", { name: field.name })}
                 value={range.end ?? ""}
                 onChange={(event) => update({ end: event.target.value })}
               />
@@ -240,6 +294,7 @@ function DimensionInput({
 
 export function CardEditor({
   boardId,
+  projectId,
   config,
   card,
   column,
@@ -247,6 +302,7 @@ export function CardEditor({
   readOnly,
 }: {
   boardId: string;
+  projectId: string;
   config: BoardConfig;
   card: CardOut | null;
   column?: string;
@@ -263,6 +319,8 @@ export function CardEditor({
     column: card?.column ?? column ?? config.columns[0]?.key ?? "",
     due_date: card?.due_date ?? "",
     cover_url: card?.cover_url ?? "",
+    color: card?.color ?? null,
+    tags: card?.tags ?? [],
     values: card ? { ...card.values } : defaultValues(config),
     fields: card
       ? { ...card.fields }
@@ -290,6 +348,8 @@ export function CardEditor({
           column: draft.column,
           due_date: draft.due_date || null,
           cover_url: draft.cover_url || null,
+          color: draft.color,
+          tags: draft.tags,
           values: draft.values,
           fields: Object.fromEntries(
             Object.entries(draft.fields).map(([key, value]) => [key, value ?? null]),
@@ -330,6 +390,8 @@ export function CardEditor({
       fields: draft.fields,
       due_date: draft.due_date || null,
       cover_url: draft.cover_url || null,
+      color: draft.color,
+      tags: draft.tags,
     });
     onClose();
   };
@@ -481,6 +543,7 @@ export function CardEditor({
         >
           {grid}
         </div>
+        <Appearance projectId={projectId} draft={draft} setDraft={setDraft} readOnly={readOnly} />
         {problem && <ErrorNote message={problem} />}
         {!readOnly && (
           <div className="flex items-center justify-between gap-2">

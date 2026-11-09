@@ -155,6 +155,30 @@
           "title": "Source Id",
           "type": "string"
         },
+        "color": {
+          "anyOf": [
+            {
+              "maxLength": 9,
+              "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Tags",
+          "type": "array"
+        },
         "column": {
           "maxLength": 64,
           "title": "Column",
@@ -400,6 +424,115 @@
       "title": "BackupData",
       "type": "object"
     },
+    "BackupFile": {
+      "additionalProperties": true,
+      "properties": {
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 200000,
+          "title": "Description",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Tags",
+          "type": "array"
+        },
+        "versions": {
+          "items": {
+            "$ref": "#/$defs/BackupFileVersion"
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "title": "Versions",
+          "type": "array"
+        },
+        "comments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupComment"
+          },
+          "maxItems": 5000,
+          "title": "Comments",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "name",
+        "versions",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "BackupFile",
+      "type": "object"
+    },
+    "BackupFileVersion": {
+      "additionalProperties": true,
+      "properties": {
+        "number": {
+          "minimum": 1,
+          "title": "Number",
+          "type": "integer"
+        },
+        "filename": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Filename",
+          "type": "string"
+        },
+        "data": {
+          "maxLength": 300000000,
+          "title": "Data",
+          "type": "string"
+        },
+        "uploader_name": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Uploader Name",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number",
+        "filename",
+        "data",
+        "created_at"
+      ],
+      "title": "BackupFileVersion",
+      "type": "object"
+    },
     "BackupProfile": {
       "additionalProperties": true,
       "properties": {
@@ -444,6 +577,24 @@
           "maxLength": 200000,
           "title": "Description",
           "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupTag"
+          },
+          "maxItems": 500,
+          "title": "Tags",
+          "type": "array"
+        },
+        "documents": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BackupFile"
+          },
+          "maxItems": 2000,
+          "title": "Documents",
+          "type": "array"
         },
         "created_at": {
           "format": "date-time",
@@ -493,6 +644,29 @@
         }
       },
       "title": "BackupScope",
+      "type": "object"
+    },
+    "BackupTag": {
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "color": {
+          "maxLength": 9,
+          "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+          "title": "Color",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "color"
+      ],
+      "title": "BackupTag",
       "type": "object"
     },
     "BackupTemplate": {
@@ -2438,6 +2612,20 @@
           ],
           "default": null,
           "title": "Cover Url"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "maxLength": 9,
+              "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color"
         },
         "checklists": {
           "default": [],

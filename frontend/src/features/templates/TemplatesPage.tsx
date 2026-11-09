@@ -237,7 +237,11 @@ export function TemplatesPage() {
                 menu={
                   <Menu
                     trigger={
-                      <Button variant="ghost" size="icon" aria-label={`${template.name}: меню`}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("templates.menu", { name: template.name })}
+                      >
                         <MoreHorizontal className="size-4" aria-hidden />
                       </Button>
                     }

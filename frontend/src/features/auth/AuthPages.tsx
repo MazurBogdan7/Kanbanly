@@ -1,11 +1,13 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import { Button, cx, ErrorNote, TextField } from "@/components/ui";
-import { useT } from "@/i18n";
+import { t, useT } from "@/i18n";
 import { api, ApiError } from "@/lib/api/client";
 import type { UserOut } from "@/lib/api/types";
+
+import { safeNext } from "../../app/queryClient";
 
 import { passwordStrength, useSetSession } from "./session";
 
@@ -13,7 +15,7 @@ function errorText(error: unknown): string | null {
   if (!error) return null;
   return error instanceof ApiError
     ? (error.problems[0]?.message ?? error.message)
-    : "Что-то пошло не так";
+    : t("common.error");
 }
 
 function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
@@ -72,8 +74,14 @@ export function PasswordMeter({ password }: { password: string }) {
   );
 }
 
+function useNext(): string {
+  const search = useSearch({ strict: false }) as { next?: unknown };
+  return safeNext(search.next);
+}
+
 export function LoginPage() {
   const { t } = useT();
+  const next = useNext();
   const setSession = useSetSession();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -91,7 +99,7 @@ export function LoginPage() {
       }),
     onSuccess: (user) => {
       setSession(user);
-      void navigate({ to: "/" });
+      void navigate({ to: next });
     },
     onError: (error) => {
       if (error instanceof ApiError && error.code === "totp_required") setSecondFactor(true);
@@ -138,12 +146,17 @@ export function LoginPage() {
           </>
         )}
         {login.error && !needCode ? <ErrorNote message={errorText(login.error) ?? ""} /> : null}
+        {login.error instanceof ApiError && login.error.code === "account_locked" && (
+          <Link to="/forgot-password" className="text-sm font-medium text-brand underline">
+            {t("auth.lockedReset")}
+          </Link>
+        )}
         <Button type="submit" variant="primary" loading={login.isPending}>
           {t("auth.submitLogin")}
         </Button>
       </form>
       <div className="mt-4 grid gap-1 text-sm">
-        <Link to="/register" className="text-brand underline">
+        <Link to="/register" search={{ next }} className="text-brand underline">
           {t("auth.noAccount")}
         </Link>
         <Link to="/forgot-password" className="text-brand underline">
@@ -156,18 +169,29 @@ export function LoginPage() {
 
 export function RegisterPage() {
   const { t } = useT();
+  const next = useNext();
   const setSession = useSetSession();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "", display_name: "" });
+  const status = useQuery({
+    queryKey: ["registration"],
+    queryFn: () => api.get<{ open: boolean }>("/auth/registration"),
+    staleTime: 60_000,
+  });
   const register = useMutation({
     mutationFn: () => api.post<UserOut>("/auth/register", form),
     onSuccess: (user) => {
       setSession(user);
-      void navigate({ to: "/" });
+      void navigate({ to: next });
     },
   });
   return (
     <AuthLayout title={t("auth.register")}>
+      {status.data?.open === false && (
+        <p role="status" className="mb-3 rounded-md bg-warning/15 px-3 py-2 text-sm">
+          {t("auth.registrationClosed")}
+        </p>
+      )}
       <form
         className="grid gap-3"
         onSubmit={(event: FormEvent) => {
@@ -204,7 +228,7 @@ export function RegisterPage() {
           {t("auth.submitRegister")}
         </Button>
       </form>
-      <Link to="/login" className="mt-4 block text-sm text-brand underline">
+      <Link to="/login" search={{ next }} className="mt-4 block text-sm text-brand underline">
         {t("auth.haveAccount")}
       </Link>
     </AuthLayout>

@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.schemas.template import BoardConfig, BoardTemplate, Node, SafeUrl
+from app.schemas.template import BoardConfig, BoardTemplate, HexColor, Node, SafeUrl
 
 BACKUP_FORMAT = "kanbanly.backup"
 ENCRYPTED_FORMAT = "kanbanly.backup.encrypted"
@@ -44,6 +44,8 @@ class BackupAttachment(Node):
 
 class BackupCard(Node):
     source_id: UUID
+    color: HexColor | None = None
+    tags: Annotated[list[Annotated[str, Field(max_length=60)]], Field(max_length=50)] = []
     column: Annotated[str, Field(max_length=64)]
     title: Annotated[str, Field(min_length=1, max_length=500)]
     description: Annotated[str, Field(max_length=200000)] = ""
@@ -73,10 +75,37 @@ class BackupBoard(Node):
     updated_at: datetime
 
 
+class BackupTag(Node):
+    name: Annotated[str, Field(min_length=1, max_length=60)]
+    color: HexColor
+
+
+class BackupFileVersion(Node):
+    number: Annotated[int, Field(ge=1)]
+    filename: Annotated[str, Field(min_length=1, max_length=255)]
+    # Содержимое файла в base64; тип и просмотр пересчитываются при восстановлении.
+    data: Annotated[str, Field(max_length=300_000_000)]
+    uploader_name: Annotated[str, Field(max_length=120)] = ""
+    created_at: datetime
+
+
+class BackupFile(Node):
+    source_id: UUID
+    name: Annotated[str, Field(min_length=1, max_length=200)]
+    description: Annotated[str, Field(max_length=200000)] = ""
+    tags: Annotated[list[Annotated[str, Field(max_length=60)]], Field(max_length=50)] = []
+    versions: Annotated[list[BackupFileVersion], Field(min_length=1, max_length=1000)]
+    comments: Annotated[list[BackupComment], Field(max_length=5000)] = []
+    created_at: datetime
+    updated_at: datetime
+
+
 class BackupProject(Node):
     source_id: UUID
     name: Annotated[str, Field(min_length=1, max_length=200)]
     description: Annotated[str, Field(max_length=200000)] = ""
+    tags: Annotated[list[BackupTag], Field(max_length=500)] = []
+    documents: Annotated[list[BackupFile], Field(max_length=2000)] = []
     created_at: datetime
     updated_at: datetime
 

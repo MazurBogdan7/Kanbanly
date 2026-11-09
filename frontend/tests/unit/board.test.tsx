@@ -240,7 +240,7 @@ describe("канва доски", () => {
     expect(onOpen).toHaveBeenCalledWith(cards[0]);
   });
 
-  it("календарь пока показан таблицей с пояснением", () => {
+  it("календарь показывает сетку месяца", () => {
     render(
       <BoardCanvas
         name="Доска"
@@ -251,7 +251,7 @@ describe("канва доски", () => {
         view={{ key: "c", name: "К", type: "calendar" }}
       />,
     );
-    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("grid")).toBeInTheDocument();
   });
 
   it("сброс требует двойного нажатия", async () => {

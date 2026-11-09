@@ -382,17 +382,22 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
 
 export function Section({
   title,
+  description,
   children,
   action,
 }: {
   title: string;
+  description?: string;
   children: ReactNode;
   action?: ReactNode;
 }) {
   return (
     <section className="grid gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">{title}</h2>
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold">{title}</h2>
+          {description && <p className="text-xs text-ink-soft">{description}</p>}
+        </div>
         {action}
       </div>
       {children}

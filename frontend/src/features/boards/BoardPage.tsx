@@ -24,15 +24,25 @@ import {
 import { toast } from "@/components/ui/toast";
 import { useT } from "@/i18n";
 import { api, downloadFrom, saveJson } from "@/lib/api/client";
-import type { BoardOut, CardOut, ViewTemplate } from "@/lib/api/types";
+import type { BoardOut, BoardTemplate, CardOut, ViewTemplate } from "@/lib/api/types";
 import { moveCardFocus, useHotkeys } from "@/lib/hotkeys";
+import { isPrototypeExport, prototypeToSamples } from "@/lib/prototypeImport";
 import { useUndo } from "@/lib/undo";
 
 import { CardEditor } from "../cards/CardEditor";
 import { ConstructorPanel } from "../settings/ConstructorPanel";
 import { useDraft } from "../settings/draft";
 import { TemplateImportDialog } from "../templates/TemplateImportDialog";
-import { keys, useBoard, useCards, useCreateCard, useMoveCard } from "./api";
+import {
+  isPending,
+  keys,
+  useBoard,
+  useCards,
+  useCreateCard,
+  useLiveBoard,
+  useMoveCard,
+} from "./api";
+import { ProjectTagsContext, useTagIndex } from "../workspace/tags";
 import { BoardCanvas } from "./engine/BoardCanvas";
 import type { MoveRequest } from "./engine/KanbanView";
 import { EMPTY_FILTERS, filtersFromView, type Filters } from "./engine/model";
@@ -121,6 +131,8 @@ export function BoardPage() {
   const search = new URLSearchParams(window.location.search);
   const board = useBoard(boardId);
   const cards = useCards(boardId);
+  const tagIndex = useTagIndex(board.data?.project_id);
+  useLiveBoard(boardId);
   const moveCard = useMoveCard(boardId);
   const createCard = useCreateCard(boardId);
   const [view, setView] = useState<ViewTemplate | undefined>();
@@ -154,6 +166,7 @@ export function BoardPage() {
   );
 
   const handleMove = (move: MoveRequest) => {
+    if (isPending({ id: move.cardId })) return;
     void moveCard(move).then(() => {
       if (!move.lane) return;
       const { dimension, value } = move.lane;
@@ -247,6 +260,34 @@ export function BoardPage() {
     },
     onError: toast.error,
   });
+
+  /** Файл шаблона уходит в диалог превью, экспорт прототипа — в новую доску рядом. */
+  const importFile = async (file: File) => {
+    let document: unknown;
+    try {
+      document = JSON.parse(await file.text());
+    } catch {
+      setImporting(file);
+      return;
+    }
+    if (!isPrototypeExport(document) || !board.data) {
+      setImporting(file);
+      return;
+    }
+    try {
+      const template = await api.get<BoardTemplate>(`/boards/${boardId}/template`);
+      const { samples, skipped } = prototypeToSamples(document, template);
+      const created = await api.post<BoardOut>(`/projects/${board.data.project_id}/boards`, {
+        name: t("board.importedName", { name: board.data.name }),
+        template: { ...template, sample_cards: samples },
+      });
+      void queryClient.invalidateQueries({ queryKey: keys.projects });
+      toast.info(t("board.prototypeImported", { count: samples.length, skipped }));
+      void navigate({ to: "/boards/$boardId", params: { boardId: created.id } });
+    } catch (error) {
+      toast.error(error);
+    }
+  };
 
   const exportTemplate = () =>
     api
@@ -350,6 +391,14 @@ export function BoardPage() {
                 <Download className="size-3.5" aria-hidden />
                 {t("board.downloadBackup")}
               </MenuItem>
+              <MenuItem
+                onSelect={() =>
+                  void downloadFrom(`/boards/${boardId}/export.csv`).catch(toast.error)
+                }
+              >
+                <Download className="size-3.5" aria-hidden />
+                {t("board.downloadCsv")}
+              </MenuItem>
               {canEdit && (
                 <MenuItem danger onSelect={() => remove.mutate()}>
                   <Trash2 className="size-3.5" aria-hidden />
@@ -359,25 +408,27 @@ export function BoardPage() {
             </Menu>
           </div>
         </div>
-        <BoardCanvas
-          name={board.data.name}
-          config={config}
-          cards={cards.data}
-          filters={filters}
-          onFilters={setFilters}
-          view={view}
-          palette={palette}
-          interactive={canEdit && !constructorOpen}
-          onOpen={(card) => setOpened({ id: card.id })}
-          onMove={handleMove}
-          onQuickAdd={(column, title) => createCard.mutate({ column, title })}
-          actions={{
-            onAddCard: () => setOpened({ id: null }),
-            onExport: () => void exportTemplate(),
-            onImport: setImporting,
-            onReset: () => reset.mutate(),
-          }}
-        />
+        <ProjectTagsContext.Provider value={tagIndex}>
+          <BoardCanvas
+            name={board.data.name}
+            config={config}
+            cards={cards.data}
+            filters={filters}
+            onFilters={setFilters}
+            view={view}
+            palette={palette}
+            interactive={canEdit && !constructorOpen}
+            onOpen={(card) => !isPending(card) && setOpened({ id: card.id })}
+            onMove={handleMove}
+            onQuickAdd={(column, title) => createCard.mutate({ column, title })}
+            actions={{
+              onAddCard: () => setOpened({ id: null }),
+              onExport: () => void exportTemplate(),
+              onImport: (file) => void importFile(file),
+              onReset: () => reset.mutate(),
+            }}
+          />
+        </ProjectTagsContext.Provider>
       </div>
       {constructorOpen && (
         <ConstructorPanel board={board.data} onClose={() => setConstructorOpen(false)} />
@@ -385,6 +436,7 @@ export function BoardPage() {
       {opened && (opened.id === null || openCard) && (
         <CardEditor
           boardId={boardId}
+          projectId={board.data.project_id}
           config={board.data.config}
           card={openCard}
           column={opened.column}

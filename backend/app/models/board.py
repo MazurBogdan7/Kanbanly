@@ -15,6 +15,7 @@ from app.core.db import (
     VersionMixin,
     utcnow,
 )
+from app.models.workspace import CardTag
 
 
 class Project(IdMixin, TimestampMixin, SoftDeleteMixin, VersionMixin, Base):
@@ -42,7 +43,7 @@ class ProjectMember(IdMixin, TimestampMixin, Base):
 
 
 class ProjectInvite(IdMixin, TimestampMixin, Base):
-    """Приглашения по email — модель заложена, поток появится на этапе 2 продукта."""
+    """Приглашение в проект. Ссылку может принять только владелец указанного email."""
 
     __tablename__ = "project_invites"
 
@@ -52,6 +53,7 @@ class ProjectInvite(IdMixin, TimestampMixin, Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     expires_at: Mapped[datetime] = mapped_column()
     accepted_at: Mapped[datetime | None] = mapped_column(default=None)
+    invited_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
 
 
 class Board(IdMixin, TimestampMixin, SoftDeleteMixin, VersionMixin, Base):
@@ -184,6 +186,8 @@ class Card(IdMixin, TimestampMixin, SoftDeleteMixin, VersionMixin, Base):
     due_date: Mapped[date | None] = mapped_column(default=None)
     completed_at: Mapped[datetime | None] = mapped_column(default=None)
     cover_url: Mapped[str | None] = mapped_column(String(2000), default=None)
+    # Цвет карточки (#RRGGBB). Текст на нём подбирается под контраст при рендере.
+    color: Mapped[str | None] = mapped_column(String(9), default=None)
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
 
     board: Mapped[Board] = relationship(back_populates="cards")
@@ -198,6 +202,7 @@ class Card(IdMixin, TimestampMixin, SoftDeleteMixin, VersionMixin, Base):
         cascade="all, delete-orphan", back_populates="card", order_by="Checklist.position"
     )
     comments: Mapped[list["Comment"]] = relationship(cascade="all, delete-orphan", back_populates="card")
+    tags: Mapped[list["CardTag"]] = relationship(cascade="all, delete-orphan")
     attachments: Mapped[list["Attachment"]] = relationship(
         cascade="all, delete-orphan", back_populates="card"
     )

@@ -1,7 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { FolderKanban, LayoutTemplate, LogOut, Search, Trash2, UserRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  FolderKanban,
+  LayoutTemplate,
+  LogOut,
+  Search,
+  ShieldCheck,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, cx, Modal, Skeleton } from "@/components/ui";
 import { Toaster } from "@/components/ui/toast";
@@ -10,7 +18,7 @@ import { api } from "@/lib/api/client";
 import type { SearchHit } from "@/lib/api/types";
 import { useHotkeys } from "@/lib/hotkeys";
 
-import { useMe, useSetSession } from "../features/auth/session";
+import { useMe, useSignOut } from "../features/auth/session";
 
 const NAV: { to: string; label: MessageKey; icon: typeof FolderKanban }[] = [
   { to: "/", label: "app.home", icon: FolderKanban },
@@ -18,6 +26,7 @@ const NAV: { to: string; label: MessageKey; icon: typeof FolderKanban }[] = [
   { to: "/trash", label: "app.trash", icon: Trash2 },
   { to: "/profile", label: "app.profile", icon: UserRound },
 ];
+const ADMIN_NAV = { to: "/admin", label: "app.admin" as MessageKey, icon: ShieldCheck };
 
 function useDebounced<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -143,7 +152,7 @@ function HotkeysHelp({
     ["/ · Ctrl+K", "hotkeys.palette"],
     ["← ↑ → ↓", "hotkeys.nav"],
     ["E · Enter", "hotkeys.edit"],
-    ["Пробел", "dnd.instructions"],
+    [t("hotkeys.space"), "dnd.instructions"],
     ["Esc", "hotkeys.close"],
     ["Ctrl+Z", "hotkeys.undo"],
     ["?", "hotkeys.help"],
@@ -168,10 +177,14 @@ function HotkeysHelp({
 
 export function AppShell() {
   const { t } = useT();
-  const navigate = useNavigate();
   const me = useMe();
-  const setSession = useSetSession();
+  const nav = me.data?.is_admin ? [...NAV, ADMIN_NAV] : NAV;
+  const signOut = useSignOut();
   const path = useRouterState({ select: (state) => state.location.pathname });
+  const href = useRouterState({ select: (state) => state.location.href });
+  // Адрес возврата фиксируется в момент потери сессии: во время перехода оболочка ещё
+  // перерисовывается с адресом страницы входа, и без фиксации переадресация зациклится.
+  const returnTo = useRef<string | null>(null);
   const [palette, setPalette] = useState(false);
   const [help, setHelp] = useState(false);
 
@@ -188,13 +201,14 @@ export function AppShell() {
       </div>
     );
   }
-  if (!me.data) return <Navigate to="/login" />;
+  if (!me.data) {
+    returnTo.current ??= href;
+    const next = returnTo.current;
+    return <Navigate to="/login" search={next === "/" ? {} : { next }} replace />;
+  }
+  returnTo.current = null;
 
-  const logout = () =>
-    void api.post("/auth/logout").finally(() => {
-      setSession(null);
-      void navigate({ to: "/login" });
-    });
+  const logout = () => void api.post("/auth/logout").finally(() => void signOut());
 
   return (
     <div className="flex h-dvh min-h-0 flex-col">
@@ -209,7 +223,7 @@ export function AppShell() {
           {t("app.name")}
         </Link>
         <nav aria-label={t("app.nav")} className="hidden gap-1 md:flex">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {nav.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -249,7 +263,7 @@ export function AppShell() {
         aria-label={t("app.nav")}
         className="fixed inset-x-0 bottom-0 z-30 flex h-14 border-t border-line bg-panel md:hidden"
       >
-        {NAV.map(({ to, label, icon: Icon }) => (
+        {nav.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
             to={to}

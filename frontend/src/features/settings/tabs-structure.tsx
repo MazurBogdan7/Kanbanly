@@ -2,11 +2,12 @@
 import { Plus } from "lucide-react";
 
 import { Button, SelectField, TextField, Toggle } from "@/components/ui";
-import { useT } from "@/i18n";
+import { useT, type MessageKey } from "@/i18n";
 import type {
   BoardConfig,
   ColumnKind,
   ColumnTemplate,
+  DimensionRole,
   DimensionTemplate,
   DimensionValueTemplate,
   FieldTemplate,
@@ -49,16 +50,16 @@ const FIELD_TYPES: FieldType[] = [
   "checklist",
   "attachment_link",
 ];
-const ROLE_LABELS = {
-  accent: "Акцент карточки",
-  badge: "Бейдж",
-  filter_select: "Фильтр-селект",
-  filter_chips: "Фильтр-чипы",
-  progress: "Виджет прогресса",
-  swimlanes: "Дорожки",
-  table_group: "Группировка в таблице",
-  legend: "Легенда",
-} as const;
+const ROLE_LABELS: Record<DimensionRole, MessageKey> = {
+  accent: "role.accent",
+  badge: "role.badge",
+  filter_select: "role.filter_select",
+  filter_chips: "role.filter_chips",
+  progress: "role.progress",
+  swimlanes: "role.swimlanes",
+  table_group: "role.table_group",
+  legend: "role.legend",
+};
 
 function useChange() {
   return useDraft((state) => state.change);
@@ -238,7 +239,7 @@ export function ColumnsTab({ config }: { config: BoardConfig }) {
       <Button
         onClick={() =>
           change((draft) => {
-            draft.columns.push({ key: newKey("col"), name: "Новая колонка", kind: "custom" });
+            draft.columns.push({ key: newKey("col"), name: t("ctor.newColumn"), kind: "custom" });
           })
         }
       >
@@ -443,7 +444,7 @@ function DimensionEditor({
                   change((draft) => setRole(draft, dimension.key, role, event.target.checked))
                 }
               />
-              {ROLE_LABELS[role]}
+              {t(ROLE_LABELS[role])}
             </label>
           ))}
         </div>
@@ -460,7 +461,7 @@ function DimensionEditor({
         <Button
           size="sm"
           onClick={() =>
-            update({ values: [...values, { key: newKey("v"), name: "Новое значение" }] })
+            update({ values: [...values, { key: newKey("v"), name: t("ctor.newValue") }] })
           }
         >
           {t("ctor.addValue")}
@@ -531,9 +532,9 @@ export function DimensionsTab({ config }: { config: BoardConfig }) {
               ...(draft.dimensions ?? []),
               {
                 key: newKey("dim"),
-                name: "Новое измерение",
+                name: t("ctor.newDimension"),
                 type: "select",
-                values: [{ key: newKey("v"), name: "Значение" }],
+                values: [{ key: newKey("v"), name: t("ctor.value") }],
               },
             ];
           })
@@ -655,7 +656,7 @@ export function FieldsTab({ config }: { config: BoardConfig }) {
           change((draft) => {
             draft.fields = [
               ...(draft.fields ?? []),
-              { key: newKey("fld"), name: "Новое поле", type: "text" },
+              { key: newKey("fld"), name: t("ctor.newField"), type: "text" },
             ];
           })
         }
@@ -667,13 +668,10 @@ export function FieldsTab({ config }: { config: BoardConfig }) {
   );
 }
 
-const RULE_TYPES: { type: Rule["type"]; label: string }[] = [
-  {
-    type: "set_completed_on_kind",
-    label: "При переносе в колонку вида — проставить дату завершения",
-  },
-  { type: "highlight_wip_exceeded", label: "При превышении WIP — подсветить колонку" },
-  { type: "warn_missing_required", label: "Карточка без обязательного значения — предупреждение" },
+const RULE_TYPES: { type: Rule["type"]; label: MessageKey }[] = [
+  { type: "set_completed_on_kind", label: "rule.completed" },
+  { type: "highlight_wip_exceeded", label: "rule.wip" },
+  { type: "warn_missing_required", label: "rule.required" },
 ];
 
 function ViewsEditor({ config }: { config: BoardConfig }) {
@@ -757,7 +755,7 @@ function ViewsEditor({ config }: { config: BoardConfig }) {
           change((draft) => {
             draft.views = [
               ...(draft.views ?? []),
-              { key: newKey("view"), name: "Новое представление", type: "table" },
+              { key: newKey("view"), name: t("ctor.newView"), type: "table" },
             ];
           })
         }
@@ -774,7 +772,8 @@ export function RulesTab({ config }: { config: BoardConfig }) {
   const rules = config.rules ?? [];
   return (
     <div className="grid gap-3">
-      {RULE_TYPES.map(({ type, label }) => {
+      {RULE_TYPES.map(({ type, label: labelKey }) => {
+        const label = t(labelKey);
         const rule = rules.find((item) => item.type === type);
         return (
           <div key={type} className="grid gap-2 rounded-md border border-line p-3">

@@ -1,10 +1,11 @@
 /** Экраны целиком: настоящий роутер и компоненты, сеть подменена таблицей маршрутов. */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createQueryClient, safeNext } from "@/app/queryClient";
 import { routeTree } from "@/app/router";
 import { useToasts } from "@/components/ui/toast";
 import { useLocale } from "@/i18n";
@@ -114,6 +115,57 @@ function defaultRoutes(): Record<string, Handler> {
     "GET /projects/p1": () => PROJECT,
     "DELETE /projects/p1": () => ({ ok: true }),
     "GET /boards/b1": () => BOARD,
+    "GET /boards/b1/revision": () => ({ revision: "r1" }),
+    "GET /projects/p1/members": () => [
+      {
+        user_id: "u1",
+        display_name: "Анна",
+        email: "user@example.com",
+        role: "owner",
+        is_you: true,
+      },
+      {
+        user_id: "u2",
+        display_name: "Сергей",
+        email: "sergo@example.com",
+        role: "editor",
+        is_you: false,
+      },
+    ],
+    "GET /projects/p1/invites": () => [
+      {
+        id: "i9",
+        email: "wait@example.com",
+        role: "viewer",
+        expires_at: "2026-12-01T00:00:00Z",
+        created_at: "2026-11-01T00:00:00Z",
+      },
+    ],
+    "POST /projects/p1/invites": (body) => ({
+      id: "i10",
+      email: (body as { email: string }).email,
+      role: "editor",
+      expires_at: "2026-12-01T00:00:00Z",
+      created_at: "2026-11-01T00:00:00Z",
+      link: "http://localhost/invite/tok",
+    }),
+    "PATCH /projects/p1/members/u2": () => ({
+      user_id: "u2",
+      display_name: "Сергей",
+      email: "sergo@example.com",
+      role: "viewer",
+      is_you: false,
+    }),
+    "DELETE /projects/p1/members/u2": () => ({ ok: true }),
+    "DELETE /projects/p1/invites/i9": () => ({ ok: true }),
+    "GET /invites/tok": () => ({
+      project_id: "p1",
+      project_name: "Проект",
+      role: "editor",
+      inviter: "Анна",
+    }),
+    "POST /invites/tok/accept": () => PROJECT,
+    "GET /boards/b1/export.csv": () => "csv",
     "PATCH /boards/b1": () => ({ ...BOARD, name: "Новое имя" }),
     "PUT /boards/b1/config": () => ({ ...BOARD, version: 4 }),
     "POST /boards/b1/reset": () => BOARD,
@@ -247,6 +299,7 @@ function defaultRoutes(): Record<string, Handler> {
     }),
     "POST /import/backup": () => ({ mode: "copy", counts: {}, warnings: [], snapshot_id: null }),
     "GET /export/backup": () => ({ format: "kanbanly.backup" }),
+    "GET /export/csv": () => "zip",
   };
 }
 
@@ -290,7 +343,8 @@ beforeEach(() => {
 });
 
 function renderAt(path: string) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryClient = createQueryClient();
+  queryClient.setDefaultOptions({ queries: { retry: false } });
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
@@ -452,7 +506,7 @@ describe("главная и проект", () => {
   it("удаляет проект с возможностью отмены", async () => {
     const user = userEvent.setup();
     renderAt("/projects/p1");
-    await user.click(await screen.findByRole("button", { name: "Удалить проект" }));
+    await user.click(await screen.findByRole("button", { name: "Действия с проектом" }));
     await user.click(await screen.findByRole("menuitem", { name: "Удалить проект" }));
     await waitFor(() => expect(sent("DELETE", "/projects/p1")).toBeTruthy());
   });
@@ -799,6 +853,8 @@ describe("профиль", () => {
     await user.click(screen.getByRole("switch", { name: "Сжать (.json.gz)" }));
     await user.click(screen.getByRole("button", { name: "Скачать бэкап" }));
     await waitFor(() => expect(calls.some((call) => call.path === "/export/backup")).toBe(true));
+    await user.click(screen.getByRole("button", { name: "Скачать таблицы для Excel (CSV в ZIP)" }));
+    await waitFor(() => expect(calls.find((call) => call.path === "/export/csv")).toBeTruthy());
     expect(await screen.findByText(/Автоснимок/)).toBeInTheDocument();
 
     await user.upload(screen.getByLabelText("Выбрать файл бэкапа"), new File(["{}"], "b.json"));
@@ -874,5 +930,218 @@ describe("оболочка", () => {
     const router = renderAt("/");
     await user.click(await screen.findByRole("button", { name: "Выйти" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+  });
+});
+
+describe("совместная работа", () => {
+  it("владелец видит участников, меняет роль, приглашает и отзывает", async () => {
+    const user = userEvent.setup();
+    renderAt("/projects/p1");
+    expect(await screen.findByText("sergo@example.com")).toBeInTheDocument();
+    expect(screen.getByText(/Анна \(вы\)/)).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Роль: Сергей"), "viewer");
+    await waitFor(() =>
+      expect(sent("PATCH", "/projects/p1/members/u2")?.body).toEqual({ role: "viewer" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Убрать из проекта: Сергей" }));
+    await waitFor(() => expect(sent("DELETE", "/projects/p1/members/u2")).toBeTruthy());
+
+    await user.type(screen.getByLabelText("Email приглашённого"), "new@example.com");
+    await user.click(screen.getByRole("button", { name: "Пригласить" }));
+    expect(await screen.findByTestId("invite-link")).toHaveTextContent(
+      "http://localhost/invite/tok",
+    );
+    await user.click(screen.getByRole("button", { name: "Отозвать" }));
+    await waitFor(() => expect(sent("DELETE", "/projects/p1/invites/i9")).toBeTruthy());
+  });
+
+  it("участник без прав владельца видит роли текстом и может выйти", async () => {
+    const user = userEvent.setup();
+    routes["GET /projects/p1"] = () => ({ ...PROJECT, role: "editor" });
+    routes["GET /projects/p1/members"] = () => [
+      {
+        user_id: "u0",
+        display_name: "Владелец",
+        email: "o@example.com",
+        role: "owner",
+        is_you: false,
+      },
+      {
+        user_id: "u2",
+        display_name: "Сергей",
+        email: "sergo@example.com",
+        role: "editor",
+        is_you: true,
+      },
+    ];
+    routes["DELETE /projects/p1/members/u2"] = () => ({ ok: true });
+    const router = renderAt("/projects/p1");
+    expect(await screen.findByText("Редактор")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Email приглашённого")).toBeNull();
+    expect(calls.some((call) => call.path === "/projects/p1/invites")).toBe(false);
+    await user.click(screen.getByRole("button", { name: "Покинуть проект" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/"));
+  });
+
+  it("принимает приглашение по ссылке", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/invite/tok");
+    expect(await screen.findByText(/Анна приглашает вас в проект «Проект»/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Принять приглашение" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/projects/p1"));
+  });
+
+  it("недействительное приглашение объясняет причину", async () => {
+    routes["GET /invites/tok"] = problem(404, "not_found", "Не найдено");
+    renderAt("/invite/tok");
+    expect(await screen.findByText("Приглашение недействительно")).toBeInTheDocument();
+  });
+
+  it("аноним по ссылке-приглашению попадает на вход и возвращается обратно", async () => {
+    const user = userEvent.setup();
+    let loggedIn = false;
+    routes["GET /auth/me"] = () => {
+      if (!loggedIn) {
+        throw { status: 401, body: { error: { code: "unauthorized", message: "Войдите" } } };
+      }
+      return USER;
+    };
+    routes["POST /auth/login"] = () => {
+      loggedIn = true;
+      return USER;
+    };
+    const router = renderAt("/invite/tok");
+    await user.type(await screen.findByLabelText("Email"), "user@example.com");
+    expect(router.state.location.search).toEqual({ next: "/invite/tok" });
+    await user.type(screen.getByLabelText("Пароль"), "password-123");
+    await user.click(screen.getByRole("button", { name: "Войти" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/invite/tok"));
+  });
+});
+
+describe("сессия", () => {
+  it("истёкшая сессия посреди работы ведёт на вход", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/");
+    await screen.findByRole("heading", { name: "Проекты" });
+    routes["POST /projects"] = problem(401, "unauthorized", "Сессия истекла, войдите снова");
+    await user.click(screen.getByRole("button", { name: "Новый проект" }));
+    await user.type(screen.getByLabelText("Название проекта"), "Х");
+    await user.click(screen.getByRole("button", { name: "Создать" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+    expect(await screen.findByText("Сессия истекла. Войдите снова.")).toBeInTheDocument();
+  });
+
+  it("возврат после входа только на свои страницы", () => {
+    expect(safeNext("/boards/1")).toBe("/boards/1");
+    expect(safeNext("//evil.test")).toBe("/");
+    expect(safeNext("https://evil.test")).toBe("/");
+    expect(safeNext(undefined)).toBe("/");
+  });
+});
+
+describe("доска: новые возможности", () => {
+  it("подхватывает чужие изменения по смене ревизии", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderAt("/boards/b1");
+    await screen.findByText("Первая");
+    routes["GET /boards/b1/revision"] = () => ({ revision: "r2" });
+    routes["GET /boards/b1/cards"] = () => ({
+      items: [CARD, card({ id: "c9", title: "От коллеги" })],
+      next_cursor: null,
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5500);
+    });
+    expect(await screen.findByText("От коллеги")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("скачивает таблицу CSV из меню доски", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await screen.findByText("Первая");
+    await user.click(screen.getByRole("button", { name: "Экспорт" }));
+    await user.click(await screen.findByRole("menuitem", { name: /CSV/ }));
+    await waitFor(() =>
+      expect(calls.some((call) => call.path === "/boards/b1/export.csv")).toBe(true),
+    );
+  });
+
+  it("импорт экспорта прототипа создаёт новую доску рядом", async () => {
+    const user = userEvent.setup();
+    renderAt("/boards/b1");
+    await screen.findByText("Первая");
+    const tasks = [
+      {
+        id: "t1",
+        status: "done",
+        epic: "a",
+        ms: 1,
+        title: "Из прототипа",
+        desc: "Описание",
+        who: "Анна Белова",
+      },
+      { id: "t2", status: "nope", epic: "b", ms: 2, title: "Без колонки" },
+    ];
+    await user.upload(
+      screen.getByLabelText("Импорт"),
+      new File([JSON.stringify(tasks)], "zif.json", { type: "application/json" }),
+    );
+    await waitFor(() => expect(sent("POST", "/projects/p1/boards")).toBeTruthy());
+    const body = sent("POST", "/projects/p1/boards")!.body as {
+      name: string;
+      template: { sample_cards: unknown[] };
+    };
+    expect(body.name).toBe("Доска (импорт)");
+    expect(body.template.sample_cards).toEqual([
+      {
+        key: "p1",
+        column: "done",
+        title: "Из прототипа",
+        description: "Описание",
+        values: { epic: "a", ms: "m1", who: "ann" },
+      },
+    ]);
+    expect(await screen.findByText("Импортировано задач: 1. Пропущено: 1.")).toBeInTheDocument();
+  });
+
+  it("календарь и таймлайн показывают карточки", async () => {
+    const user = userEvent.setup();
+    routes["GET /boards/b1"] = () => ({
+      ...BOARD,
+      config: {
+        ...BOARD.config,
+        views: [
+          { key: "k", name: "Канбан", type: "kanban", is_default: true },
+          { key: "c", name: "Календарь", type: "calendar" },
+          { key: "l", name: "Таймлайн", type: "timeline", group_by: "ms" },
+        ],
+      },
+    });
+    const today = new Date().toISOString().slice(0, 10);
+    routes["GET /boards/b1/cards"] = () => ({
+      items: [
+        card({ id: "c1", title: "С датой", due_date: today }),
+        card({ id: "c2", title: "Без даты", values: { ms: ["m2"] } }),
+      ],
+      next_cursor: null,
+    });
+    routes["GET /cards/c2"] = () => ({ ...DETAIL, id: "c2", title: "Без даты" });
+    routes["GET /cards/c2/activity"] = () => ({ items: [], next_cursor: null });
+    renderAt("/boards/b1");
+    await screen.findByText("С датой");
+    await user.click(screen.getByRole("button", { name: "Календарь" }));
+    const day = document.querySelector(`[data-date="${today}"]`) as HTMLElement;
+    expect(within(day).getByRole("button", { name: "С датой" })).toBeInTheDocument();
+    expect(screen.getByText("Без срока: 1")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Следующий месяц" }));
+    await user.click(screen.getByRole("button", { name: "Сегодня" }));
+    expect(document.querySelector(`[data-date="${today}"]`)).toHaveAttribute("data-today");
+
+    await user.click(screen.getByRole("button", { name: "Таймлайн" }));
+    const stage = document.querySelector('[data-value="m2"]') as HTMLElement;
+    await user.click(within(stage).getByRole("button", { name: /Без даты/ }));
+    expect(await screen.findByTestId("card-form")).toBeInTheDocument();
   });
 });

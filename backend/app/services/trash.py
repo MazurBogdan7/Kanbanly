@@ -8,7 +8,7 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.db import utcnow
-from app.models import Board, Card, Project, Template
+from app.models import Board, Card, Document, Project, Template
 
 logger = logging.getLogger(__name__)
 PURGE_INTERVAL_SECONDS = 3600
@@ -17,7 +17,7 @@ PURGE_INTERVAL_SECONDS = 3600
 async def purge_expired(db: AsyncSession, retention_days: int) -> int:
     threshold = utcnow() - timedelta(days=retention_days)
     removed = 0
-    for model in (Card, Board, Project, Template):
+    for model in (Card, Document, Board, Project, Template):
         result = await db.execute(delete(model).where(model.deleted_at < threshold))
         removed += int(result.rowcount)  # type: ignore[attr-defined]
     return removed

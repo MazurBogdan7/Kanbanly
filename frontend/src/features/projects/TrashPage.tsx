@@ -13,6 +13,7 @@ const RESTORE_PATH: Record<TrashItem["type"], string> = {
   board: "boards",
   card: "cards",
   template: "templates",
+  document: "documents",
 };
 
 export function TrashPage() {

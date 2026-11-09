@@ -23,11 +23,16 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     password_reset_ttl_minutes: int = 30
 
-    rate_limit_attempts: int = 5
+    # Общий барьер на IP+email в минуту: от массовых запросов, а не от подбора одного пароля.
+    rate_limit_attempts: int = 30
+    # После стольких неудачных входов подряд аккаунт блокируется до разблокировки.
+    login_lock_threshold: int = 20
     rate_limit_window_seconds: int = 60
 
     template_max_bytes: int = 1_048_576
-    backup_max_bytes: int = 52_428_800
+    # Бэкап включает документы проектов, поэтому лимит больше, чем у шаблона.
+    backup_max_bytes: int = 209_715_200
+    file_max_bytes: int = 26_214_400
     json_max_depth: int = 32
     trash_retention_days: int = 30
 

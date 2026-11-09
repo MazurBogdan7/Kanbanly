@@ -17,6 +17,13 @@ class User(IdMixin, TimestampMixin, Base):
     locale: Mapped[str] = mapped_column(String(8), default="ru")
     totp_secret: Mapped[str | None] = mapped_column(String(255), default=None)
     totp_enabled: Mapped[bool] = mapped_column(default=False)
+    is_admin: Mapped[bool] = mapped_column(default=False)
+    # Отключённый администратором аккаунт не может войти, его сессии не действуют.
+    is_active: Mapped[bool] = mapped_column(default=True)
+    # Неудачные попытки входа подряд; после порога аккаунт блокируется до разблокировки.
+    failed_logins: Mapped[int] = mapped_column(default=0)
+    locked_at: Mapped[datetime | None] = mapped_column(default=None)
+    last_login_at: Mapped[datetime | None] = mapped_column(default=None)
 
 
 class UserSession(IdMixin, Base):

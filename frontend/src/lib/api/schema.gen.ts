@@ -38,6 +38,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/auth/registration": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Registration
+     * @description Открыта ли регистрация: страница регистрации заранее объясняет, если нет.
+     */
+    get: operations["registration_api_v1_auth_registration_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/auth/password-strength": {
     parameters: {
       query?: never;
@@ -352,6 +372,93 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/projects/{project_id}/members/{user_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove Member */
+    delete: operations["remove_member_api_v1_projects__project_id__members__user_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Member */
+    patch: operations["update_member_api_v1_projects__project_id__members__user_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/projects/{project_id}/invites": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Invites */
+    get: operations["list_invites_api_v1_projects__project_id__invites_get"];
+    put?: never;
+    /** Create Invite */
+    post: operations["create_invite_api_v1_projects__project_id__invites_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/projects/{project_id}/invites/{invite_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Revoke Invite */
+    delete: operations["revoke_invite_api_v1_projects__project_id__invites__invite_id__delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/invites/{token}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Preview Invite */
+    get: operations["preview_invite_api_v1_invites__token__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/invites/{token}/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept Invite */
+    post: operations["accept_invite_api_v1_invites__token__accept_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/projects/{project_id}/boards": {
     parameters: {
       query?: never;
@@ -542,6 +649,46 @@ export interface paths {
     head?: never;
     /** Update View */
     patch: operations["update_view_api_v1_views__view_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/boards/{board_id}/revision": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Board Revision
+     * @description Дешёвая метка изменений: клиент опрашивает её и перезагружает доску, только когда она сменилась.
+     */
+    get: operations["board_revision_api_v1_boards__board_id__revision_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/boards/{board_id}/export.csv": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Export Csv
+     * @description Таблица доски для Excel. Несколько досок сразу — GET /export/csv.
+     */
+    get: operations["export_csv_api_v1_boards__board_id__export_csv_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   "/api/v1/cards/{card_id}": {
@@ -963,6 +1110,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/export/csv": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Export Tables
+     * @description Таблицы Excel всех досок аккаунта, проекта или одной доски одним ZIP-архивом.
+     */
+    get: operations["export_tables_api_v1_export_csv_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/import/backup/preview": {
     parameters: {
       query?: never;
@@ -1024,6 +1191,309 @@ export interface paths {
     /** Download Snapshot */
     get: operations["download_snapshot_api_v1_backups_snapshots__snapshot_id__get"];
     put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/projects/{project_id}/tags": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Tags */
+    get: operations["list_tags_api_v1_projects__project_id__tags_get"];
+    put?: never;
+    /** Create Tag */
+    post: operations["create_tag_api_v1_projects__project_id__tags_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/tags/{tag_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Tag */
+    delete: operations["delete_tag_api_v1_tags__tag_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Tag */
+    patch: operations["update_tag_api_v1_tags__tag_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/projects/{project_id}/documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Documents */
+    get: operations["list_documents_api_v1_projects__project_id__documents_get"];
+    put?: never;
+    /**
+     * Upload Document
+     * @description Тело запроса — сам файл; имя приходит в X-File-Name (URL-кодированное).
+     */
+    post: operations["upload_document_api_v1_projects__project_id__documents_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Document */
+    get: operations["get_document_api_v1_documents__document_id__get"];
+    put?: never;
+    post?: never;
+    /** Delete Document */
+    delete: operations["delete_document_api_v1_documents__document_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Document */
+    patch: operations["update_document_api_v1_documents__document_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/restore": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Restore Document */
+    post: operations["restore_document_api_v1_documents__document_id__restore_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/versions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Upload Version
+     * @description Новая версия не затирает старые: история остаётся доступной для просмотра и скачивания.
+     */
+    post: operations["upload_version_api_v1_documents__document_id__versions_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/versions/{number}/content": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Version Content */
+    get: operations["version_content_api_v1_documents__document_id__versions__number__content_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/versions/{number}/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Version Preview */
+    get: operations["version_preview_api_v1_documents__document_id__versions__number__preview_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/comments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Comment */
+    post: operations["create_comment_api_v1_documents__document_id__comments_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/document-comments/{document_comment_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Comment */
+    delete: operations["delete_comment_api_v1_document_comments__document_comment_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Comment */
+    patch: operations["update_comment_api_v1_document_comments__document_comment_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/admin/stats": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Stats */
+    get: operations["stats_api_v1_admin_stats_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/users": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Users */
+    get: operations["list_users_api_v1_admin_users_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/users/{user_id}/unlock": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Unlock User */
+    post: operations["unlock_user_api_v1_admin_users__user_id__unlock_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/users/{user_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete User */
+    delete: operations["delete_user_api_v1_admin_users__user_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update User */
+    patch: operations["update_user_api_v1_admin_users__user_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/admin/users/{user_id}/logout-all": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Logout User */
+    post: operations["logout_user_api_v1_admin_users__user_id__logout_all_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/audit": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Audit Log */
+    get: operations["audit_log_api_v1_admin_audit_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/settings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Settings */
+    get: operations["get_settings_api_v1_admin_settings_get"];
+    /** Put Settings */
+    put: operations["put_settings_api_v1_admin_settings_put"];
     post?: never;
     delete?: never;
     options?: never;
@@ -1120,6 +1590,96 @@ export interface components {
       reset?: boolean;
     } & {
       [key: string]: unknown;
+    };
+    /** AdminDelete */
+    AdminDelete: {
+      /** Confirm Email */
+      confirm_email: string;
+    };
+    /** AdminEvent */
+    AdminEvent: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Action */
+      action: string;
+      /** Email */
+      email: string | null;
+      /** Ip */
+      ip: string;
+      /** Target Type */
+      target_type: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
+    /** AdminSettings */
+    AdminSettings: {
+      /** Registration Open */
+      registration_open: boolean;
+    };
+    /** AdminStats */
+    AdminStats: {
+      /** Users */
+      users: number;
+      /** Active Users */
+      active_users: number;
+      /** Locked Users */
+      locked_users: number;
+      /** Admins */
+      admins: number;
+      /** Projects */
+      projects: number;
+      /** Boards */
+      boards: number;
+      /** Cards */
+      cards: number;
+      /** Documents */
+      documents: number;
+      /** Storage Bytes */
+      storage_bytes: number;
+    };
+    /** AdminUser */
+    AdminUser: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Email */
+      email: string;
+      /** Display Name */
+      display_name: string;
+      /** Is Admin */
+      is_admin: boolean;
+      /** Is Active */
+      is_active: boolean;
+      /** Locked */
+      locked: boolean;
+      /** Failed Logins */
+      failed_logins: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Last Login At */
+      last_login_at: string | null;
+      /** Projects */
+      projects: number;
+      /** Is You */
+      is_you: boolean;
+    };
+    /** AdminUserUpdate */
+    AdminUserUpdate: {
+      /** Is Active */
+      is_active?: boolean | null;
+      /** Is Admin */
+      is_admin?: boolean | null;
     };
     /** AttachmentCreate */
     AttachmentCreate: {
@@ -1503,6 +2063,11 @@ export interface components {
        */
       cards?: boolean;
     };
+    /** BoardRevision */
+    BoardRevision: {
+      /** Revision */
+      revision: string;
+    };
     /** BoardSummary */
     BoardSummary: {
       /**
@@ -1717,6 +2282,13 @@ export interface components {
       due_date?: string | null;
       /** Cover Url */
       cover_url?: string | null;
+      /** Color */
+      color?: string | null;
+      /**
+       * Tags
+       * @default []
+       */
+      tags?: string[];
       /** After Id */
       after_id?: string | null;
     };
@@ -1774,6 +2346,13 @@ export interface components {
        * Format: date-time
        */
       updated_at: string;
+      /** Color */
+      color?: string | null;
+      /**
+       * Tags
+       * @default []
+       */
+      tags?: string[];
       /** Checklists */
       checklists: components["schemas"]["ChecklistOut"][];
       /** Comments */
@@ -1943,6 +2522,13 @@ export interface components {
        * Format: date-time
        */
       updated_at: string;
+      /** Color */
+      color?: string | null;
+      /**
+       * Tags
+       * @default []
+       */
+      tags?: string[];
     };
     /** CardUpdate */
     CardUpdate: {
@@ -1962,6 +2548,10 @@ export interface components {
       due_date?: string | null;
       /** Cover Url */
       cover_url?: string | null;
+      /** Color */
+      color?: string | null;
+      /** Tags */
+      tags?: string[] | null;
       /** Column */
       column?: string | null;
     };
@@ -2230,6 +2820,145 @@ export interface components {
     } & {
       [key: string]: unknown;
     };
+    /** DocumentCommentOut */
+    DocumentCommentOut: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Author Id */
+      author_id: string | null;
+      /** Author Name */
+      author_name: string;
+      /** Body */
+      body: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /** DocumentDetail */
+    DocumentDetail: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string;
+      /** Name */
+      name: string;
+      /** Description */
+      description: string;
+      /** Tags */
+      tags: string[];
+      current: components["schemas"]["DocumentVersionOut"];
+      /** Versions Count */
+      versions_count: number;
+      /** Comments Count */
+      comments_count: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Versions */
+      versions: components["schemas"]["DocumentVersionOut"][];
+      /** Comments */
+      comments: components["schemas"]["DocumentCommentOut"][];
+      /** Role */
+      role: string;
+    };
+    /** DocumentOut */
+    DocumentOut: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string;
+      /** Name */
+      name: string;
+      /** Description */
+      description: string;
+      /** Tags */
+      tags: string[];
+      current: components["schemas"]["DocumentVersionOut"];
+      /** Versions Count */
+      versions_count: number;
+      /** Comments Count */
+      comments_count: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /** DocumentPreview */
+    DocumentPreview: {
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: "html" | "text" | "markdown" | "pdf" | "image" | "none";
+      /** Html */
+      html?: string | null;
+      /** Text */
+      text?: string | null;
+      /** Reason */
+      reason?: string | null;
+    };
+    /** DocumentUpdate */
+    DocumentUpdate: {
+      /** Name */
+      name?: string | null;
+      /** Description */
+      description?: string | null;
+      /** Tags */
+      tags?: string[] | null;
+    };
+    /** DocumentVersionOut */
+    DocumentVersionOut: {
+      /** Number */
+      number: number;
+      /** Filename */
+      filename: string;
+      /** Kind */
+      kind: string;
+      /** Size */
+      size: number;
+      /** Uploader Name */
+      uploader_name: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
     /** EditorLayout */
     EditorLayout: {
       /**
@@ -2426,6 +3155,58 @@ export interface components {
     } & {
       [key: string]: unknown;
     };
+    /** InviteCreate */
+    InviteCreate: {
+      /**
+       * Email
+       * Format: email
+       */
+      email: string;
+      /**
+       * Role
+       * @default editor
+       * @enum {string}
+       */
+      role?: "editor" | "viewer";
+    };
+    /** InviteOut */
+    InviteOut: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Email */
+      email: string;
+      /** Role */
+      role: string;
+      /**
+       * Expires At
+       * Format: date-time
+       */
+      expires_at: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Link */
+      link?: string | null;
+    };
+    /** InvitePreview */
+    InvitePreview: {
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string;
+      /** Project Name */
+      project_name: string;
+      /** Role */
+      role: string;
+      /** Inviter */
+      inviter: string;
+    };
     /** Layout */
     Layout: {
       /**
@@ -2548,8 +3329,23 @@ export interface components {
       user_id: string;
       /** Display Name */
       display_name: string;
+      /** Email */
+      email: string;
       /** Role */
       role: string;
+      /**
+       * Is You
+       * @default false
+       */
+      is_you?: boolean;
+    };
+    /** MemberUpdate */
+    MemberUpdate: {
+      /**
+       * Role
+       * @enum {string}
+       */
+      role: "editor" | "viewer";
     };
     /** NoteWidget */
     NoteWidget: {
@@ -2575,6 +3371,13 @@ export interface components {
        * @default true
        */
       ok?: boolean;
+    };
+    /** Page[AdminUser] */
+    Page_AdminUser_: {
+      /** Items */
+      items: components["schemas"]["AdminUser"][];
+      /** Next Cursor */
+      next_cursor?: string | null;
     };
     /** Page[CardEventOut] */
     Page_CardEventOut_: {
@@ -2746,6 +3549,11 @@ export interface components {
        */
       display_name?: string;
     };
+    /** RegistrationOut */
+    RegistrationOut: {
+      /** Open */
+      open: boolean;
+    };
     /** ResetConfirmIn */
     ResetConfirmIn: {
       /** Token */
@@ -2792,6 +3600,8 @@ export interface components {
       due_date?: string | null;
       /** Cover Url */
       cover_url?: string | null;
+      /** Color */
+      color?: string | null;
       /**
        * Checklists
        * @default []
@@ -2937,6 +3747,32 @@ export interface components {
       metrics?: ("total" | "in_progress" | "overdue" | "wip_exceeded")[];
     } & {
       [key: string]: unknown;
+    };
+    /** TagCreate */
+    TagCreate: {
+      /** Name */
+      name: string;
+      /** Color */
+      color: string;
+    };
+    /** TagOut */
+    TagOut: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
+      /** Color */
+      color: string;
+    };
+    /** TagUpdate */
+    TagUpdate: {
+      /** Name */
+      name?: string | null;
+      /** Color */
+      color?: string | null;
     };
     /**
      * TemplateApply
@@ -3143,7 +3979,7 @@ export interface components {
        * Type
        * @enum {string}
        */
-      type: "project" | "board" | "card" | "template";
+      type: "project" | "board" | "card" | "template" | "document";
       /**
        * Id
        * Format: uuid
@@ -3217,6 +4053,8 @@ export interface components {
       locale: string;
       /** Totp Enabled */
       totp_enabled: boolean;
+      /** Is Admin */
+      is_admin: boolean;
       /**
        * Created At
        * Format: date-time
@@ -3432,6 +4270,26 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CsrfOut"];
+        };
+      };
+    };
+  };
+  registration_api_v1_auth_registration_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RegistrationOut"];
         };
       };
     };
@@ -4125,6 +4983,234 @@ export interface operations {
       };
     };
   };
+  remove_member_api_v1_projects__project_id__members__user_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_member_api_v1_projects__project_id__members__user_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MemberUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MemberOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_invites_api_v1_projects__project_id__invites_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InviteOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_invite_api_v1_projects__project_id__invites_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["InviteCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InviteOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  revoke_invite_api_v1_projects__project_id__invites__invite_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+        invite_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  preview_invite_api_v1_invites__token__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InvitePreview"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  accept_invite_api_v1_invites__token__accept_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProjectOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   create_board_api_v1_projects__project_id__boards_post: {
     parameters: {
       query?: never;
@@ -4654,6 +5740,68 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ViewOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  board_revision_api_v1_boards__board_id__revision_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        board_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BoardRevision"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  export_csv_api_v1_boards__board_id__export_csv_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        board_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
         };
       };
       /** @description Validation Error */
@@ -5670,6 +6818,37 @@ export interface operations {
       };
     };
   };
+  export_tables_api_v1_export_csv_get: {
+    parameters: {
+      query?: {
+        scope?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   preview_backup_api_v1_import_backup_preview_post: {
     parameters: {
       query?: never;
@@ -5773,6 +6952,802 @@ export interface operations {
         };
         content: {
           "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_tags_api_v1_projects__project_id__tags_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_tag_api_v1_projects__project_id__tags_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TagCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_tag_api_v1_tags__tag_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tag_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_tag_api_v1_tags__tag_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tag_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TagUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_documents_api_v1_projects__project_id__documents_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  upload_document_api_v1_projects__project_id__documents_post: {
+    parameters: {
+      query?: {
+        name?: string | null;
+        description?: string;
+      };
+      header?: {
+        "X-File-Name"?: string | null;
+      };
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentDetail"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_document_api_v1_documents__document_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentDetail"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_document_api_v1_documents__document_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_document_api_v1_documents__document_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DocumentUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentDetail"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  restore_document_api_v1_documents__document_id__restore_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentDetail"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  upload_version_api_v1_documents__document_id__versions_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "X-File-Name"?: string | null;
+      };
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentDetail"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  version_content_api_v1_documents__document_id__versions__number__content_get: {
+    parameters: {
+      query?: {
+        inline?: boolean;
+      };
+      header?: never;
+      path: {
+        document_id: string;
+        number: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  version_preview_api_v1_documents__document_id__versions__number__preview_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+        number: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentPreview"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_comment_api_v1_documents__document_id__comments_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CommentCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentCommentOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_comment_api_v1_document_comments__document_comment_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_comment_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_comment_api_v1_document_comments__document_comment_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_comment_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CommentCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentCommentOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  stats_api_v1_admin_stats_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminStats"];
+        };
+      };
+    };
+  };
+  list_users_api_v1_admin_users_get: {
+    parameters: {
+      query?: {
+        q?: string;
+        cursor?: string | null;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Page_AdminUser_"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  unlock_user_api_v1_admin_users__user_id__unlock_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminUser"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_user_api_v1_admin_users__user_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdminDelete"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_user_api_v1_admin_users__user_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdminUserUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminUser"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  logout_user_api_v1_admin_users__user_id__logout_all_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  audit_log_api_v1_admin_audit_get: {
+    parameters: {
+      query?: {
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminEvent"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_settings_api_v1_admin_settings_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminSettings"];
+        };
+      };
+    };
+  };
+  put_settings_api_v1_admin_settings_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdminSettings"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdminSettings"];
         };
       };
       /** @description Validation Error */

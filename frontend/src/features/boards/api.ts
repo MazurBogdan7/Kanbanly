@@ -1,6 +1,7 @@
 /** Серверное состояние досок и оптимистичные операции над карточками. */
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { generateKeyBetween } from "fractional-indexing";
+import { useEffect, useRef } from "react";
 
 import { toast } from "@/components/ui/toast";
 import { t } from "@/i18n";
@@ -63,6 +64,36 @@ async function fetchAllCards(boardId: string): Promise<CardOut[]> {
 
 export function useCards(boardId: string) {
   return useQuery({ queryKey: keys.cards(boardId), queryFn: () => fetchAllCards(boardId) });
+}
+
+/** Как часто доска проверяет чужие изменения. Метка ревизии лёгкая, сами карточки не грузятся. */
+export const LIVE_INTERVAL_MS = 5000;
+
+/**
+ * Обновление без перезагрузки: опрашиваем ревизию и перечитываем доску, только когда она сменилась.
+ * Пока идёт своя мутация, ревизию не принимаем: иначе свежий ответ сервера затрёт оптимистичное
+ * состояние, а изменение подхватится следующим опросом.
+ */
+export function useLiveBoard(boardId: string): void {
+  const queryClient = useQueryClient();
+  const seen = useRef<string | null>(null);
+  const revision = useQuery({
+    queryKey: [...keys.board(boardId), "revision"],
+    queryFn: () => api.get<{ revision: string }>(`/boards/${boardId}/revision`),
+    refetchInterval: LIVE_INTERVAL_MS,
+    refetchIntervalInBackground: false,
+    staleTime: 0,
+  });
+  const current = revision.data?.revision;
+  useEffect(() => {
+    if (!current || queryClient.isMutating() > 0) return;
+    if (seen.current !== null && seen.current !== current) {
+      void queryClient.invalidateQueries({ queryKey: keys.board(boardId), exact: true });
+      void queryClient.invalidateQueries({ queryKey: keys.cards(boardId) });
+      void queryClient.invalidateQueries({ queryKey: ["cards"] });
+    }
+    seen.current = current;
+  }, [boardId, current, queryClient]);
 }
 
 export function useCardDetail(id: string | null) {
@@ -230,6 +261,8 @@ export function useCreateCard(boardId: string) {
             due_date: null,
             completed_at: null,
             cover_url: null,
+            color: typeof payload.color === "string" ? payload.color : null,
+            tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
             values: {},
             fields: {},
             checklist_done: 0,
@@ -270,6 +303,11 @@ export function useSaveConfig(boardId: string) {
 
 export function refreshBoard(queryClient: QueryClient, boardId: string) {
   void queryClient.invalidateQueries({ queryKey: keys.board(boardId) });
+}
+
+/** Карточка ещё создаётся: у неё временный id, сервер её пока не знает. */
+export function isPending(card: { id: string }): boolean {
+  return card.id.startsWith("temp-");
 }
 
 export function isConflict(error: unknown): boolean {

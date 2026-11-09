@@ -4,6 +4,7 @@
 и пишется последним полем. Импорт идёт в транзакции запроса: любая ошибка откатывает всё.
 """
 
+import base64
 import gzip
 import hashlib
 import json
@@ -29,11 +30,17 @@ from app.models import (
     Board,
     Card,
     CardFieldValue,
+    CardTag,
     Checklist,
     ChecklistItem,
     Comment,
+    Document,
+    DocumentComment,
+    DocumentTag,
+    DocumentVersion,
     Project,
     ProjectMember,
+    ProjectTag,
     Template,
     User,
 )
@@ -53,9 +60,10 @@ from app.schemas.backup import (
 )
 from app.security import backup_crypto
 from app.services import cards as card_service
+from app.services import documents
 from app.services.board_config import apply_config, export_config, load_board
 from app.services.cards import BoardIndex, build_index
-from app.services.fractional import sequence
+from app.services.fractional import key_between, sequence
 from app.services.json_import import check_depth, strip_extras
 
 REPLACE_CONFIRMATION = "ЗАМЕНИТЬ"
@@ -156,6 +164,7 @@ async def _board_document(db: AsyncSession, board_id: UUID) -> dict[str, Any]:
         .order_by(Card.position, Card.id)
     )
     cards = (await db.execute(statement)).scalars().all()
+    tag_names = {tag.id: tag.name for tag in await _project_tags(db, board.project_id)}
     document = {
         "source_id": str(board.id),
         "project_source_id": str(board.project_id),
@@ -164,17 +173,75 @@ async def _board_document(db: AsyncSession, board_id: UUID) -> dict[str, Any]:
         "is_favorite": board.is_favorite,
         "source_template": board.source_template,
         "config": _json_config(board),
-        "cards": [_card_document(card, index) for card in cards],
+        "cards": [_card_document(card, index, tag_names) for card in cards],
         "created_at": _iso(board.created_at),
         "updated_at": _iso(board.updated_at),
     }
     return document
 
 
-def _card_document(card: Card, index: BoardIndex) -> dict[str, Any]:
+async def _project_tags(db: AsyncSession, project_id: UUID) -> list[ProjectTag]:
+    rows = await db.execute(
+        select(ProjectTag).where(ProjectTag.project_id == project_id).order_by(ProjectTag.position)
+    )
+    return list(rows.scalars().all())
+
+
+async def _project_document(db: AsyncSession, project: Project, *, with_documents: bool) -> dict[str, Any]:
+    """Проект с тегами и документами. Документы идут во все бэкапы, кроме бэкапа одной доски."""
+    tags = await _project_tags(db, project.id)
+    names = {tag.id: tag.name for tag in tags}
+    documents: list[dict[str, Any]] = []
+    if with_documents:
+        rows = await db.execute(
+            select(Document)
+            .where(Document.project_id == project.id, Document.deleted_at.is_(None))
+            .options(selectinload(Document.versions), selectinload(Document.comments))
+            .order_by(Document.id)
+        )
+        for item in rows.scalars():
+            links = await db.execute(select(DocumentTag.tag_id).where(DocumentTag.document_id == item.id))
+            documents.append(
+                {
+                    "source_id": str(item.id),
+                    "name": item.name,
+                    "description": item.description,
+                    "tags": sorted(names[tag] for tag in links.scalars() if tag in names),
+                    "versions": [
+                        {
+                            "number": version.number,
+                            "filename": version.filename,
+                            "data": base64.b64encode(version.data).decode(),
+                            "uploader_name": version.uploader_name,
+                            "created_at": _iso(version.created_at),
+                        }
+                        for version in item.versions
+                    ],
+                    "comments": [
+                        {"author_name": c.author_name, "body": c.body, "created_at": _iso(c.created_at)}
+                        for c in item.comments
+                    ],
+                    "created_at": _iso(item.created_at),
+                    "updated_at": _iso(item.updated_at),
+                }
+            )
+    return {
+        "source_id": str(project.id),
+        "name": project.name,
+        "description": project.description,
+        "tags": [{"name": tag.name, "color": tag.color} for tag in tags],
+        "documents": documents,
+        "created_at": _iso(project.created_at),
+        "updated_at": _iso(project.updated_at),
+    }
+
+
+def _card_document(card: Card, index: BoardIndex, tag_names: dict[UUID, str]) -> dict[str, Any]:
     data = card_service.serialize(card, index)
     return {
         "source_id": str(card.id),
+        "color": card.color,
+        "tags": sorted(tag_names[link.tag_id] for link in card.tags if link.tag_id in tag_names),
         "column": data.column,
         "title": card.title,
         "description": card.description,
@@ -201,8 +268,14 @@ def _card_document(card: Card, index: BoardIndex) -> dict[str, Any]:
     }
 
 
-async def iter_backup(db: AsyncSession, user: User, scope: Scope) -> AsyncIterator[bytes]:
-    """Чанки JSON. Ключи data идут по алфавиту — поток совпадает с каноническим видом."""
+async def iter_backup(
+    db: AsyncSession, user: User, scope: Scope, *, release: bool = False
+) -> AsyncIterator[bytes]:
+    """Чанки JSON. Ключи data идут по алфавиту — поток совпадает с каноническим видом.
+
+    release=True сбрасывает загруженные доски после записи. Только для отдельной сессии стрима:
+    в сессии запроса это отцепило бы объекты, которые запрос ещё меняет.
+    """
     projects, board_ids, templates = await _scope_contents(db, user.id, scope)
     digest = hashlib.sha256()
 
@@ -222,21 +295,19 @@ async def iter_backup(db: AsyncSession, user: User, scope: Scope) -> AsyncIterat
     for number, board_id in enumerate(board_ids):
         prefix = b"," if number else b""
         yield emit(prefix + canonical(await _board_document(db, board_id)))
-        # Освобождаем загруженные доски: иначе память растёт вместе с аккаунтом.
-        db.expunge_all()
+        if release:
+            # Освобождаем загруженные доски: иначе память растёт вместе с аккаунтом.
+            db.expunge_all()
     profile = {"display_name": user.display_name, "email": user.email, "locale": user.locale}
     yield emit(b'],"profile":' + canonical(profile) + b',"projects":[')
-    project_docs = [
-        {
-            "source_id": str(p.id),
-            "name": p.name,
-            "description": p.description,
-            "created_at": _iso(p.created_at),
-            "updated_at": _iso(p.updated_at),
-        }
-        for p in projects
-    ]
-    yield emit(b",".join(canonical(doc) for doc in project_docs) + b'],"templates":[')
+    for number, project in enumerate(projects):
+        prefix = b"," if number else b""
+        yield emit(
+            prefix + canonical(await _project_document(db, project, with_documents=scope.type != "board"))
+        )
+        if release:
+            db.expunge_all()
+    yield emit(b'],"templates":[')
     template_docs = [
         {
             "source_id": str(t.id),
@@ -354,6 +425,7 @@ def counts(document: BackupDocument) -> dict[str, int]:
         "boards": len(data.boards),
         "cards": sum(len(board.cards) for board in data.boards),
         "templates": len(data.templates),
+        "documents": sum(len(project.documents) for project in data.projects),
     }
 
 
@@ -468,7 +540,73 @@ async def _restore_project(db: AsyncSession, user_id: UUID, source: BackupProjec
     return project
 
 
-async def _restore_board(db: AsyncSession, project: Project, source: BackupBoard) -> None:
+async def _ensure_tags(db: AsyncSession, project: Project, tags: list[Any]) -> dict[str, UUID]:
+    """Теги проекта по именам: существующие используются, недостающие создаются."""
+    existing = {tag.name: tag for tag in await _project_tags(db, project.id)}
+    last = max((tag.position for tag in existing.values()), default=None)
+    for source in tags:
+        if source.name in existing:
+            continue
+        last = key_between(last, None)
+        tag = ProjectTag(project_id=project.id, name=source.name, color=source.color, position=last)
+        db.add(tag)
+        existing[source.name] = tag
+    await db.flush()
+    return {name: tag.id for name, tag in existing.items()}
+
+
+async def _restore_documents(
+    db: AsyncSession, settings: Settings, project: Project, source: BackupProject, tags: dict[str, UUID]
+) -> None:
+    for item in source.documents:
+        restored = Document(
+            project_id=project.id,
+            name=item.name,
+            description=item.description,
+            created_at=item.created_at,
+            updated_at=item.updated_at,
+        )
+        db.add(restored)
+        await db.flush()
+        for version in item.versions:
+            try:
+                data = base64.b64decode(version.data, validate=True)
+            except ValueError as exc:
+                raise ApiError(422, "invalid_backup", f"Повреждён файл «{version.filename}»") from exc
+            kind, digest, preview = await documents.prepare(version.filename, data, settings.file_max_bytes)
+            db.add(
+                DocumentVersion(
+                    document_id=restored.id,
+                    number=version.number,
+                    filename=version.filename,
+                    kind=kind,
+                    size=len(data),
+                    sha256=digest,
+                    data=data,
+                    preview=preview,
+                    uploader_name=version.uploader_name,
+                    created_at=version.created_at,
+                )
+            )
+        db.add_all(
+            DocumentComment(
+                document_id=restored.id,
+                author_name=comment.author_name,
+                body=comment.body,
+                created_at=comment.created_at,
+                updated_at=comment.created_at,
+            )
+            for comment in item.comments
+        )
+        db.add_all(
+            DocumentTag(document_id=restored.id, tag_id=tags[name]) for name in item.tags if name in tags
+        )
+    await db.flush()
+
+
+async def _restore_board(
+    db: AsyncSession, project: Project, source: BackupBoard, tags: dict[str, UUID]
+) -> None:
     board = Board(
         project_id=project.id,
         name=source.name,
@@ -488,12 +626,12 @@ async def _restore_board(db: AsyncSession, project: Project, source: BackupBoard
     board = await load_board(db, board.id)
     index = build_index(board)
     for card in source.cards:
-        db.add(_restore_card(board, index, card))
+        db.add(_restore_card(board, index, card, tags))
     board.updated_at = source.updated_at
     await db.flush()
 
 
-def _restore_card(board: Board, index: BoardIndex, source: BackupCard) -> Card:
+def _restore_card(board: Board, index: BoardIndex, source: BackupCard, tags: dict[str, UUID]) -> Card:
     column = index.columns_by_key.get(source.column)
     if column is None:
         raise ApiError(422, "invalid_backup", f"Колонка «{source.column}» не найдена в доске «{board.name}»")
@@ -506,8 +644,10 @@ def _restore_card(board: Board, index: BoardIndex, source: BackupCard) -> Card:
         due_date=source.due_date,
         completed_at=source.completed_at,
         cover_url=source.cover_url,
+        color=source.color,
         created_at=source.created_at,
         updated_at=source.updated_at,
+        tags=[CardTag(tag_id=tags[name]) for name in dict.fromkeys(source.tags) if name in tags],
         dimension_values=[],
         field_values=[],
         checklists=[],
@@ -549,7 +689,12 @@ def _restore_fields(card: Card, index: BoardIndex, fields: dict[str, Any]) -> No
 
 
 async def restore(
-    db: AsyncSession, user: User, parsed: ParsedBackup, mode: str, confirmation: str | None
+    db: AsyncSession,
+    settings: Settings,
+    user: User,
+    parsed: ParsedBackup,
+    mode: str,
+    confirmation: str | None,
 ) -> tuple[dict[str, int], list[str], UUID | None]:
     """Все id создаются заново; владелец — только текущий пользователь."""
     document = parsed.document
@@ -570,8 +715,13 @@ async def restore(
         name = _copy_name(source.name, taken)
         taken.add(name)
         created[source.source_id] = await _restore_project(db, user.id, source, name)
+    tag_maps: dict[UUID, dict[str, UUID]] = {}
+    for source in document.data.projects:
+        project = created[source.source_id]
+        tag_maps[source.source_id] = await _ensure_tags(db, project, source.tags)
+        await _restore_documents(db, settings, project, source, tag_maps[source.source_id])
     for board in document.data.boards:
-        await _restore_board(db, created[board.project_source_id], board)
+        await _restore_board(db, created[board.project_source_id], board, tag_maps[board.project_source_id])
     existing_templates = await db.execute(
         select(Template.name).where(Template.owner_id == user.id, Template.deleted_at.is_(None))
     )

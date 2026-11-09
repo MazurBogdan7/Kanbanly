@@ -1,7 +1,7 @@
 .PHONY: up down logs test test-backend test-frontend test-e2e lint typecheck format schemas migrate
 
 up: .env
-	docker compose --profile dev up --build -d
+	docker compose --profile dev --profile localdb up --build -d
 	@echo "Kanbanly: http://localhost:8080   Почта: http://localhost:8025"
 
 .env:

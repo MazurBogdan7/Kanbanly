@@ -1,15 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Download, MoreHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
 
 import { Button, EmptyState, ErrorNote, Menu, MenuItem, Skeleton } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import { useT } from "@/i18n";
-import { api } from "@/lib/api/client";
+import { api, downloadFrom } from "@/lib/api/client";
 
 import { keys, useProject } from "../boards/api";
+import { ProjectDocuments } from "../workspace/Documents";
+import { ProjectTags } from "../workspace/tags";
 import { BoardTile } from "./HomePage";
+import { ProjectMembers } from "./Members";
 import { NewBoardWizard } from "./NewBoardWizard";
 
 export function ProjectPage() {
@@ -52,7 +55,7 @@ export function ProjectPage() {
   }
   const boards = project.data.boards ?? [];
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 p-4 md:p-8">
+    <div className="mx-auto grid w-full max-w-6xl gap-6 p-4 md:p-8">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold">{project.data.name}</h1>
@@ -65,14 +68,36 @@ export function ProjectPage() {
           </Button>
           <Menu
             trigger={
-              <Button variant="ghost" size="icon" aria-label={t("project.delete")}>
+              <Button variant="ghost" size="icon" aria-label={t("project.actions")}>
                 <MoreHorizontal className="size-4" aria-hidden />
               </Button>
             }
           >
-            <MenuItem danger onSelect={() => remove.mutate()}>
-              {t("project.delete")}
+            <MenuItem
+              onSelect={() =>
+                void downloadFrom("/export/backup", {
+                  query: { scope: `project:${projectId}` },
+                }).catch(toast.error)
+              }
+            >
+              <Download className="size-3.5" aria-hidden />
+              {t("project.download")}
             </MenuItem>
+            <MenuItem
+              onSelect={() =>
+                void downloadFrom("/export/csv", {
+                  query: { scope: `project:${projectId}` },
+                }).catch(toast.error)
+              }
+            >
+              <Download className="size-3.5" aria-hidden />
+              {t("project.downloadTables")}
+            </MenuItem>
+            {project.data.role === "owner" && (
+              <MenuItem danger onSelect={() => remove.mutate()}>
+                {t("project.delete")}
+              </MenuItem>
+            )}
           </Menu>
         </div>
       </div>
@@ -92,6 +117,9 @@ export function ProjectPage() {
           ))}
         </div>
       )}
+      <ProjectDocuments projectId={projectId} canEdit={project.data.role !== "viewer"} />
+      <ProjectTags projectId={projectId} canEdit={project.data.role !== "viewer"} />
+      <ProjectMembers project={project.data} />
       {wizard && <NewBoardWizard projectId={projectId} onClose={() => setWizard(false)} />}
     </div>
   );

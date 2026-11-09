@@ -1,20 +1,22 @@
+import hashlib
 import json
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 
 from app.api.deps import AppSettings, Current, Db, IfMatch, bump, check_version, set_etag
 from app.core.db import utcnow
 from app.core.errors import ApiError
-from app.models import Board, BoardView, Card, Template
+from app.models import Attachment, Board, BoardView, Card, Checklist, ChecklistItem, Comment, Template
 from app.repositories import access
 from app.schemas.api import (
     BoardCreate,
     BoardOut,
     BoardReset,
+    BoardRevision,
     BoardUpdate,
     CardOut,
     Page,
@@ -25,7 +27,7 @@ from app.schemas.api import (
 from app.schemas.auth import Ok
 from app.schemas.template import BoardConfig, BoardTemplate, ViewTemplate
 from app.services import cards as card_service
-from app.services import presets
+from app.services import presets, spreadsheet
 from app.services import templates as template_service
 from app.services.audit import audit
 from app.services.board_config import apply_config, export_config, load_board
@@ -357,3 +359,38 @@ async def delete_view(view_id: UUID, current: Current, db: Db) -> Ok:
     view, _ = await access.get_view(db, current.id, view_id, "editor")
     await db.delete(view)
     return Ok()
+
+
+@router.get("/boards/{board_id}/revision")
+async def board_revision(board_id: UUID, current: Current, db: Db) -> BoardRevision:
+    """Дешёвая метка изменений: клиент опрашивает её и перезагружает доску, только когда она сменилась."""
+    found = await access.get_board(db, current.id, board_id)
+    cards = (
+        await db.execute(
+            select(func.count(Card.id), func.max(Card.updated_at)).where(Card.board_id == board_id)
+        )
+    ).one()
+    card_ids = select(Card.id).where(Card.board_id == board_id).scalar_subquery()
+    items = (
+        await db.execute(
+            select(func.count(ChecklistItem.id), func.max(ChecklistItem.updated_at))
+            .join(Checklist, Checklist.id == ChecklistItem.checklist_id)
+            .where(Checklist.card_id.in_(card_ids))
+        )
+    ).one()
+    comments = await db.scalar(select(func.count(Comment.id)).where(Comment.card_id.in_(card_ids)))
+    attachments = await db.scalar(select(func.count(Attachment.id)).where(Attachment.card_id.in_(card_ids)))
+    parts = (found.board.version, found.board.updated_at, *cards, *items, comments, attachments)
+    digest = hashlib.sha256(repr(parts).encode()).hexdigest()[:24]
+    return BoardRevision(revision=digest)
+
+
+@router.get("/boards/{board_id}/export.csv")
+async def export_csv(board_id: UUID, current: Current, db: Db) -> Response:
+    """Таблица доски для Excel. Несколько досок сразу — GET /export/csv."""
+    await access.get_board(db, current.id, board_id)
+    return Response(
+        await spreadsheet.board_csv(db, board_id),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="board-{board_id}.csv"'},
+    )

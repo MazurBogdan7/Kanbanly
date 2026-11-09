@@ -28,6 +28,7 @@ class UserOut(BaseModel):
     display_name: str
     locale: str
     totp_enabled: bool
+    is_admin: bool
     created_at: datetime
 
 
@@ -74,6 +75,10 @@ class SessionOut(BaseModel):
     user_agent: str
     ip: str
     current: bool
+
+
+class RegistrationOut(BaseModel):
+    open: bool
 
 
 class CsrfOut(BaseModel):

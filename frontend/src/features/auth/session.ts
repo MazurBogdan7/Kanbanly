@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 
 import { useLocale, type Locale } from "@/i18n";
 import { api, ApiError } from "@/lib/api/client";
@@ -29,6 +30,19 @@ export function useSetSession() {
   return (user: UserOut | null) => {
     queryClient.clear();
     queryClient.setQueryData(keys.me, user);
+  };
+}
+
+/**
+ * Осознанный выход: сначала уходим на страницу входа, потом сбрасываем данные.
+ * В обратном порядке оболочка приняла бы выход за истёкшую сессию и предложила бы вернуться назад.
+ */
+export function useSignOut() {
+  const navigate = useNavigate();
+  const setSession = useSetSession();
+  return async () => {
+    await navigate({ to: "/login" });
+    setSession(null);
   };
 }
 

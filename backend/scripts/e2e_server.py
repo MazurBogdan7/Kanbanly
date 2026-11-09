@@ -12,9 +12,15 @@ BACKEND = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND))
 
 from app.core.config import Settings  # noqa: E402
-from app.core.db import Base, create_engine  # noqa: E402
+from app.core.db import Base, create_engine, create_session_factory  # noqa: E402
 from app.main import create_app  # noqa: E402
+from app.services import auth  # noqa: E402
 from app.services.mailer import FileMailer  # noqa: E402
+
+# Первый пользователь сервера — администратор. Заводим его заранее, чтобы тесты
+# регистрировали обычных пользователей, как на настоящем сервере.
+ADMIN_EMAIL = "admin@example.com"
+ADMIN_PASSWORD = "correct-horse-battery-7"  # noqa: S105
 
 
 def main() -> None:
@@ -35,6 +41,9 @@ def main() -> None:
     async def prepare() -> None:
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
+        async with create_session_factory(engine)() as db:
+            await auth.register(db, ADMIN_EMAIL, ADMIN_PASSWORD, "Админ")
+            await db.commit()
 
     asyncio.run(prepare())
     mail_dir = Path(os.environ.get("E2E_MAIL_DIR", directory / "mail"))

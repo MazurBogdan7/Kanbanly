@@ -16,6 +16,9 @@ dependencies = [
   "pyotp>=2.9",
   "cryptography>=43",
   "aiosmtplib>=3.0",
+  "mammoth>=1.13.0",
+  "openpyxl>=3.1.5",
+  "nh3>=0.3.7",
 ]
 
 [dependency-groups]

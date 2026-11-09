@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import {
@@ -19,7 +18,7 @@ import { api, ApiError } from "@/lib/api/client";
 import type { RecoveryCodesOut, SessionOut, TotpSetupOut, UserOut } from "@/lib/api/types";
 
 import { PasswordMeter } from "../auth/AuthPages";
-import { useMe, useSetSession } from "../auth/session";
+import { useMe, useSignOut } from "../auth/session";
 import { DataBackups } from "../backup/DataBackups";
 import { keys } from "../boards/api";
 
@@ -192,8 +191,7 @@ function Security({ user }: { user: UserOut }) {
 function Sessions() {
   const { t, locale } = useT();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const setSession = useSetSession();
+  const signOut = useSignOut();
   const sessions = useQuery({
     queryKey: keys.sessions,
     queryFn: () => api.get<SessionOut[]>("/auth/sessions"),
@@ -237,10 +235,7 @@ function Sessions() {
         onClick={() =>
           void api
             .post("/auth/logout-all")
-            .then(() => {
-              setSession(null);
-              void navigate({ to: "/login" });
-            })
+            .then(() => signOut())
             .catch(toast.error)
         }
       >
@@ -252,15 +247,11 @@ function Sessions() {
 
 function Danger() {
   const { t } = useT();
-  const navigate = useNavigate();
-  const setSession = useSetSession();
+  const signOut = useSignOut();
   const [password, setPassword] = useState("");
   const remove = useMutation({
     mutationFn: () => api.delete("/auth/me", { password }),
-    onSuccess: () => {
-      setSession(null);
-      void navigate({ to: "/login" });
-    },
+    onSuccess: () => void signOut(),
     onError: toast.error,
   });
   return (

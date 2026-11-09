@@ -20,8 +20,11 @@ from app.models import (
     Checklist,
     ChecklistItem,
     Comment,
+    Document,
+    DocumentComment,
     Project,
     ProjectMember,
+    ProjectTag,
     Template,
 )
 
@@ -173,3 +176,31 @@ async def get_template(
     if template is None or template.owner_id != user_id or (template.deleted_at is not None) != deleted:
         raise not_found()
     return template
+
+
+async def get_tag(
+    db: AsyncSession, user_id: UUID, tag_id: UUID, minimum: Role = "viewer"
+) -> tuple[ProjectTag, ProjectAccess]:
+    tag = await db.get(ProjectTag, tag_id)
+    if tag is None:
+        raise not_found()
+    return tag, await get_project(db, user_id, tag.project_id, minimum)
+
+
+async def get_document(
+    db: AsyncSession, user_id: UUID, document_id: UUID, minimum: Role = "viewer", *, deleted: bool = False
+) -> tuple[Document, ProjectAccess]:
+    document = await db.get(Document, document_id)
+    if document is None or (document.deleted_at is not None) != deleted:
+        raise not_found()
+    return document, await get_project(db, user_id, document.project_id, minimum)
+
+
+async def get_document_comment(
+    db: AsyncSession, user_id: UUID, comment_id: UUID, minimum: Role = "viewer"
+) -> tuple[DocumentComment, ProjectAccess]:
+    comment = await db.get(DocumentComment, comment_id)
+    if comment is None:
+        raise not_found()
+    _, found = await get_document(db, user_id, comment.document_id, minimum)
+    return comment, found

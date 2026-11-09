@@ -1,7 +1,7 @@
 import { AlertTriangle, CalendarDays, CheckSquare, MessageSquare } from "lucide-react";
-import { memo, type CSSProperties, type ReactNode } from "react";
+import { memo, useContext, type CSSProperties, type ReactNode } from "react";
 
-import { useT } from "@/i18n";
+import { t as translate, useT } from "@/i18n";
 import type {
   BadgeConfig,
   BoardConfig,
@@ -12,7 +12,9 @@ import type {
   FaceSlot,
   FieldTemplate,
 } from "@/lib/api/types";
-import { blend, readableOpacity, readableText } from "@/lib/contrast";
+import { blend, ensureContrast, readableOpacity, readableText, strongText } from "@/lib/contrast";
+
+import { ProjectTagsContext } from "../../workspace/tags";
 import { isSafeImageUrl } from "@/lib/templateFile";
 
 import { hasRule, isOverdue, missingRequired, todayIso } from "./model";
@@ -141,7 +143,7 @@ export function formatFieldValue(field: FieldTemplate, value: unknown): string |
       return `${items.filter((item) => item.done).length}/${items.length}`;
     }
     case "attachment_link":
-      return (value as { name?: string }).name ?? "Ссылка";
+      return (value as { name?: string }).name ?? translate("card.link");
     case "url":
       return String(value).replace(/^https?:\/\//, "");
     case "number":
@@ -270,6 +272,45 @@ function slot(
   }
 }
 
+/** Теги проекта на карточке: имена и цвета берутся из справочника проекта. */
+function CardTags({ ids }: { ids: string[] }) {
+  const index = useContext(ProjectTagsContext);
+  const tags = ids.map((id) => index.get(id)).filter((tag) => !!tag);
+  if (!tags.length) return null;
+  return (
+    <div className="kb-labels">
+      {tags.map((tag) => (
+        <span
+          key={tag.id}
+          className="kb-label"
+          style={{ background: tag.color, color: strongText(tag.color) }}
+        >
+          {tag.name}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Свой цвет карточки. Переопределяем токены темы только внутри карточки: основной и
+ * приглушённый текст подбираются под фон с контрастом не ниже WCAG AA.
+ */
+export function cardColorVars(color: string | null | undefined): Record<string, string> {
+  if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return {};
+  const text = strongText(color);
+  return {
+    "--t-surface-2": color,
+    "--t-text": text,
+    "--t-text-muted": ensureContrast(blend(text, color, 0.72), color),
+    // Цвета заголовка и текста из типографики шаблона на чужом фоне могут не читаться.
+    "--ty-card-title-color": text,
+    "--ty-card-body-color": ensureContrast(blend(text, color, 0.85), color),
+    "--t-border": blend(text, color, 0.18),
+    "--t-border-strong": blend(text, color, 0.35),
+  };
+}
+
 export function accentColor(
   card: CardOut,
   config: BoardConfig,
@@ -322,6 +363,7 @@ export const CardFace = memo(function CardFace({ card, config, column }: CardFac
         </span>
       )}
       {face.map((name) => slot(name, card, config, tokens, titleStyle))}
+      {card.tags?.length ? <CardTags ids={card.tags} /> : null}
     </>
   );
 });
@@ -357,6 +399,7 @@ export function cardShellProps(card: CardOut, config: BoardConfig, column?: Colu
   const style: Record<string, string | number | undefined> = {
     "--c": color ?? "var(--t-accent-dim)",
     "--c-w": `${accent.width ?? 3}px`,
+    ...cardColorVars(card.color),
   };
   const dim = column?.card_style?.opacity ?? undefined;
   if (dim) {
@@ -370,6 +413,7 @@ export function cardShellProps(card: CardOut, config: BoardConfig, column?: Colu
     "data-hover": layout.hover ?? "border",
     "data-border": layout.border === false ? "off" : undefined,
     "data-dim": dim ? true : undefined,
+    "data-colored": card.color ? true : undefined,
     "data-mute-badges": column?.card_style?.mute_badges || undefined,
   };
 }

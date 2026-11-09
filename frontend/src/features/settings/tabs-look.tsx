@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button, cx, SelectField, TextField, Toggle } from "@/components/ui";
 import { FONT_NAMES, fontStack } from "@/design-system/fonts";
-import { useT } from "@/i18n";
+import { useT, type MessageKey } from "@/i18n";
 import type {
   Background,
   BadgeConfig,
@@ -34,17 +34,17 @@ const FACE_SLOTS: FaceSlot[] = [
   "comments_count",
   "custom_text",
 ];
-const SLOT_LABELS: Record<FaceSlot, string> = {
-  title: "Заголовок",
-  description: "Описание",
-  badges: "Бейджи",
-  fields: "Поля",
-  cover: "Обложка",
-  assignees: "Исполнители",
-  due_date: "Срок",
-  checklist_progress: "Прогресс чек-листа",
-  comments_count: "Счётчик комментариев",
-  custom_text: "Свой текст",
+const SLOT_LABELS: Record<FaceSlot, MessageKey> = {
+  title: "slot.title",
+  description: "slot.description",
+  badges: "slot.badges",
+  fields: "slot.fields",
+  cover: "slot.cover",
+  assignees: "slot.assignees",
+  due_date: "slot.due_date",
+  checklist_progress: "slot.checklist_progress",
+  comments_count: "slot.comments_count",
+  custom_text: "slot.custom_text",
 };
 const ACCENT_STYLES = [
   "left-border",
@@ -57,24 +57,24 @@ const BADGE_DISPLAY = ["name", "short", "icon", "icon+name"] as const;
 const BADGE_STYLES = ["per-value", "neutral", "outlined", "filled", "dot"] as const;
 const WEIGHTS = [300, 400, 500, 600, 700, 800];
 const CASES = ["as_is", "upper", "lower", "capitalize"] as const;
-const ROLE_NAMES: Record<RoleName, string> = {
-  board_title: "Заголовок доски",
-  board_subtitle: "Подзаголовок",
-  column_title: "Заголовок колонки",
-  card_title: "Заголовок карточки",
-  card_body: "Текст карточки",
-  badge: "Бейдж",
-  base: "Базовый текст",
+const ROLE_NAMES: Record<RoleName, MessageKey> = {
+  board_title: "typeRole.board_title",
+  board_subtitle: "typeRole.board_subtitle",
+  column_title: "typeRole.column_title",
+  card_title: "typeRole.card_title",
+  card_body: "typeRole.card_body",
+  badge: "typeRole.badge",
+  base: "typeRole.base",
 };
-const WIDGET_LABELS: Record<Widget["type"], string> = {
-  title: "Заголовок",
-  actions: "Панель действий",
-  progress_by_dimension: "Прогресс по измерению",
-  filter_bar: "Панель фильтров",
-  filter_chips: "Чипы-фильтры",
-  stats: "Счётчики",
-  note: "Заметка",
-  legend: "Легенда",
+const WIDGET_LABELS: Record<Widget["type"], MessageKey> = {
+  title: "widget.title",
+  actions: "widget.actions",
+  progress_by_dimension: "widget.progress_by_dimension",
+  filter_bar: "widget.filter_bar",
+  filter_chips: "widget.filter_chips",
+  stats: "widget.stats",
+  note: "widget.note",
+  legend: "widget.legend",
 };
 
 function useCardChange() {
@@ -239,14 +239,14 @@ export function CardTab({ config }: { config: BoardConfig }) {
   const inactive = FACE_SLOTS.filter((slot) => !face.includes(slot));
   const sources = [
     { value: "none", label: "—" },
-    { value: "column", label: "Колонка" },
+    { value: "column", label: t("ctor.sourceColumn") },
     ...(config.dimensions ?? []).map((item) => ({
       value: `dimension:${item.key}`,
-      label: `Измерение: ${item.name}`,
+      label: t("ctor.sourceDimension", { name: item.name }),
     })),
     ...(config.fields ?? []).map((item) => ({
       value: `field:${item.key}`,
-      label: `Поле: ${item.name}`,
+      label: t("ctor.sourceField", { name: item.name }),
     })),
   ];
   const padding = card.padding ?? [10, 12];
@@ -256,14 +256,14 @@ export function CardTab({ config }: { config: BoardConfig }) {
         <SortableList
           items={face}
           getKey={(item) => item}
-          getLabel={(item) => SLOT_LABELS[item]}
+          getLabel={(item) => t(SLOT_LABELS[item])}
           onReorder={(next) => changeCard((target) => (target.face = next))}
         >
           {(slot) => (
             <div className="flex items-center justify-between text-sm">
-              {SLOT_LABELS[slot]}
+              {t(SLOT_LABELS[slot])}
               <RemoveButton
-                label={`${t("common.remove")}: ${SLOT_LABELS[slot]}`}
+                label={`${t("common.remove")}: ${t(SLOT_LABELS[slot])}`}
                 onClick={() =>
                   changeCard((target) => {
                     target.face = face.filter((item) => item !== slot);
@@ -281,7 +281,7 @@ export function CardTab({ config }: { config: BoardConfig }) {
                 size="sm"
                 onClick={() => changeCard((target) => (target.face = [...face, slot]))}
               >
-                + {SLOT_LABELS[slot]}
+                + {t(SLOT_LABELS[slot])}
               </Button>
             ))}
           </div>
@@ -500,12 +500,12 @@ function WidgetEditor({
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
         <Toggle
-          label={WIDGET_LABELS[widget.type]}
+          label={t(WIDGET_LABELS[widget.type])}
           checked={widget.enabled !== false}
           onChange={(enabled) => update({ enabled })}
         />
         <RemoveButton
-          label={`${t("common.remove")}: ${WIDGET_LABELS[widget.type]}`}
+          label={`${t("common.remove")}: ${t(WIDGET_LABELS[widget.type])}`}
           onClick={() =>
             change((draft) => {
               draft.layout?.header?.widgets?.splice(index, 1);
@@ -517,17 +517,17 @@ function WidgetEditor({
         <>
           {dimensionSelect(widget.dimension)}
           <TextField
-            label="Правило «готово»"
+            label={t("ctor.doneRule")}
             value={widget.done_rule ?? "column_kind:done"}
             onChange={(event) => update({ done_rule: event.target.value })}
           />
           <Toggle
-            label="Показывать подсказку"
+            label={t("ctor.showHint")}
             checked={widget.show_hint !== false}
             onChange={(show_hint) => update({ show_hint })}
           />
           <ColorField
-            label="Цвет полосы"
+            label={t("ctor.barColor")}
             config={config}
             value={widget.bar_color ?? "{accent}"}
             onChange={(bar_color) => update({ bar_color })}
@@ -538,7 +538,7 @@ function WidgetEditor({
         <>
           {dimensionSelect(widget.dimension)}
           <SelectField
-            label="Стиль чипа"
+            label={t("ctor.chipStyle")}
             value={widget.chip_style ?? "left-border-color"}
             onChange={(event) => update({ chip_style: event.target.value })}
           >
@@ -547,7 +547,7 @@ function WidgetEditor({
             ))}
           </SelectField>
           <Toggle
-            label="Мультивыбор"
+            label={t("ctor.multi")}
             checked={widget.multi !== false}
             onChange={(multi) => update({ multi })}
           />
@@ -557,12 +557,12 @@ function WidgetEditor({
       {widget.type === "filter_bar" && (
         <>
           <Toggle
-            label="Поиск"
+            label={t("ctor.search")}
             checked={widget.search !== false}
             onChange={(search) => update({ search })}
           />
           <fieldset className="grid gap-1">
-            <legend className="text-xs text-ink-soft">Селекты</legend>
+            <legend className="text-xs text-ink-soft">{t("ctor.selects")}</legend>
             {config.dimensions?.map((item) => (
               <label key={item.key} className="flex items-center gap-1.5 text-xs">
                 <input
@@ -584,14 +584,14 @@ function WidgetEditor({
       )}
       {widget.type === "note" && (
         <TextField
-          label="Текст"
+          label={t("ctor.text")}
           value={widget.text}
           onChange={(event) => update({ text: event.target.value })}
         />
       )}
       {widget.type === "stats" && (
         <fieldset className="grid gap-1">
-          <legend className="text-xs text-ink-soft">Метрики</legend>
+          <legend className="text-xs text-ink-soft">{t("ctor.metrics")}</legend>
           {(["total", "in_progress", "overdue", "wip_exceeded"] as const).map((metric) => (
             <label key={metric} className="flex items-center gap-1.5 text-xs">
               <input
@@ -669,7 +669,7 @@ export function HeaderTab({ config }: { config: BoardConfig }) {
         <SortableList
           items={widgets.map((widget, index) => ({ widget, id: `${widget.type}-${index}` }))}
           getKey={(item) => item.id}
-          getLabel={(item) => WIDGET_LABELS[item.widget.type]}
+          getLabel={(item) => t(WIDGET_LABELS[item.widget.type])}
           onReorder={(next) =>
             change((draft) => {
               draft.layout!.header!.widgets = next.map((item) => item.widget);
@@ -681,7 +681,7 @@ export function HeaderTab({ config }: { config: BoardConfig }) {
         <div className="flex flex-wrap gap-1">
           {missingBase.map((type) => (
             <Button key={type} size="sm" onClick={() => add({ type } as Widget)}>
-              + {WIDGET_LABELS[type]}
+              + {t(WIDGET_LABELS[type])}
             </Button>
           ))}
           {firstDimension && (
@@ -690,30 +690,30 @@ export function HeaderTab({ config }: { config: BoardConfig }) {
                 size="sm"
                 onClick={() => add({ type: "progress_by_dimension", dimension: firstDimension })}
               >
-                + {WIDGET_LABELS.progress_by_dimension}
+                + {t(WIDGET_LABELS.progress_by_dimension)}
               </Button>
               <Button
                 size="sm"
                 onClick={() => add({ type: "filter_chips", dimension: firstDimension })}
               >
-                + {WIDGET_LABELS.filter_chips}
+                + {t(WIDGET_LABELS.filter_chips)}
               </Button>
               <Button size="sm" onClick={() => add({ type: "legend", dimension: firstDimension })}>
-                + {WIDGET_LABELS.legend}
+                + {t(WIDGET_LABELS.legend)}
               </Button>
             </>
           )}
           <Button size="sm" onClick={() => add({ type: "filter_bar", selects: [] })}>
-            + {WIDGET_LABELS.filter_bar}
+            + {t(WIDGET_LABELS.filter_bar)}
           </Button>
           <Button
             size="sm"
             onClick={() => add({ type: "stats", metrics: ["total", "in_progress"] })}
           >
-            + {WIDGET_LABELS.stats}
+            + {t(WIDGET_LABELS.stats)}
           </Button>
-          <Button size="sm" onClick={() => add({ type: "note", text: "Заметка" })}>
-            + {WIDGET_LABELS.note}
+          <Button size="sm" onClick={() => add({ type: "note", text: t("widget.note") })}>
+            + {t(WIDGET_LABELS.note)}
           </Button>
         </div>
         <p className="text-xs text-ink-soft">{normalizedWidgets(config).length} активн.</p>
@@ -1021,7 +1021,7 @@ function RoleEditor({
       draft.typography = { ...draft.typography, [role]: { ...draft.typography?.[role], ...patch } };
     });
   return (
-    <Collapsible title={ROLE_NAMES[role]}>
+    <Collapsible title={t(ROLE_NAMES[role])}>
       <div data-role-editor={role} className="grid gap-2">
         <SelectField
           label={t("ctor.font")}

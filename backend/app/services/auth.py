@@ -5,7 +5,7 @@ from datetime import timedelta
 from uuid import UUID
 
 import pyotp
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +21,8 @@ from app.security.tokens import (
     new_recovery_code,
     new_token,
 )
+from app.services import app_settings
+from app.services.audit import audit
 from app.services.mailer import Mailer
 
 logger = logging.getLogger(__name__)
@@ -40,11 +42,16 @@ async def find_user(db: AsyncSession, email: str) -> User | None:
 
 
 async def register(db: AsyncSession, email: str, password: str, display_name: str) -> User:
+    first = (await db.scalar(select(func.count(User.id)))) == 0
+    # Первый пользователь сервера — администратор, и для него регистрация открыта всегда.
+    if not first and not await app_settings.get(db, "registration_open"):
+        raise ApiError(403, "registration_closed", "Регистрация закрыта. Обратитесь к администратору.")
     passwords.validate_password(password)
     user = User(
         email=normalize_email(email),
         password_hash=passwords.hash_password(password),
         display_name=display_name.strip() or email.split("@")[0],
+        is_admin=first,
     )
     db.add(user)
     try:
@@ -66,13 +73,53 @@ async def authenticate(
     if user is None:
         passwords.burn_verification(password)
         raise ApiError(401, "invalid_credentials", "Неверный email или пароль")
-    if not passwords.verify_password(user.password_hash, password):
+    valid = passwords.verify_password(user.password_hash, password)
+    if user.locked_at is not None:
+        raise locked_error(settings)
+    if not valid:
+        await _register_failure(db, settings, user)
         raise ApiError(401, "invalid_credentials", "Неверный email или пароль")
+    if not user.is_active:
+        raise ApiError(403, "account_disabled", "Аккаунт отключён. Обратитесь к администратору.")
     if passwords.needs_rehash(user.password_hash):
         user.password_hash = passwords.hash_password(password)
     if user.totp_enabled:
-        await _check_second_factor(db, settings, user, totp_code, recovery_code)
+        try:
+            await _check_second_factor(db, settings, user, totp_code, recovery_code)
+        except ApiError as exc:
+            # Подбор кода второго фактора считается так же, как подбор пароля.
+            if exc.code == "invalid_second_factor":
+                await _register_failure(db, settings, user)
+            raise
+    user.failed_logins = 0
+    user.last_login_at = utcnow()
     return user
+
+
+def locked_error(settings: Settings) -> ApiError:
+    return ApiError(
+        423,
+        "account_locked",
+        f"Аккаунт заблокирован после {settings.login_lock_threshold} неудачных попыток входа. "
+        "Обратитесь к администратору или восстановите пароль через «Забыли пароль?».",
+    )
+
+
+async def _register_failure(db: AsyncSession, settings: Settings, user: User) -> None:
+    """Счётчик сохраняется сразу: ответ с ошибкой откатил бы транзакцию запроса."""
+    user.failed_logins += 1
+    lock = user.failed_logins >= settings.login_lock_threshold
+    if lock:
+        user.locked_at = utcnow()
+        audit(db, user.id, "auth.locked", attempts=user.failed_logins)
+    await db.commit()
+    if lock:
+        raise locked_error(settings)
+
+
+def unlock(user: User) -> None:
+    user.failed_logins = 0
+    user.locked_at = None
 
 
 async def _check_second_factor(
@@ -119,7 +166,8 @@ async def create_session(db: AsyncSession, user: User, user_agent: str, ip: str)
 
 async def resolve_session(
     db: AsyncSession, settings: Settings, token: str
-) -> tuple[User, UserSession] | None:
+) -> tuple[User, UserSession, bool] | None:
+    """Пользователь, сессия и признак продления (тогда cookie нужно выдать заново)."""
     result = await db.execute(
         select(User, UserSession)
         .join(UserSession, UserSession.user_id == User.id)
@@ -129,13 +177,16 @@ async def resolve_session(
     if row is None:
         return None
     user, session = row
+    if not user.is_active:
+        return None
     now = utcnow()
     if now - session.last_seen_at > timedelta(days=settings.session_idle_days):
         await db.delete(session)
         return None
-    if (now - session.last_seen_at).total_seconds() > SESSION_TOUCH_SECONDS:
+    touched = (now - session.last_seen_at).total_seconds() > SESSION_TOUCH_SECONDS
+    if touched:
         session.last_seen_at = now
-    return user, session
+    return user, session, touched
 
 
 async def revoke_session_by_token(db: AsyncSession, token: str) -> None:
@@ -201,6 +252,8 @@ async def confirm_password_reset(db: AsyncSession, token: str, new_password: str
         raise ApiError(400, "invalid_token", "Ссылка недействительна или устарела")
     user.password_hash = passwords.hash_password(new_password)
     row.used_at = utcnow()
+    # Владелец доказал доступ к почте: блокировка за подбор снимается.
+    unlock(user)
     await revoke_all_sessions(db, user.id)
     return user
 

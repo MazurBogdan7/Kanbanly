@@ -1,6 +1,9 @@
 services:
+  # База на этом же сервере. Для внешней базы уберите localdb из COMPOSE_PROFILES в .env
+  # и укажите её адрес в KANBANLY_DATABASE_URL.
   db:
     image: postgres:16-alpine
+    profiles: ["localdb"]
     environment:
       POSTGRES_USER: kanbanly
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kanbanly}
@@ -26,6 +29,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        # С внешней базой сервиса db нет, и api стартует без него.
+        required: false
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/v1/health')"]
       interval: 10s

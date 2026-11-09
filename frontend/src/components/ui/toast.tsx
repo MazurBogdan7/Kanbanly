@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { useEffect } from "react";
 import { create } from "zustand";
 
-import { useT } from "@/i18n";
+import { t, useT } from "@/i18n";
 import { ApiError } from "@/lib/api/client";
 
 import { Button, cx } from "./index";
@@ -37,7 +37,7 @@ export const toast = {
       message:
         error instanceof ApiError
           ? (error.problems[0]?.message ?? error.message)
-          : "Что-то пошло не так",
+          : t("common.error"),
       tone: "error",
     }),
 };

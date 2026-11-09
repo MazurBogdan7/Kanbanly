@@ -227,7 +227,7 @@
       "cover_url": "https://images.example.com/cover.jpg",
       "checklists": [ { "title": "Готовность", "items": [ { "text": "Код", "done": true }, { "text": "Тесты", "done": false } ] } ]
     },
-    { "key": "todo", "column": "todo", "title": "Обычная задача", "description": "Значения по умолчанию подставятся сами.", "values": { "epic": "ui", "milestone": "m2", "platform": "mobile", "owner": "ivan" } },
+    { "key": "todo", "column": "todo", "title": "Обычная задача", "color": "#FFE8A3", "description": "Значения по умолчанию подставятся сами.", "values": { "epic": "ui", "milestone": "m2", "platform": "mobile", "owner": "ivan" } },
     { "key": "backlog", "column": "backlog", "title": "Идея в бэклоге", "values": { "epic": "ui", "milestone": "m2", "tags": ["idea"] } },
     { "key": "review", "column": "review", "title": "На проверке", "values": { "epic": "core", "milestone": "m1", "sprint": "s2" } },
     { "key": "blocked", "column": "blocked", "title": "Заблокированная", "values": { "epic": "core", "milestone": "m1" }, "fields": { "blocked": true } },

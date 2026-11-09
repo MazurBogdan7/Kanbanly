@@ -57,14 +57,17 @@ class Principal:
         return self.user.id
 
 
-async def _current(request: Request, db: Db, settings: AppSettings) -> Principal:
+async def _current(request: Request, response: Response, db: Db, settings: AppSettings) -> Principal:
     token = request.cookies.get(settings.session_cookie)
     if not token:
         raise unauthorized()
     resolved = await auth_service.resolve_session(db, settings, token)
     if resolved is None:
         raise unauthorized("Сессия истекла, войдите снова")
-    user, session = resolved
+    user, session, touched = resolved
+    if touched:
+        # Срок cookie сдвигается вместе с сессией: активного пользователя не выкидывает через 7 дней.
+        set_session_cookie(response, settings, token)
     return Principal(user, session.id, token)
 
 

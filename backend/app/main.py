@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app.api import auth, backup, boards, cards, misc, projects, templates
+from app.api import admin, auth, backup, boards, cards, misc, projects, templates, workspace
 from app.core.config import Settings, get_settings
 from app.core.db import create_engine, create_session_factory
 from app.core.errors import install_error_handlers, not_found
@@ -65,7 +65,7 @@ def create_app(
             await session.execute(text("SELECT 1"))
         return {"status": "ok"}
 
-    for module in (auth, projects, boards, cards, templates, backup, misc):
+    for module in (auth, projects, boards, cards, templates, backup, workspace, admin, misc):
         api.include_router(module.router)
     app.include_router(api)
 

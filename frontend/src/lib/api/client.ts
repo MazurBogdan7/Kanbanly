@@ -1,5 +1,7 @@
 /** Запросы к API: CSRF, ETag, единый разбор ошибок. */
 
+import { t } from "@/i18n";
+
 const BASE = "/api/v1";
 const CSRF_COOKIE = "kanbanly_csrf";
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
@@ -66,7 +68,7 @@ async function toError(response: Response): Promise<ApiError> {
     };
     return new ApiError(response.status, error.code, error.message, error.details);
   } catch {
-    return new ApiError(response.status, "unknown", "Сервер недоступен. Повторите попытку.");
+    return new ApiError(response.status, "unknown", t("common.serverDown"));
   }
 }
 
@@ -120,8 +122,20 @@ export async function downloadFrom(
 ): Promise<void> {
   const response = await send(options.method ?? "GET", path, options);
   const header = response.headers.get("content-disposition") ?? "";
-  const filename = /filename="([^"]+)"/.exec(header)?.[1] ?? "download.json";
-  saveBlob(await response.blob(), filename);
+  saveBlob(await response.blob(), filenameFrom(header));
+}
+
+/** Имя из Content-Disposition: сначала filename* (UTF-8, кириллица), затем обычное. */
+export function filenameFrom(header: string): string {
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded);
+    } catch {
+      // Битое кодирование: берём ASCII-имя.
+    }
+  }
+  return /filename="([^"]+)"/.exec(header)?.[1] ?? "download.json";
 }
 
 export function saveBlob(blob: Blob, filename: string): void {

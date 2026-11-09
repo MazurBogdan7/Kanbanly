@@ -1,14 +1,15 @@
 /** Движок доски: один компонент для доски, live-preview конструктора и миниатюр галереи. */
 import { useEffect, useMemo } from "react";
 
-import { useT } from "@/i18n";
 import type { BoardConfig, CardOut, ViewTemplate } from "@/lib/api/types";
 
 import "./board.css";
+import { CalendarView } from "./CalendarView";
 import { BoardHeader, type BoardActions } from "./HeaderWidgets";
 import { KanbanView, type CardHandlers } from "./KanbanView";
 import { matchesFilters, type Filters } from "./model";
 import { TableView } from "./TableView";
+import { TimelineView } from "./TimelineView";
 import { boardStyle, loadConfigFonts, type Palette } from "./theme";
 
 export interface BoardCanvasProps extends CardHandlers {
@@ -39,7 +40,6 @@ export function BoardCanvas({
   onMove,
   onQuickAdd,
 }: BoardCanvasProps) {
-  const { t } = useT();
   useEffect(() => loadConfigFonts(config), [config]);
   const style = useMemo(() => boardStyle(config, palette), [config, palette]);
   const visible = useMemo(
@@ -68,13 +68,18 @@ export function BoardCanvas({
           onMove={onMove}
           onQuickAdd={onQuickAdd}
         />
+      ) : viewType === "calendar" ? (
+        <CalendarView config={config} cards={visible} onOpen={onOpen} />
+      ) : viewType === "timeline" ? (
+        <TimelineView
+          config={config}
+          cards={visible}
+          allCards={cards}
+          view={view}
+          onOpen={onOpen}
+        />
       ) : (
-        <>
-          {viewType !== "table" && (
-            <p className="kb-note kb-view-note">{t("board.calendarSoon")}</p>
-          )}
-          <TableView config={config} cards={visible} view={view} onOpen={onOpen} />
-        </>
+        <TableView config={config} cards={visible} view={view} onOpen={onOpen} />
       )}
       {footer && <div className="kb-footer">{footer}</div>}
     </div>

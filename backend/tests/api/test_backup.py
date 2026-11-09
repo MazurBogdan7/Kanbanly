@@ -108,7 +108,7 @@ async def test_full_cycle_delete_restore_identical(client: Api, seeded: dict[str
 
     preview = (await client.post("/import/backup/preview", content=json.dumps(original))).json()
     assert preview["valid"] and preview["conflicts"] == []
-    assert preview["counts"] == {"projects": 2, "boards": 3, "cards": 10, "templates": 1}
+    assert preview["counts"] == {"projects": 2, "boards": 3, "cards": 10, "templates": 1, "documents": 0}
     result = await client.post("/import/backup", content=json.dumps(original))
     assert result.status_code == 200, result.text
 

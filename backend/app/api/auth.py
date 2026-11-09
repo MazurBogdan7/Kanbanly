@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Request, Response
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 
 from app.api.deps import (
     AppMailer,
@@ -15,7 +15,7 @@ from app.api.deps import (
     set_session_cookie,
 )
 from app.core.errors import not_found
-from app.models import UserSession
+from app.models import User, UserSession
 from app.schemas.auth import (
     CsrfOut,
     LoginIn,
@@ -25,6 +25,7 @@ from app.schemas.auth import (
     ProfileUpdate,
     RecoveryCodesOut,
     RegisterIn,
+    RegistrationOut,
     ResetConfirmIn,
     ResetRequestIn,
     SessionOut,
@@ -34,6 +35,7 @@ from app.schemas.auth import (
 )
 from app.security import passwords
 from app.security.tokens import new_token
+from app.services import app_settings
 from app.services import auth as service
 from app.services.audit import audit
 
@@ -45,6 +47,13 @@ def csrf(request: Request, response: Response, settings: AppSettings) -> CsrfOut
     token = request.cookies.get(settings.csrf_cookie) or new_token()
     set_csrf_cookie(response, settings, token)
     return CsrfOut(csrf_token=token)
+
+
+@router.get("/registration")
+async def registration(db: Db) -> RegistrationOut:
+    """Открыта ли регистрация: страница регистрации заранее объясняет, если нет."""
+    users = await db.scalar(select(func.count(User.id)))
+    return RegistrationOut(open=users == 0 or bool(await app_settings.get(db, "registration_open")))
 
 
 @router.post("/password-strength")

@@ -45,7 +45,9 @@ class SecurityHeadersMiddleware:
         async def send_wrapper(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
-                headers["Content-Security-Policy"] = CSP
+                # Ответ с собственной, более строгой политикой (файлы документов) её сохраняет.
+                if "content-security-policy" not in headers:
+                    headers["Content-Security-Policy"] = CSP
                 headers["X-Content-Type-Options"] = "nosniff"
                 headers["X-Frame-Options"] = "DENY"
                 headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -97,6 +99,8 @@ class BodyGuardMiddleware:
     def _limit(self, path: str) -> int:
         if path.startswith("/api/v1/import/"):
             return self.settings.backup_max_bytes
+        if path.endswith(("/documents", "/versions")):
+            return self.settings.file_max_bytes
         return self.settings.template_max_bytes * 2
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:

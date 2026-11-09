@@ -16,22 +16,26 @@ import type {
 } from "@/lib/api/types";
 import { parseTemplateText, type FileProblem } from "@/lib/templateFile";
 
-import { PALETTES } from "../settings/config-ops";
+import { applyLook, PALETTES } from "../settings/config-ops";
 import { TemplateThumbnail } from "../templates/TemplateThumbnail";
 import { usePresets, useTemplates } from "../templates/TemplatesPage";
 
 type Source = "preset" | "mine" | "blank" | "file";
 
-const BLANK: BoardTemplate = {
-  format: "kanbanly.board-template",
-  version: 1,
-  meta: { name: "" },
-  columns: [
-    { key: "todo", name: "К работе", kind: "todo" },
-    { key: "doing", name: "В работе", kind: "in_progress" },
-    { key: "done", name: "Готово", kind: "done" },
-  ],
-};
+function blankTemplate(t: Translate): BoardTemplate {
+  return {
+    format: "kanbanly.board-template",
+    version: 1,
+    meta: { name: "" },
+    columns: [
+      { key: "todo", name: t("wizard.colTodo"), kind: "todo" },
+      { key: "doing", name: t("wizard.colDoing"), kind: "in_progress" },
+      { key: "done", name: t("wizard.colDone"), kind: "done" },
+    ],
+  };
+}
+
+type Translate = ReturnType<typeof useT>["t"];
 
 interface Suggestion {
   label: "wizard.setEpics" | "wizard.setPriority" | "wizard.setClient";
@@ -39,64 +43,68 @@ interface Suggestion {
   fields?: FieldTemplate[];
 }
 
-const SUGGESTIONS: Suggestion[] = [
-  {
-    label: "wizard.setEpics",
-    dimensions: [
-      {
-        key: "epic",
-        name: "Эпик",
-        values: [
-          { key: "core", name: "Основное", color: "#3B5BDB" },
-          { key: "extra", name: "Дополнительное", color: "#0CA678" },
-        ],
-      },
-      {
-        key: "milestone",
-        name: "Веха",
-        type: "ordered_select",
-        values: [
-          { key: "m1", name: "M1", short: "M1" },
-          { key: "m2", name: "M2", short: "M2" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "wizard.setPriority",
-    dimensions: [
-      {
-        key: "priority",
-        name: "Приоритет",
-        type: "ordered_select",
-        values: [
-          { key: "high", name: "Высокий", color: "#C92A2A" },
-          { key: "normal", name: "Обычный", color: "#E67700" },
-          { key: "low", name: "Низкий", color: "#2F9E44" },
-        ],
-      },
-      {
-        key: "type",
-        name: "Тип",
-        values: [
-          { key: "feature", name: "Фича" },
-          { key: "bug", name: "Баг" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "wizard.setClient",
-    dimensions: [
-      {
-        key: "client",
-        name: "Клиент",
-        values: [{ key: "default", name: "Клиент", color: "#3B5BDB" }],
-      },
-    ],
-    fields: [{ key: "deadline", name: "Дедлайн", type: "date", show_on_face: true }],
-  },
-];
+function suggestions(t: Translate): Suggestion[] {
+  return [
+    {
+      label: "wizard.setEpics",
+      dimensions: [
+        {
+          key: "epic",
+          name: t("wizard.dimEpic"),
+          values: [
+            { key: "core", name: t("wizard.valCore"), color: "#3B5BDB" },
+            { key: "extra", name: t("wizard.valExtra"), color: "#0CA678" },
+          ],
+        },
+        {
+          key: "milestone",
+          name: t("wizard.dimMilestone"),
+          type: "ordered_select",
+          values: [
+            { key: "m1", name: "M1", short: "M1" },
+            { key: "m2", name: "M2", short: "M2" },
+          ],
+        },
+      ],
+    },
+    {
+      label: "wizard.setPriority",
+      dimensions: [
+        {
+          key: "priority",
+          name: t("wizard.dimPriority"),
+          type: "ordered_select",
+          values: [
+            { key: "high", name: t("wizard.valHigh"), color: "#C92A2A" },
+            { key: "normal", name: t("wizard.valNormal"), color: "#E67700" },
+            { key: "low", name: t("wizard.valLow"), color: "#2F9E44" },
+          ],
+        },
+        {
+          key: "type",
+          name: t("wizard.dimType"),
+          values: [
+            { key: "feature", name: t("wizard.valFeature") },
+            { key: "bug", name: t("wizard.valBug") },
+          ],
+        },
+      ],
+    },
+    {
+      label: "wizard.setClient",
+      dimensions: [
+        {
+          key: "client",
+          name: t("wizard.dimClient"),
+          values: [{ key: "default", name: t("wizard.dimClient"), color: "#3B5BDB" }],
+        },
+      ],
+      fields: [
+        { key: "deadline", name: t("wizard.fieldDeadline"), type: "date", show_on_face: true },
+      ],
+    },
+  ];
+}
 
 function Choice({
   selected,
@@ -133,8 +141,10 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
   const [name, setName] = useState("");
   const [samples, setSamples] = useState(true);
   const [palette, setPalette] = useState<string>("");
+  const [look, setLook] = useState<string>("");
   const [suggestion, setSuggestion] = useState<number | null>(null);
   const [columns, setColumns] = useState<string>("");
+  const sets = useMemo(() => suggestions(t), [t]);
   const [problems, setProblems] = useState<FileProblem[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -151,12 +161,14 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
   };
 
   const template = useMemo<BoardTemplate>(() => {
-    const source_template = base ?? BLANK;
+    const source_template = base ?? blankTemplate(t);
     const result: BoardTemplate = structuredClone(source_template);
     result.meta = { ...result.meta, name: name || t("wizard.title") };
+    const styled = presets.data?.find((item) => item.key === look);
+    if (styled) Object.assign(result, applyLook(result, styled.data));
     const chosen = PALETTES.find((item) => item.name === palette);
     if (chosen) result.theme = { ...result.theme, tokens: chosen.tokens, mode: chosen.mode };
-    const set = suggestion === null ? null : SUGGESTIONS[suggestion];
+    const set = suggestion === null ? null : suggestions(t)[suggestion];
     if (set) {
       const existing = new Set(result.dimensions?.map((item) => item.key));
       result.dimensions = [
@@ -181,7 +193,7 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
       }));
     }
     return result;
-  }, [base, columns, name, palette, suggestion, t]);
+  }, [base, columns, look, name, palette, presets.data, suggestion, t]);
 
   const create = useMutation({
     mutationFn: () =>
@@ -318,24 +330,56 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
       )}
 
       {step === 2 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <Choice selected={palette === ""} onClick={() => setPalette("")}>
-            {t("wizard.keepTheme")}
-          </Choice>
-          {PALETTES.map((item) => (
-            <Choice
-              key={item.name}
-              selected={palette === item.name}
-              onClick={() => setPalette(item.name)}
-            >
-              <span className="flex h-6 overflow-hidden rounded-sm" aria-hidden>
-                {["bg", "surface-2", "accent", "text"].map((token) => (
-                  <i key={token} className="flex-1" style={{ background: item.tokens[token] }} />
-                ))}
-              </span>
-              {item.name}
-            </Choice>
-          ))}
+        <div className="grid gap-4">
+          <section className="grid gap-2" aria-labelledby="wizard-look">
+            <h3 id="wizard-look" className="text-xs font-medium text-ink-soft">
+              {t("wizard.looks")}
+            </h3>
+            <p className="text-xs text-ink-soft">{t("wizard.looksHint")}</p>
+            <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+              <Choice selected={look === ""} onClick={() => setLook("")}>
+                {t("wizard.keepTheme")}
+              </Choice>
+              {presets.data?.map((preset) => (
+                <Choice
+                  key={preset.key}
+                  selected={look === preset.key}
+                  onClick={() => setLook(preset.key)}
+                >
+                  <TemplateThumbnail template={applyLook(template, preset.data)} width={300} />
+                  <span className="font-medium">{preset.data.meta.name}</span>
+                </Choice>
+              ))}
+            </div>
+          </section>
+          <section className="grid gap-2" aria-labelledby="wizard-palette">
+            <h3 id="wizard-palette" className="text-xs font-medium text-ink-soft">
+              {t("wizard.palettes")}
+            </h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Choice selected={palette === ""} onClick={() => setPalette("")}>
+                {t("wizard.keepPalette")}
+              </Choice>
+              {PALETTES.map((item) => (
+                <Choice
+                  key={item.name}
+                  selected={palette === item.name}
+                  onClick={() => setPalette(item.name)}
+                >
+                  <span className="flex h-6 overflow-hidden rounded-sm" aria-hidden>
+                    {["bg", "surface-2", "accent", "text"].map((token) => (
+                      <i
+                        key={token}
+                        className="flex-1"
+                        style={{ background: item.tokens[token] }}
+                      />
+                    ))}
+                  </span>
+                  {item.name}
+                </Choice>
+              ))}
+            </div>
+          </section>
         </div>
       )}
 
@@ -344,14 +388,14 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
           {!base && (
             <TextField
               label={t("wizard.columns")}
-              placeholder="К работе, В работе, Готово"
+              placeholder={t("wizard.columnsPlaceholder")}
               value={columns}
               onChange={(event) => setColumns(event.target.value)}
             />
           )}
           <p className="text-xs font-medium text-ink-soft">{t("wizard.suggestions")}</p>
           <div className="grid gap-2 sm:grid-cols-3">
-            {SUGGESTIONS.map((item, index) => (
+            {sets.map((item, index) => (
               <Choice
                 key={item.label}
                 selected={suggestion === index}

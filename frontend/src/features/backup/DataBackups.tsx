@@ -46,6 +46,12 @@ export function DataBackups() {
     onError: toast.error,
   });
 
+  const tables = useMutation({
+    mutationFn: () => downloadFrom("/export/csv", { query: { scope } }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.backups }),
+    onError: toast.error,
+  });
+
   const check = useMutation({
     mutationFn: (target: File) =>
       request<BackupPreview>("POST", "/import/backup/preview", {
@@ -116,6 +122,11 @@ export function DataBackups() {
           <Download className="size-4" aria-hidden />
           {t("backup.download")}
         </Button>
+        <Button loading={tables.isPending} onClick={() => tables.mutate()}>
+          <Download className="size-4" aria-hidden />
+          {t("backup.downloadTables")}
+        </Button>
+        <p className="text-xs text-ink-soft">{t("backup.tablesHint")}</p>
       </Section>
 
       <Section title={t("backup.import")}>

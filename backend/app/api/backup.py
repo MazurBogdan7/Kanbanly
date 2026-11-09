@@ -21,6 +21,7 @@ from app.schemas.backup import (
 )
 from app.security import backup_crypto
 from app.services import backup as service
+from app.services import spreadsheet
 from app.services.audit import audit
 
 router = APIRouter(tags=["backup"])
@@ -51,7 +52,7 @@ async def export_backup(
         # Запросная сессия к этому моменту закрыта: у стрима своя, на всё время передачи.
         async with factory() as session:
             user = await session.get(User, user_id)
-            chunks = service.iter_backup(session, user, parsed)
+            chunks = service.iter_backup(session, user, parsed, release=True)
             async for chunk in service.gzip_stream(chunks) if compress else chunks:
                 yield chunk
 
@@ -90,6 +91,24 @@ async def export_encrypted_backup(
     return Response(body, media_type="application/json", headers=_attachment(filename))
 
 
+@router.get("/export/csv")
+async def export_tables(
+    request: Request,
+    current: Current,
+    db: Db,
+    scope: Annotated[str, Query(max_length=64)] = "account",
+) -> Response:
+    """Таблицы Excel всех досок аккаунта, проекта или одной доски одним ZIP-архивом."""
+    parsed = service.parse_scope(scope)
+    archive = await spreadsheet.csv_archive(db, current.id, parsed)
+    audit(db, current.id, "backup.exported", ip=client_ip(request), scope=parsed.type, format="csv")
+    return Response(
+        archive,
+        media_type="application/zip",
+        headers=_attachment(spreadsheet.archive_filename()),
+    )
+
+
 @router.post("/import/backup/preview")
 async def preview_backup(
     request: Request,
@@ -125,7 +144,7 @@ async def import_backup(
     password: BackupPassword = None,
 ) -> BackupImportResult:
     parsed = service.read_backup(await request.body(), settings, password)
-    counts, warnings, snapshot_id = await service.restore(db, current.user, parsed, mode, confirm)
+    counts, warnings, snapshot_id = await service.restore(db, settings, current.user, parsed, mode, confirm)
     audit(db, current.id, "backup.imported", ip=client_ip(request), mode=mode, counts=counts)
     return BackupImportResult(mode=mode, counts=counts, warnings=warnings, snapshot_id=snapshot_id)
 

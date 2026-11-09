@@ -26,7 +26,20 @@ PARAMS = {
     "template_id": "template",
     "session_id": "session",
     "snapshot_id": "snapshot",
+    "user_id": "member",
+    "invite_id": "invite",
+    "token": "invite_token",
+    "tag_id": "tag",
+    "document_id": "document",
+    "number": "version",
+    "document_comment_id": "document_comment",
 }
+DELETE_BODIES: dict[str, Any] = {
+    "/auth/me": {"password": "x"},
+    "/admin/users/{user_id}": {"confirm_email": "x@example.com"},
+}
+# Ссылка-приглашение выписана на чужой email: владелец проекта её тоже не откроет.
+OWNER_EXEMPT = {"/invites/{token}"}
 # Минимальные валидные тела: 404 должен случиться раньше прочих проверок, но 422 на схеме
 # запроса скрыл бы ошибку, поэтому тела настоящие.
 BODIES: dict[str, Any] = {
@@ -52,6 +65,14 @@ BODIES: dict[str, Any] = {
     "/comments/{comment_id}": {"body": "x"},
     "/cards/{card_id}/attachments": {"name": "x", "url": "https://example.com"},
     "/templates/{template_id}": {"name": "x"},
+    "/projects/{project_id}/members/{user_id}": {"role": "viewer"},
+    "/projects/{project_id}/invites": {"email": "x@example.com", "role": "editor"},
+    "/projects/{project_id}/tags": {"name": "x", "color": "#112233"},
+    "/tags/{tag_id}": {"name": "x"},
+    "/documents/{document_id}": {"name": "x"},
+    "/documents/{document_id}/comments": {"body": "x"},
+    "/document-comments/{document_comment_id}": {"body": "x"},
+    "/admin/users/{user_id}": {"is_active": False},
 }
 
 
@@ -101,7 +122,31 @@ async def victim(client: Api) -> dict[str, str]:
         await client.post(f"/cards/{card_id}/attachments", json={"name": "A", "url": "https://e.com/a"})
     ).json()
     template = (await client.get("/templates")).json()["items"][0]
+    member = (await client.get("/auth/me")).json()
+    invite = (
+        await client.post(f"/projects/{project['id']}/invites", json={"email": "bob@example.com"})
+    ).json()
+    tag = (
+        await client.post(f"/projects/{project['id']}/tags", json={"name": "Секрет", "color": "#112233"})
+    ).json()
+    document = (
+        await client.post(
+            f"/projects/{project['id']}/documents",
+            content="Тайный документ".encode(),
+            headers={"X-File-Name": "secret.txt", "Content-Type": "application/octet-stream"},
+        )
+    ).json()
+    document_comment = (
+        await client.post(f"/documents/{document['id']}/comments", json={"body": "Тайный"})
+    ).json()
     return {
+        "tag": tag["id"],
+        "document": document["id"],
+        "version": "1",
+        "document_comment": document_comment["id"],
+        "member": member["id"],
+        "invite": invite["id"],
+        "invite_token": invite["link"].rsplit("/", 1)[-1],
         "project": project["id"],
         "board": board_id,
         "card": card_id,
@@ -136,8 +181,8 @@ async def test_every_id_route_hides_foreign_resources(
         if method in {"POST", "PATCH", "PUT"}:
             if path in BODIES:
                 kwargs["json"] = BODIES[path]
-        elif method == "DELETE" and path == "/auth/me":
-            kwargs["json"] = {"password": "x"}
+        elif method == "DELETE" and path in DELETE_BODIES:
+            kwargs["json"] = DELETE_BODIES[path]
         response = await other.request(method, fill(path, victim), **kwargs)
         if response.status_code != 404:
             failures.append(f"{method} {path} → {response.status_code} {response.text[:120]}")
@@ -152,7 +197,11 @@ async def test_missing_ids_are_indistinguishable_from_foreign(app: Any, client: 
         kwargs: dict[str, Any] = {}
         if method in {"POST", "PATCH", "PUT"} and path in BODIES:
             kwargs["json"] = BODIES[path]
-        response = await client.request(method, re.sub(r"\{\w+\}", missing, path), **kwargs)
+        elif method == "DELETE" and path in DELETE_BODIES:
+            kwargs["json"] = DELETE_BODIES[path]
+        # Номер версии — число, остальные параметры — несуществующий UUID.
+        target = re.sub(r"\{(\w+)\}", lambda m: "1" if m.group(1) == "number" else missing, path)
+        response = await client.request(method, target, **kwargs)
         assert response.status_code == 404, f"{method} {path}: {response.status_code}"
         assert response.json()["error"]["message"] == "Не найдено"
 
@@ -160,7 +209,7 @@ async def test_missing_ids_are_indistinguishable_from_foreign(app: Any, client: 
 async def test_owner_still_reaches_get_routes(app: Any, client: Api, victim: dict[str, str]) -> None:
     """Контроль теста: те же URL работают у владельца, значит 404 выше — не из-за опечаток."""
     for method, path in routes_with_ids(app):
-        if method == "GET":
+        if method == "GET" and path not in OWNER_EXEMPT:
             response = await client.get(fill(path, victim))
             assert response.status_code == 200, f"{path}: {response.status_code}"
 
@@ -174,6 +223,7 @@ async def test_anonymous_gets_401_everywhere(app: Any, anon: Api, victim: dict[s
         "/auth/password-strength",
         "/auth/password-reset/request",
         "/auth/password-reset/confirm",
+        "/auth/registration",
     }
     routes = [(m, p) for m, p in all_routes(app) if p not in public]
     assert len(routes) >= 70

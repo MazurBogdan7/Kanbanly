@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.schemas.template import BoardConfig, BoardTemplate, SafeUrl, ViewTemplate
 
@@ -12,6 +12,8 @@ Title = Annotated[str, Field(min_length=1, max_length=500)]
 ProjectName = Annotated[str, Field(min_length=1, max_length=200)]
 LongText = Annotated[str, Field(max_length=20000)]
 KeyStr = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")]
+HexColor6 = Annotated[str, Field(pattern=r"^#[0-9a-fA-F]{6}$")]
+TagIds = Annotated[list[UUID], Field(max_length=50)]
 
 
 class Page[T](BaseModel):
@@ -55,7 +57,113 @@ class ProjectUpdate(BaseModel):
 class MemberOut(BaseModel):
     user_id: UUID
     display_name: str
+    email: str
     role: str
+    is_you: bool = False
+
+
+AssignableRole = Literal["editor", "viewer"]
+
+
+class MemberUpdate(BaseModel):
+    role: AssignableRole
+
+
+class InviteCreate(BaseModel):
+    email: EmailStr
+    role: AssignableRole = "editor"
+
+
+class InviteOut(BaseModel):
+    id: UUID
+    email: str
+    role: str
+    expires_at: datetime
+    created_at: datetime
+    link: str | None = None
+
+
+class InvitePreview(BaseModel):
+    project_id: UUID
+    project_name: str
+    role: str
+    inviter: str
+
+
+class TagOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    color: str
+
+
+class TagCreate(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=60)]
+    color: HexColor6
+
+
+class TagUpdate(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=60)] | None = None
+    color: HexColor6 | None = None
+
+
+class DocumentVersionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    number: int
+    filename: str
+    kind: str
+    size: int
+    uploader_name: str
+    created_at: datetime
+
+
+class DocumentCommentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    author_id: UUID | None
+    author_name: str
+    body: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class DocumentOut(BaseModel):
+    id: UUID
+    project_id: UUID
+    name: str
+    description: str
+    tags: list[UUID]
+    current: DocumentVersionOut
+    versions_count: int
+    comments_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class DocumentDetail(DocumentOut):
+    versions: list[DocumentVersionOut]
+    comments: list[DocumentCommentOut]
+    role: str
+
+
+class DocumentUpdate(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=200)] | None = None
+    description: Annotated[str, Field(max_length=20000)] | None = None
+    tags: Annotated[list[UUID], Field(max_length=50)] | None = None
+
+
+class DocumentPreview(BaseModel):
+    kind: Literal["html", "text", "markdown", "pdf", "image", "none"]
+    html: str | None = None
+    text: str | None = None
+    reason: str | None = None
+
+
+class BoardRevision(BaseModel):
+    revision: str
 
 
 class BoardCreate(BaseModel):
@@ -110,6 +218,8 @@ class CardOut(BaseModel):
     attachments_count: int
     created_at: datetime
     updated_at: datetime
+    color: str | None = None
+    tags: list[UUID] = []
 
 
 class CardCreate(BaseModel):
@@ -120,6 +230,8 @@ class CardCreate(BaseModel):
     fields: dict[KeyStr, Any] = {}
     due_date: date | None = None
     cover_url: SafeUrl | None = None
+    color: HexColor6 | None = None
+    tags: TagIds = []
     # Размещение: сосед сверху; без него карточка идёт в конец колонки.
     after_id: UUID | None = None
 
@@ -131,6 +243,8 @@ class CardUpdate(BaseModel):
     fields: dict[KeyStr, Any] | None = None
     due_date: date | None = None
     cover_url: SafeUrl | None = None
+    color: HexColor6 | None = None
+    tags: TagIds | None = None
     column: KeyStr | None = None
 
 
@@ -288,7 +402,7 @@ class SearchHit(BaseModel):
 
 
 class TrashItem(BaseModel):
-    type: Literal["project", "board", "card", "template"]
+    type: Literal["project", "board", "card", "template", "document"]
     id: UUID
     name: str
     deleted_at: datetime

@@ -9,16 +9,17 @@ uv run python scripts/pg.py serve                     держать серве�
 import os
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
 import pgserver
 
-DATA_DIR = Path(tempfile.gettempdir()) / "kanbanly-pg"
+# Не во временном каталоге: Windows чистит там пустые служебные папки, и кластер перестаёт стартовать.
+DATA_DIR = Path(__file__).resolve().parent.parent / "var" / "pg"
 
 
 def urls() -> tuple[object, str]:
+    DATA_DIR.parent.mkdir(parents=True, exist_ok=True)
     server = pgserver.get_server(DATA_DIR, cleanup_mode="stop")
     sync_uri: str = server.get_uri()
     server.psql("SELECT 1;")

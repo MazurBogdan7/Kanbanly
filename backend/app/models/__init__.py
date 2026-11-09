@@ -20,9 +20,19 @@ from app.models.board import (
     Template,
 )
 from app.models.user import ApiToken, AuditLog, PasswordResetToken, RecoveryCode, User, UserSession
+from app.models.workspace import (
+    AppSetting,
+    CardTag,
+    Document,
+    DocumentComment,
+    DocumentTag,
+    DocumentVersion,
+    ProjectTag,
+)
 
 __all__ = [
     "ApiToken",
+    "AppSetting",
     "Attachment",
     "AuditLog",
     "BackupSnapshot",
@@ -33,16 +43,22 @@ __all__ = [
     "CardDimensionValue",
     "CardEvent",
     "CardFieldValue",
+    "CardTag",
     "Checklist",
     "ChecklistItem",
     "Comment",
     "Dimension",
     "DimensionValue",
+    "Document",
+    "DocumentComment",
+    "DocumentTag",
+    "DocumentVersion",
     "FieldDefinition",
     "PasswordResetToken",
     "Project",
     "ProjectInvite",
     "ProjectMember",
+    "ProjectTag",
     "RecoveryCode",
     "Template",
     "User",

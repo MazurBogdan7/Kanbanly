@@ -76,6 +76,8 @@ async def update_card(
     board = await load_board(db, found.board.id)
     index = build_index(board)
     card = await service.load_card(db, card_id)
+    if payload.tags is not None:
+        payload.tags = await service.resolve_tags(db, board.project_id, payload.tags)
     changed = service.update(card, board, index, payload)
     if payload.column is not None and index.columns_by_id[card.column_id].key != payload.column:
         await service.move(db, board, index, card, CardMove(column=payload.column))

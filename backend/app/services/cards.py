@@ -21,10 +21,12 @@ from app.models import (
     CardDimensionValue,
     CardEvent,
     CardFieldValue,
+    CardTag,
     Checklist,
     Comment,
     Dimension,
     FieldDefinition,
+    ProjectTag,
 )
 from app.schemas.api import CardCreate, CardDetail, CardMove, CardOut, CardUpdate
 from app.services.fractional import key_between
@@ -66,6 +68,7 @@ def card_query() -> Any:
         selectinload(Card.dimension_values),
         selectinload(Card.field_values),
         selectinload(Card.checklists).selectinload(Checklist.items),
+        selectinload(Card.tags),
     )
 
 
@@ -104,6 +107,8 @@ def serialize(card: Card, index: BoardIndex, comments: int = 0, attachments: int
         due_date=card.due_date,
         completed_at=card.completed_at,
         cover_url=card.cover_url,
+        color=card.color,
+        tags=[link.tag_id for link in card.tags],
         values={key: [k for _, k in sorted(ranks)] for key, ranks in values.items()},
         fields={
             index.fields_by_id[row.field_id].key: row.value
@@ -186,6 +191,27 @@ def apply_defaults(
         if dimension.key not in merged and dimension.default_key:
             merged[dimension.key] = dimension.default_key
     return merged
+
+
+async def resolve_tags(db: AsyncSession, project_id: UUID, ids: list[UUID]) -> list[UUID]:
+    """Теги из другого проекта отвергаются: связи не выходят за границы проекта."""
+    unique = list(dict.fromkeys(ids))
+    if not unique:
+        return []
+    found = set(
+        (
+            await db.execute(
+                select(ProjectTag.id).where(ProjectTag.project_id == project_id, ProjectTag.id.in_(unique))
+            )
+        ).scalars()
+    )
+    if len(found) != len(unique):
+        raise ApiError(422, "unknown_tag", "Тег не найден в этом проекте")
+    return unique
+
+
+def set_tags(card: Card, tag_ids: list[UUID]) -> None:
+    card.tags[:] = [CardTag(tag_id=tag_id) for tag_id in dict.fromkeys(tag_ids)]
 
 
 def validate_field(definition: FieldDefinition, value: Any) -> None:
@@ -347,11 +373,14 @@ async def create(
         position=position,
         due_date=payload.due_date,
         cover_url=payload.cover_url,
+        color=payload.color,
         created_by=user_id,
         dimension_values=[],
         field_values=[],
         checklists=[],
+        tags=[],
     )
+    set_tags(card, await resolve_tags(db, board.project_id, payload.tags))
     set_values(card, index, apply_defaults(card, index, payload.values))
     fields = {d.key: d.default for d in index.fields_by_key.values() if d.default is not None}
     set_fields(card, index, {**fields, **payload.fields})
@@ -365,7 +394,10 @@ async def create(
 def update(card: Card, board: Board, index: BoardIndex, payload: CardUpdate) -> list[str]:
     data = payload.model_dump(exclude_unset=True)
     changed: list[str] = []
-    for name in ("title", "description", "due_date", "cover_url"):
+    if "tags" in data and data["tags"] is not None:
+        set_tags(card, data["tags"])
+        changed.append("tags")
+    for name in ("title", "description", "due_date", "cover_url", "color"):
         if name in data and getattr(card, name) != data[name]:
             setattr(card, name, data[name])
             changed.append(name)

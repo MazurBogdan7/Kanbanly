@@ -98,6 +98,7 @@ async def create_sample_cards(
                 position=position,
                 due_date=sample.due_date,
                 cover_url=sample.cover_url,
+                color=sample.color,
                 created_by=user_id,
                 dimension_values=[],
                 field_values=[],
@@ -158,6 +159,7 @@ def export_samples(board: Board, cards: list[Card], index: BoardIndex) -> list[S
                 fields=data.fields,
                 due_date=card.due_date,
                 cover_url=card.cover_url,
+                color=card.color,
                 checklists=[
                     SampleChecklist(
                         title=c.title,

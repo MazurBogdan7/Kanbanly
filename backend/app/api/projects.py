@@ -1,16 +1,31 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Path, Query, Request, Response
 from sqlalchemy import func, select
 
-from app.api.deps import Current, Db, IfMatch, bump, check_version, set_etag
+from app.api.deps import (
+    AppMailer,
+    AppSettings,
+    Current,
+    Db,
+    IfMatch,
+    bump,
+    check_version,
+    client_ip,
+    set_etag,
+)
 from app.core.db import utcnow
 from app.core.ids import uuid7
-from app.models import Board, BoardColumn, Card, Project, ProjectMember, User
+from app.models import Board, BoardColumn, Card, Project, ProjectInvite, ProjectMember, User
 from app.repositories import access
 from app.schemas.api import (
     BoardSummary,
+    InviteCreate,
+    InviteOut,
+    InvitePreview,
     MemberOut,
+    MemberUpdate,
     Page,
     ProjectCreate,
     ProjectOut,
@@ -18,6 +33,7 @@ from app.schemas.api import (
 )
 from app.schemas.auth import Ok
 from app.schemas.template import DEFAULT_TOKENS
+from app.services import members
 from app.services.audit import audit
 
 router = APIRouter(tags=["projects"])
@@ -165,13 +181,113 @@ async def restore_project(project_id: UUID, current: Current, db: Db) -> Project
     return _out(found.project, found.role)
 
 
+def _member_out(member: ProjectMember, user: User, current_id: UUID) -> MemberOut:
+    return MemberOut(
+        user_id=user.id,
+        display_name=user.display_name,
+        email=user.email,
+        role=member.role,
+        is_you=user.id == current_id,
+    )
+
+
 @router.get("/projects/{project_id}/members")
 async def list_members(project_id: UUID, current: Current, db: Db) -> list[MemberOut]:
     await access.get_project(db, current.id, project_id)
-    rows = await db.execute(
-        select(ProjectMember, User.display_name)
-        .join(User, User.id == ProjectMember.user_id)
-        .where(ProjectMember.project_id == project_id)
-        .order_by(ProjectMember.id)
+    rows = await members.list_members(db, project_id)
+    return [_member_out(member, user, current.id) for member, user in rows]
+
+
+@router.patch("/projects/{project_id}/members/{user_id}")
+async def update_member(
+    project_id: UUID, user_id: UUID, payload: MemberUpdate, current: Current, db: Db
+) -> MemberOut:
+    await access.get_project(db, current.id, project_id, "owner")
+    member = await members.change_role(db, project_id, user_id, payload.role)
+    user = await db.get(User, user_id)
+    assert user is not None
+    audit(
+        db, current.id, "project.member_role", target_type="project", target_id=project_id, role=payload.role
     )
-    return [MemberOut(user_id=m.user_id, display_name=name, role=m.role) for m, name in rows]
+    return _member_out(member, user, current.id)
+
+
+@router.delete("/projects/{project_id}/members/{user_id}")
+async def remove_member(project_id: UUID, user_id: UUID, current: Current, db: Db) -> Ok:
+    found = await access.get_project(db, current.id, project_id)
+    await members.remove_member(db, project_id, user_id, found.role, current.id)
+    audit(db, current.id, "project.member_removed", target_type="project", target_id=project_id)
+    return Ok()
+
+
+def _invite_out(invite: ProjectInvite, link: str | None = None) -> InviteOut:
+    return InviteOut(
+        id=invite.id,
+        email=invite.email,
+        role=invite.role,
+        expires_at=invite.expires_at,
+        created_at=invite.created_at,
+        link=link,
+    )
+
+
+@router.get("/projects/{project_id}/invites")
+async def list_invites(project_id: UUID, current: Current, db: Db) -> list[InviteOut]:
+    await access.get_project(db, current.id, project_id, "owner")
+    return [_invite_out(invite) for invite in await members.pending_invites(db, project_id)]
+
+
+@router.post("/projects/{project_id}/invites", status_code=201)
+async def create_invite(
+    project_id: UUID,
+    payload: InviteCreate,
+    current: Current,
+    db: Db,
+    settings: AppSettings,
+    mailer: AppMailer,
+) -> InviteOut:
+    found = await access.get_project(db, current.id, project_id, "owner")
+    invite, token = await members.create_invite(
+        db, settings, mailer, found.project, current.user, payload.email, payload.role
+    )
+    audit(db, current.id, "project.invite_created", target_type="project", target_id=project_id)
+    # Ссылка показывается один раз: в базе хранится только хэш токена.
+    return _invite_out(invite, members.invite_link(settings, token))
+
+
+@router.delete("/projects/{project_id}/invites/{invite_id}")
+async def revoke_invite(project_id: UUID, invite_id: UUID, current: Current, db: Db) -> Ok:
+    await access.get_project(db, current.id, project_id, "owner")
+    await members.revoke_invite(db, project_id, invite_id)
+    return Ok()
+
+
+@router.get("/invites/{token}")
+async def preview_invite(
+    token: Annotated[str, Path(max_length=128)], current: Current, db: Db
+) -> InvitePreview:
+    invite, project = await members.find_invite(db, current.user, token)
+    inviter = await db.get(User, invite.invited_by) if invite.invited_by else None
+    return InvitePreview(
+        project_id=project.id,
+        project_name=project.name,
+        role=invite.role,
+        inviter=inviter.display_name if inviter else "",
+    )
+
+
+@router.post("/invites/{token}/accept")
+async def accept_invite(
+    token: Annotated[str, Path(max_length=128)], request: Request, current: Current, db: Db
+) -> ProjectOut:
+    project = await members.accept_invite(db, current.user, token)
+    audit(
+        db,
+        current.id,
+        "project.invite_accepted",
+        ip=client_ip(request),
+        target_type="project",
+        target_id=project.id,
+    )
+    role = (await access.get_project(db, current.id, project.id)).role
+    return _out(project, role)

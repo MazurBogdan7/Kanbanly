@@ -8,7 +8,7 @@ from sqlalchemy import or_, select
 
 from app.api.deps import AppSettings, Current, Db
 from app.core.db import escape_like
-from app.models import AuditLog, Board, Card, Project, ProjectMember, Template
+from app.models import AuditLog, Board, Card, Document, Project, ProjectMember, Template
 from app.schemas.api import AuditOut, SearchHit, TrashItem
 
 router = APIRouter(tags=["misc"])
@@ -107,6 +107,24 @@ async def trash(current: Current, db: Db, settings: AppSettings) -> list[TrashIt
                 name=card.title,
                 deleted_at=card.deleted_at,
                 purge_at=card.deleted_at + keep,
+            )
+        )
+    documents = await db.execute(
+        select(Document)
+        .join(Project, Project.id == Document.project_id)
+        .where(
+            Document.project_id.in_(member), Document.deleted_at.is_not(None), Project.deleted_at.is_(None)
+        )
+    )
+    for document in documents.scalars():
+        assert document.deleted_at is not None
+        items.append(
+            TrashItem(
+                type="document",
+                id=document.id,
+                name=document.name,
+                deleted_at=document.deleted_at,
+                purge_at=document.deleted_at + keep,
             )
         )
     templates = await db.execute(

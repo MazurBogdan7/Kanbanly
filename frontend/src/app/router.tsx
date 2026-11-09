@@ -10,10 +10,13 @@ import {
 } from "../features/auth/AuthPages";
 import { BoardPage } from "../features/boards/BoardPage";
 import { HomePage } from "../features/projects/HomePage";
+import { InvitePage } from "../features/projects/Members";
 import { ProjectPage } from "../features/projects/ProjectPage";
 import { TrashPage } from "../features/projects/TrashPage";
 import { ProfilePage } from "../features/settings/ProfilePage";
 import { TemplatesPage } from "../features/templates/TemplatesPage";
+import { DocumentPage } from "../features/workspace/DocumentPage";
+import { AdminPage } from "../features/admin/AdminPage";
 import { AppShell } from "./AppShell";
 
 const rootRoute = createRootRoute({ component: Outlet });
@@ -67,9 +70,16 @@ export const routeTree = rootRoute.addChildren([
       validateSearch: (search: Record<string, unknown>): { builder?: number } =>
         search.builder ? { builder: Number(search.builder) } : {},
     }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/documents/$documentId",
+      component: DocumentPage,
+    }),
+    createRoute({ getParentRoute: () => appRoute, path: "/admin", component: AdminPage }),
     createRoute({ getParentRoute: () => appRoute, path: "/templates", component: TemplatesPage }),
     createRoute({ getParentRoute: () => appRoute, path: "/trash", component: TrashPage }),
     createRoute({ getParentRoute: () => appRoute, path: "/profile", component: ProfilePage }),
+    createRoute({ getParentRoute: () => appRoute, path: "/invite/$token", component: InvitePage }),
   ]),
 ]);
 

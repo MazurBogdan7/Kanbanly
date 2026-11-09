@@ -91,6 +91,7 @@ const SortableCard = memo(function SortableCard({
   column: ColumnTemplate | undefined;
   onOpen?: (card: CardOut) => void;
 }) {
+  const { t } = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
   });
@@ -118,7 +119,7 @@ const SortableCard = memo(function SortableCard({
       {...attributes}
       {...listeners}
       style={style}
-      aria-roledescription="карточка"
+      aria-roledescription={t("board.cardRole")}
       onKeyDown={handleKeyDown}
       onClick={() => onOpen?.(card)}
     >
@@ -216,6 +217,7 @@ function Column({
   onOpen,
   onQuickAdd,
 }: ColumnProps) {
+  const { t } = useT();
   const layout = config.layout?.column ?? {};
   const [collapsed, setCollapsed] = useState(column.collapsed ?? false);
   const { setNodeRef, isOver } = useDroppable({
@@ -241,7 +243,7 @@ function Column({
       data-over={(isOver && draggingId !== null) || undefined}
     >
       {cards.length === 0 && (
-        <div className="kb-empty">{column.empty_text ?? layout.empty_text ?? "Пусто"}</div>
+        <div className="kb-empty">{column.empty_text ?? layout.empty_text ?? t("board.empty")}</div>
       )}
       {cards.map((card) =>
         interactive ? (

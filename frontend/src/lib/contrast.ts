@@ -33,6 +33,16 @@ export function readableText(background: string): "#111111" | "#FFFFFF" {
     : "#FFFFFF";
 }
 
+/**
+ * Текст для произвольного фона (цвет карточки или тега выбирает пользователь).
+ * Мягкие #111/#fff не на любом фоне дают AA; чистые чёрный и белый — всегда, минимум ≈4.58.
+ */
+export function strongText(background: string): string {
+  const soft = readableText(background);
+  if (contrastRatio(soft, background) >= AA_NORMAL) return soft;
+  return soft === "#111111" ? "#000000" : "#FFFFFF";
+}
+
 function toHex(rgb: number[]): string {
   return `#${rgb.map((value) => Math.round(value).toString(16).padStart(2, "0")).join("")}`;
 }

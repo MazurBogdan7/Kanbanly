@@ -262,6 +262,10 @@ test.describe("UX", () => {
     await expect(page.getByRole("button", { name: "Боссы", exact: true }).first()).toBeVisible();
 
     await page.getByRole("button", { name: "В избранное" }).click();
+    await expect(page.getByRole("button", { name: "В избранное" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Избранное" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Недавние доски" })).toBeVisible();

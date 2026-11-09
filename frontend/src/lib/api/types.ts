@@ -21,6 +21,9 @@ export type BackupPreview = S["BackupPreview"];
 export type BackupHistory = S["BackupHistory"];
 export type BackupImportResult = S["BackupImportResult"];
 export type RecoveryCodesOut = S["RecoveryCodesOut"];
+export type MemberOut = S["MemberOut"];
+export type InviteOut = S["InviteOut"];
+export type InvitePreview = S["InvitePreview"];
 export type TotpSetupOut = S["TotpSetupOut"];
 
 export type BoardConfig = S["BoardConfig"];
@@ -52,3 +55,14 @@ export type DimensionRole = NonNullable<DimensionTemplate["roles"]>[number];
 export type ColumnKind = NonNullable<ColumnTemplate["kind"]>;
 export type FaceSlot = NonNullable<CardLayout["face"]>[number];
 export type FieldType = FieldTemplate["type"];
+
+export type TagOut = S["TagOut"];
+export type DocumentOut = S["DocumentOut"];
+export type DocumentDetail = S["DocumentDetail"];
+export type DocumentVersionOut = S["DocumentVersionOut"];
+export type DocumentCommentOut = S["DocumentCommentOut"];
+export type DocumentPreview = S["DocumentPreview"];
+export type AdminUser = S["AdminUser"];
+export type AdminStats = S["AdminStats"];
+export type AdminEvent = S["AdminEvent"];
+export type AdminSettings = S["AdminSettings"];

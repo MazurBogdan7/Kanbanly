@@ -1,29 +1,42 @@
 /** Клиентская предпроверка файлов: быстрый отказ до запроса. Полная проверка — на сервере. */
 import { z } from "zod";
 
+import { t } from "@/i18n";
+
 export const TEMPLATE_MAX_BYTES = 1_048_576;
 export const BACKUP_MAX_BYTES = 52_428_800;
 
-const hexOrToken = z.string().regex(/^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\{[a-z][a-z0-9-]*\})$/, {
-  message: "неверный формат цвета",
-});
+const hexOrToken = () =>
+  z.string().regex(/^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|\{[a-z][a-z0-9-]*\})$/, {
+    message: t("file.badColor"),
+  });
 
-const envelope = z.looseObject({
-  format: z.literal("kanbanly.board-template", { message: "ожидается kanbanly.board-template" }),
-  version: z.number({ message: "ожидается номер версии" }).int().min(1),
-  meta: z.looseObject({
-    name: z.string({ message: "обязательное поле" }).min(1, "обязательное поле").max(200),
-  }),
-  columns: z
-    .array(
-      z.looseObject({
-        key: z.string({ message: "обязательное поле" }).min(1),
-        name: z.string({ message: "обязательное поле" }).min(1).max(120),
-        color: hexOrToken.nullish(),
-      }),
-    )
-    .min(1, "нужна хотя бы одна колонка"),
-});
+const envelope = () =>
+  z.looseObject({
+    format: z.literal("kanbanly.board-template", { message: t("file.badFormat") }),
+    version: z
+      .number({ message: t("file.badVersion") })
+      .int()
+      .min(1),
+    meta: z.looseObject({
+      name: z
+        .string({ message: t("file.required") })
+        .min(1, t("file.required"))
+        .max(200),
+    }),
+    columns: z
+      .array(
+        z.looseObject({
+          key: z.string({ message: t("file.required") }).min(1),
+          name: z
+            .string({ message: t("file.required") })
+            .min(1)
+            .max(120),
+          color: hexOrToken().nullish(),
+        }),
+      )
+      .min(1, t("file.noColumns")),
+  });
 
 export interface FileProblem {
   path: string;
@@ -48,15 +61,15 @@ function formatPath(path: PropertyKey[]): string {
 
 export function parseTemplateText(raw: string): ParseResult {
   if (new Blob([raw]).size > TEMPLATE_MAX_BYTES) {
-    return { ok: false, problems: [{ path: "", message: "Файл больше 1 МБ" }] };
+    return { ok: false, problems: [{ path: "", message: t("file.tooBig") }] };
   }
   let document: unknown;
   try {
     document = JSON.parse(raw);
   } catch {
-    return { ok: false, problems: [{ path: "", message: "Файл не является корректным JSON" }] };
+    return { ok: false, problems: [{ path: "", message: t("file.badJson") }] };
   }
-  const result = envelope.safeParse(document);
+  const result = envelope().safeParse(document);
   if (!result.success) {
     return {
       ok: false,

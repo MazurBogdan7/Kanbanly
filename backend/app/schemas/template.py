@@ -560,6 +560,8 @@ class SampleCard(Node):
     fields: Annotated[dict[Key, Any], Field(max_length=100)] = {}
     due_date: date | None = None
     cover_url: SafeUrl | None = None
+    # Цвет карточки; текст на нём подбирается под контраст автоматически.
+    color: HexColor | None = None
     checklists: Annotated[list[SampleChecklist], Field(max_length=20)] = []
 
 

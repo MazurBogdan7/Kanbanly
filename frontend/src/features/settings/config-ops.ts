@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 /** Чистые операции над конфигурацией: роли измерений, контраст, плотность, палитры. */
 import type { BoardConfig, DimensionRole, Widget } from "@/lib/api/types";
 import { AA_NORMAL, contrastRatio, readableText } from "@/lib/contrast";
@@ -155,34 +156,26 @@ export function contrastReport(config: BoardConfig): ContrastIssue[] {
   const color = (value: string | null | undefined, fallback: string) =>
     resolveHex(value, tokens) ?? tokens[fallback];
   const typography = config.typography ?? {};
-  check("Текст / фон доски", tokens.text, tokens.bg);
-  check("Вторичный текст / колонка", tokens["text-muted"], tokens.surface);
-  check("Вторичный текст / карточка", tokens["text-muted"], tokens["surface-2"]);
-  check("Текст карточки / карточка", tokens.text, tokens["surface-2"]);
-  check("Заголовок доски / фон", color(typography.board_title?.color, "text"), tokens.bg);
+  check(t("contrast.textBg"), tokens.text, tokens.bg);
+  check(t("contrast.mutedColumn"), tokens["text-muted"], tokens.surface);
+  check(t("contrast.mutedCard"), tokens["text-muted"], tokens["surface-2"]);
+  check(t("contrast.cardText"), tokens.text, tokens["surface-2"]);
+  check(t("contrast.boardTitle"), color(typography.board_title?.color, "text"), tokens.bg);
+  check(t("contrast.columnTitle"), color(typography.column_title?.color, "text"), tokens.surface);
+  check(t("contrast.cardTitle"), color(typography.card_title?.color, "text"), tokens["surface-2"]);
   check(
-    "Заголовок колонки / колонка",
-    color(typography.column_title?.color, "text"),
-    tokens.surface,
-  );
-  check(
-    "Заголовок карточки / карточка",
-    color(typography.card_title?.color, "text"),
-    tokens["surface-2"],
-  );
-  check(
-    "Текст карточки / карточка",
+    t("contrast.cardText"),
     color(typography.card_body?.color, "text-muted"),
     tokens["surface-2"],
   );
-  check("Бейдж / фон бейджа", tokens["text-muted"], tokens.border);
+  check(t("contrast.badge"), tokens["text-muted"], tokens.border);
   for (const dimension of config.dimensions ?? []) {
     for (const value of dimension.values ?? []) {
       const background = resolveHex(value.badge?.bg ?? value.color, tokens);
       if (!background) continue;
       const foreground =
         resolveHex(value.badge?.fg, tokens) ?? readableText(background.slice(0, 7));
-      check(`Бейдж «${value.name}»`, foreground, background);
+      check(t("contrast.value", { name: value.name }), foreground, background);
     }
   }
   return issues;
@@ -311,3 +304,33 @@ export const PALETTES: { name: string; mode: "light" | "dark"; tokens: Record<st
       },
     },
   ];
+
+type Look = Pick<BoardConfig, "theme" | "typography" | "layout">;
+
+/**
+ * Оформление другого шаблона без его структуры: тема, шрифты, геометрия колонок и карточек.
+ * Бейджи, лицевая сторона и виджеты остаются свои: они ссылаются на измерения этой доски.
+ */
+export function applyLook<T extends Look>(target: T, source: Look): T {
+  const card = source.layout?.card ?? {};
+  const own = target.layout?.card ?? {};
+  return {
+    ...target,
+    theme: structuredClone(source.theme ?? {}),
+    typography: structuredClone(source.typography ?? {}),
+    layout: {
+      ...target.layout,
+      column: structuredClone(source.layout?.column ?? {}),
+      card: {
+        ...own,
+        radius: card.radius,
+        padding: card.padding,
+        gap: card.gap,
+        shadow: card.shadow,
+        border: card.border,
+        hover: card.hover,
+        accent: { ...own.accent, style: card.accent?.style, width: card.accent?.width },
+      },
+    },
+  };
+}

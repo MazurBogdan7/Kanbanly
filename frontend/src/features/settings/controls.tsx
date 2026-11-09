@@ -130,6 +130,7 @@ export function ColorField({
   config: BoardConfig;
   allowEmpty?: boolean;
 }) {
+  const { t } = useT();
   const tokens = tokensOf(config);
   const isToken = value?.startsWith("{");
   const hex = resolveHex(value, tokens)?.slice(0, 7) ?? "#000000";
@@ -139,7 +140,7 @@ export function ColorField({
         <div className="flex items-center gap-1">
           <input
             type="color"
-            aria-label={`${label}: палитра`}
+            aria-label={t("ctor.colorPicker", { label })}
             className="size-8 shrink-0 cursor-pointer rounded-sm border border-line-strong bg-panel p-0.5"
             value={hex}
             onChange={(event) => onChange(event.target.value.toUpperCase())}
@@ -157,12 +158,12 @@ export function ColorField({
             }}
           />
           <Select
-            aria-label={`${label}: токен`}
+            aria-label={t("ctor.colorToken", { label })}
             className="w-28 shrink-0 text-xs"
             value={isToken ? (value ?? "") : ""}
             onChange={(event) => onChange(event.target.value || (allowEmpty ? null : hex))}
           >
-            <option value="">токен…</option>
+            <option value="">{t("ctor.tokenPlaceholder")}</option>
             {Object.keys(tokens).map((token) => (
               <option key={token} value={`{${token}}`}>
                 {token}
