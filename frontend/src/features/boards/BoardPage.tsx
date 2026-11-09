@@ -42,6 +42,7 @@ import {
   useLiveBoard,
   useMoveCard,
 } from "./api";
+import { ProjectMembersContext, useMemberIndex } from "../projects/people";
 import { ProjectTagsContext, useTagIndex } from "../workspace/tags";
 import { BoardCanvas } from "./engine/BoardCanvas";
 import type { MoveRequest } from "./engine/KanbanView";
@@ -132,6 +133,7 @@ export function BoardPage() {
   const board = useBoard(boardId);
   const cards = useCards(boardId);
   const tagIndex = useTagIndex(board.data?.project_id);
+  const memberIndex = useMemberIndex(board.data?.project_id);
   useLiveBoard(boardId);
   const moveCard = useMoveCard(boardId);
   const createCard = useCreateCard(boardId);
@@ -409,25 +411,27 @@ export function BoardPage() {
           </div>
         </div>
         <ProjectTagsContext.Provider value={tagIndex}>
-          <BoardCanvas
-            name={board.data.name}
-            config={config}
-            cards={cards.data}
-            filters={filters}
-            onFilters={setFilters}
-            view={view}
-            palette={palette}
-            interactive={canEdit && !constructorOpen}
-            onOpen={(card) => !isPending(card) && setOpened({ id: card.id })}
-            onMove={handleMove}
-            onQuickAdd={(column, title) => createCard.mutate({ column, title })}
-            actions={{
-              onAddCard: () => setOpened({ id: null }),
-              onExport: () => void exportTemplate(),
-              onImport: (file) => void importFile(file),
-              onReset: () => reset.mutate(),
-            }}
-          />
+          <ProjectMembersContext.Provider value={memberIndex}>
+            <BoardCanvas
+              name={board.data.name}
+              config={config}
+              cards={cards.data}
+              filters={filters}
+              onFilters={setFilters}
+              view={view}
+              palette={palette}
+              interactive={canEdit && !constructorOpen}
+              onOpen={(card) => !isPending(card) && setOpened({ id: card.id })}
+              onMove={handleMove}
+              onQuickAdd={(column, title) => createCard.mutate({ column, title })}
+              actions={{
+                onAddCard: () => setOpened({ id: null }),
+                onExport: () => void exportTemplate(),
+                onImport: (file) => void importFile(file),
+                onReset: () => reset.mutate(),
+              }}
+            />
+          </ProjectMembersContext.Provider>
         </ProjectTagsContext.Provider>
       </div>
       {constructorOpen && (

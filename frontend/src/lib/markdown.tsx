@@ -80,26 +80,31 @@ const OFFICE_TAGS = [
 
 /**
  * Просмотр Word и Excel. Сервер уже очистил HTML белым списком; здесь вторая линия защиты:
- * картинки только встроенные (data:image), ссылки только http(s) и mailto.
+ * картинки только встроенные (data:image) или из самого документа (наш адрес /api/v1/…/images/N),
+ * ссылки только http(s) и mailto.
  */
+const DOCUMENT_IMAGE = /^\/api\/v1\/documents\/[\w-]+\/versions\/\d+\/images\/\d+$/;
 const officePurifier = DOMPurify();
 officePurifier.addHook("afterSanitizeAttributes", (node) => {
   if (node.tagName === "A") {
     node.setAttribute("target", "_blank");
     node.setAttribute("rel", "noopener noreferrer");
   }
-  // Внешние картинки в документе — это пиксели слежения: показываем только встроенные.
-  if (node.tagName === "IMG" && !/^data:image\//i.test(node.getAttribute("src") ?? "")) {
+  // Внешние картинки в документе — это пиксели слежения: показываем только свои.
+  const src = node.getAttribute("src") ?? "";
+  if (node.tagName === "IMG" && !/^data:image\//i.test(src) && !DOCUMENT_IMAGE.test(src)) {
     node.removeAttribute("src");
   }
+  if (node.tagName === "IMG") node.setAttribute("loading", "lazy");
 });
 
 export function sanitizeOfficeHtml(html: string): string {
   return officePurifier.sanitize(html, {
     ALLOWED_TAGS: OFFICE_TAGS,
-    ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "colspan", "rowspan"],
-    ADD_URI_SAFE_ATTR: ["colspan", "rowspan"],
-    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|data:image\/(?:png|jpe?g|gif|webp);)/i,
+    ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "colspan", "rowspan", "loading"],
+    ADD_URI_SAFE_ATTR: ["colspan", "rowspan", "loading"],
+    ALLOWED_URI_REGEXP:
+      /^(?:https?:|mailto:|data:image\/(?:png|jpe?g|gif|webp);|\/api\/v1\/documents\/[\w-]+\/versions\/\d+\/images\/\d+$)/i,
   });
 }
 

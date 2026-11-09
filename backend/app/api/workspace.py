@@ -1,5 +1,6 @@
 """Теги проекта и документы: загрузка, версии, просмотр, комментарии."""
 
+import asyncio
 from typing import Annotated
 from uuid import UUID
 
@@ -342,7 +343,42 @@ async def version_preview(
     document_id: UUID, number: Annotated[int, Path(ge=1, le=100000)], current: Current, db: Db
 ) -> DocumentPreview:
     version = await _version(db, current, document_id, number)
-    return DocumentPreview.model_validate(version.preview or {"kind": "none", "reason": "unsupported"})
+    preview = version.preview or {"kind": "none", "reason": "unsupported"}
+    # Word, загруженный до выноса картинок из HTML, пересобирается при первом открытии.
+    if version.kind == "docx" and preview.get("format") != 2:
+        preview = await asyncio.to_thread(service.build_preview, version.kind, version.data)
+        version.preview = preview
+    markup = preview.get("html")
+    if markup:
+        base = f"/api/v1/documents/{document_id}/versions/{number}/images/"
+        preview = {**preview, "html": markup.replace(f'src="{service.IMAGE_SCHEME}:', f'src="{base}')}
+    return DocumentPreview.model_validate(preview)
+
+
+@router.get("/documents/{document_id}/versions/{number}/images/{index}")
+async def version_image(
+    document_id: UUID,
+    number: Annotated[int, Path(ge=1, le=100000)],
+    index: Annotated[int, Path(ge=0, le=10000)],
+    current: Current,
+    db: Db,
+) -> Response:
+    version = await _version(db, current, document_id, number)
+    if version.kind != "docx":
+        raise not_found()
+    found = await asyncio.to_thread(service.docx_image, version.data, version.preview, index)
+    if found is None:
+        raise not_found()
+    data, media_type = found
+    return Response(
+        data,
+        media_type=media_type,
+        headers={
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; sandbox",
+            "Cache-Control": "private, max-age=86400",
+        },
+    )
 
 
 @router.post("/documents/{document_id}/comments", status_code=201)

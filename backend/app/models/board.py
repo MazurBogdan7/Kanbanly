@@ -54,6 +54,11 @@ class ProjectInvite(IdMixin, TimestampMixin, Base):
     expires_at: Mapped[datetime] = mapped_column()
     accepted_at: Mapped[datetime | None] = mapped_column(default=None)
     invited_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    # Приглашение зарегистрированному пользователю: приходит во входящие в приложении.
+    invitee_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, default=None
+    )
+    declined_at: Mapped[datetime | None] = mapped_column(default=None)
 
 
 class Board(IdMixin, TimestampMixin, SoftDeleteMixin, VersionMixin, Base):
@@ -189,6 +194,10 @@ class Card(IdMixin, TimestampMixin, SoftDeleteMixin, VersionMixin, Base):
     # Цвет карточки (#RRGGBB). Текст на нём подбирается под контраст при рендере.
     color: Mapped[str | None] = mapped_column(String(9), default=None)
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), default=None)
+    # Исполнитель — участник проекта; при выходе из проекта назначение снимается.
+    assignee_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True, default=None
+    )
 
     board: Mapped[Board] = relationship(back_populates="cards")
     column: Mapped[BoardColumn] = relationship()

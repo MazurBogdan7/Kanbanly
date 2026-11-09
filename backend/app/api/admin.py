@@ -4,11 +4,13 @@
 администратор не видит: панель управляет учётными записями и сервером, а не данными.
 """
 
+from collections.abc import AsyncIterator
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, or_, select
 
@@ -30,7 +32,9 @@ from app.schemas.api import Page
 from app.schemas.auth import Ok
 from app.services import app_settings
 from app.services import auth as auth_service
+from app.services import backup as backup_service
 from app.services.audit import audit
+from app.services.spreadsheet import safe_name
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -90,6 +94,18 @@ class AdminEvent(BaseModel):
 
 class AdminSettings(BaseModel):
     registration_open: bool
+
+
+class AdminBoard(BaseModel):
+    id: UUID
+    name: str
+    project_id: UUID
+    project_name: str
+    owner_id: UUID
+    owner_email: str
+    owner_name: str
+    cards: int
+    updated_at: datetime
 
 
 async def _user(db: Db, user_id: UUID) -> User:
@@ -251,3 +267,132 @@ async def put_settings(payload: AdminSettings, admin: Admin, request: Request, d
         await app_settings.put(db, key, value)
     audit(db, admin.id, "admin.settings_changed", ip=client_ip(request), **payload.model_dump())
     return payload
+
+
+@router.get("/boards")
+async def list_boards(
+    _: Admin,
+    db: Db,
+    q: Annotated[str, Query(max_length=120)] = "",
+    cursor: UUID | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+) -> Page[AdminBoard]:
+    """Все доски сервера: название, проект и владелец — для выгрузки бэкапа."""
+    counts = (
+        select(Card.board_id, func.count(Card.id).label("cards"))
+        .where(Card.deleted_at.is_(None))
+        .group_by(Card.board_id)
+        .subquery()
+    )
+    statement = (
+        select(Board, Project, User, func.coalesce(counts.c.cards, 0))
+        .join(Project, Project.id == Board.project_id)
+        .join(User, User.id == Project.owner_id)
+        .outerjoin(counts, counts.c.board_id == Board.id)
+        .where(Board.deleted_at.is_(None), Project.deleted_at.is_(None))
+        .order_by(Board.id)
+        .limit(limit + 1)
+    )
+    if q:
+        # ilike без регистра на PostgreSQL; на SQLite — для латиницы и для текста в том же регистре.
+        pattern = f"%{escape_like(q.strip())}%"
+        statement = statement.where(
+            or_(
+                Board.name.ilike(pattern, escape="\\"),
+                Project.name.ilike(pattern, escape="\\"),
+                User.email.ilike(pattern, escape="\\"),
+                User.display_name.ilike(pattern, escape="\\"),
+            )
+        )
+    if cursor is not None:
+        statement = statement.where(Board.id > cursor)
+    rows = list((await db.execute(statement)).all())
+    page = rows[:limit]
+    return Page(
+        items=[
+            AdminBoard(
+                id=board.id,
+                name=board.name,
+                project_id=project.id,
+                project_name=project.name,
+                owner_id=owner.id,
+                owner_email=owner.email,
+                owner_name=owner.display_name,
+                cards=int(cards),
+                updated_at=board.updated_at,
+            )
+            for board, project, owner, cards in page
+        ],
+        next_cursor=str(page[-1][0].id) if len(rows) > limit else None,
+    )
+
+
+def _stream_backup(
+    request: Request, owner_id: UUID, scope: backup_service.Scope, filename: str
+) -> StreamingResponse:
+    factory = request.app.state.session_factory
+
+    async def stream() -> AsyncIterator[bytes]:
+        # Бэкап собирается от имени владельца: в него попадает ровно то, что видит он сам.
+        async with factory() as session:
+            owner = await session.get(User, owner_id)
+            async for chunk in backup_service.iter_backup(session, owner, scope, release=True):
+                yield chunk
+
+    return StreamingResponse(
+        stream(),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _ascii_name(name: str, fallback: str) -> str:
+    cleaned = "".join(char if char.isascii() and (char.isalnum() or char in "-_") else "-" for char in name)
+    return cleaned.strip("-")[:40] or fallback
+
+
+@router.get("/boards/{board_id}/backup")
+async def export_board(board_id: UUID, admin: Admin, request: Request, db: Db) -> StreamingResponse:
+    """Бэкап чужой доски. Каждая выгрузка пишется в журнал безопасности."""
+    row = (
+        await db.execute(
+            select(Board, Project)
+            .join(Project, Project.id == Board.project_id)
+            .where(Board.id == board_id, Board.deleted_at.is_(None), Project.deleted_at.is_(None))
+        )
+    ).first()
+    if row is None:
+        raise not_found()
+    board, project = row
+    audit(
+        db,
+        admin.id,
+        "admin.board_exported",
+        ip=client_ip(request),
+        target_type="board",
+        target_id=board.id,
+        owner_id=str(project.owner_id),
+        name=board.name,
+    )
+    await db.flush()
+    filename = backup_service.backup_filename(
+        suffix=f"-{_ascii_name(safe_name(board.name, ''), 'board')}.json"
+    )
+    return _stream_backup(request, project.owner_id, backup_service.Scope("board", board.id), filename)
+
+
+@router.get("/users/{user_id}/backup")
+async def export_user(user_id: UUID, admin: Admin, request: Request, db: Db) -> StreamingResponse:
+    """Бэкап всего аккаунта пользователя: его проекты, доски, документы и шаблоны."""
+    user = await _user(db, user_id)
+    audit(
+        db,
+        admin.id,
+        "admin.user_exported",
+        ip=client_ip(request),
+        target_type="user",
+        target_id=user.id,
+    )
+    await db.flush()
+    filename = backup_service.backup_filename(suffix=f"-{_ascii_name(user.email.split('@')[0], 'user')}.json")
+    return _stream_backup(request, user.id, backup_service.Scope("account"), filename)

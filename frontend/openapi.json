@@ -1181,6 +1181,111 @@
         }
       }
     },
+    "/api/v1/me/invites": {
+      "get": {
+        "tags": ["projects"],
+        "summary": "Incoming Invites",
+        "operationId": "incoming_invites_api_v1_me_invites_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IncomingInvite"
+                  },
+                  "type": "array",
+                  "title": "Response Incoming Invites Api V1 Me Invites Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/invites/{invite_id}/accept": {
+      "post": {
+        "tags": ["projects"],
+        "summary": "Accept Incoming",
+        "operationId": "accept_incoming_api_v1_me_invites__invite_id__accept_post",
+        "parameters": [
+          {
+            "name": "invite_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invite Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/invites/{invite_id}/decline": {
+      "post": {
+        "tags": ["projects"],
+        "summary": "Decline Incoming",
+        "operationId": "decline_incoming_api_v1_me_invites__invite_id__decline_post",
+        "parameters": [
+          {
+            "name": "invite_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invite Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/invites/{token}": {
       "get": {
         "tags": ["projects"],
@@ -5098,6 +5203,158 @@
         }
       }
     },
+    "/api/v1/admin/boards": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "List Boards",
+        "description": "Все доски сервера: название, проект и владелец — для выгрузки бэкапа.",
+        "operationId": "list_boards_api_v1_admin_boards_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AdminBoard_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/boards/{board_id}/backup": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Export Board",
+        "description": "Бэкап чужой доски. Каждая выгрузка пишется в журнал безопасности.",
+        "operationId": "export_board_api_v1_admin_boards__board_id__backup_get",
+        "parameters": [
+          {
+            "name": "board_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Board Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/backup": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Export User",
+        "description": "Бэкап всего аккаунта пользователя: его проекты, доски, документы и шаблоны.",
+        "operationId": "export_user_api_v1_admin_users__user_id__backup_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/search": {
       "get": {
         "tags": ["misc"],
@@ -5266,6 +5523,63 @@
         "type": "object",
         "required": ["type"],
         "title": "ActionsWidget"
+      },
+      "AdminBoard": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "owner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Owner Id"
+          },
+          "owner_email": {
+            "type": "string",
+            "title": "Owner Email"
+          },
+          "owner_name": {
+            "type": "string",
+            "title": "Owner Name"
+          },
+          "cards": {
+            "type": "integer",
+            "title": "Cards"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "project_id",
+          "project_name",
+          "owner_id",
+          "owner_email",
+          "owner_name",
+          "cards",
+          "updated_at"
+        ],
+        "title": "AdminBoard"
       },
       "AdminDelete": {
         "properties": {
@@ -6642,6 +6956,18 @@
             "title": "Tags",
             "default": []
           },
+          "assignee_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Id"
+          },
           "after_id": {
             "anyOf": [
               {
@@ -6786,6 +7112,18 @@
             "type": "array",
             "title": "Tags",
             "default": []
+          },
+          "assignee_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Id"
           },
           "checklists": {
             "items": {
@@ -7122,6 +7460,18 @@
             "type": "array",
             "title": "Tags",
             "default": []
+          },
+          "assignee_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Id"
           }
         },
         "type": "object",
@@ -7279,6 +7629,18 @@
               }
             ],
             "title": "Column"
+          },
+          "assignee_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Id"
           }
         },
         "type": "object",
@@ -8599,11 +8961,78 @@
         "required": ["type", "url"],
         "title": "ImageBackground"
       },
+      "IncomingInvite": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "inviter": {
+            "type": "string",
+            "title": "Inviter"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "project_name",
+          "role",
+          "inviter",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "IncomingInvite"
+      },
       "InviteCreate": {
         "properties": {
+          "target": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 254,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          },
           "email": {
-            "type": "string",
-            "format": "email",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Email"
           },
           "role": {
@@ -8614,7 +9043,6 @@
           }
         },
         "type": "object",
-        "required": ["email"],
         "title": "InviteCreate"
       },
       "InviteOut": {
@@ -8652,6 +9080,34 @@
               }
             ],
             "title": "Link"
+          },
+          "invitee_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invitee Name"
+          },
+          "invitee_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invitee Username"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "declined"],
+            "title": "Status",
+            "default": "pending"
           }
         },
         "type": "object",
@@ -8869,6 +9325,17 @@
             "type": "boolean",
             "title": "Is You",
             "default": false
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
           }
         },
         "type": "object",
@@ -8920,6 +9387,31 @@
         },
         "type": "object",
         "title": "Ok"
+      },
+      "Page_AdminBoard_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminBoard"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "Page[AdminBoard]"
       },
       "Page_AdminUser_": {
         "properties": {
@@ -9103,6 +9595,18 @@
               }
             ],
             "title": "Display Name"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 33
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
           },
           "locale": {
             "anyOf": [
@@ -10339,6 +10843,17 @@
           "display_name": {
             "type": "string",
             "title": "Display Name"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
           },
           "locale": {
             "type": "string",

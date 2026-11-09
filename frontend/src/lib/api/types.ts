@@ -26,6 +26,7 @@ export type RecoveryCodesOut = S["RecoveryCodesOut"];
 export type MemberOut = S["MemberOut"];
 export type InviteOut = S["InviteOut"];
 export type InvitePreview = S["InvitePreview"];
+export type IncomingInvite = S["IncomingInvite"];
 export type TotpSetupOut = S["TotpSetupOut"];
 
 export type BoardConfig = S["BoardConfig"];
@@ -66,6 +67,7 @@ export type DocumentVersionOut = S["DocumentVersionOut"];
 export type DocumentCommentOut = S["DocumentCommentOut"];
 export type DocumentPreview = S["DocumentPreview"];
 export type AdminUser = S["AdminUser"];
+export type AdminBoard = S["AdminBoard"];
 export type AdminStats = S["AdminStats"];
 export type AdminEvent = S["AdminEvent"];
 export type AdminSettings = S["AdminSettings"];

@@ -22,6 +22,10 @@ from app.core.errors import ApiError
 MAX_UNZIPPED = 200 * 1024 * 1024
 MAX_ZIP_ENTRIES = 5000
 MAX_PREVIEW_HTML = 5 * 1024 * 1024
+# Картинки Word не вшиваются в HTML (иначе документ со скриншотами не помещается в просмотр):
+# в разметке остаётся ссылка «kanbanly-image:N», а сам файл берётся из архива docx по запросу.
+IMAGE_SCHEME = "kanbanly-image"
+MAX_DOC_IMAGES = 500
 MAX_PREVIEW_TEXT = 1024 * 1024
 XLSX_ROWS = 300
 XLSX_COLUMNS = 40
@@ -90,9 +94,11 @@ def detect_kind(filename: str, data: bytes) -> str:
 
 
 def _attribute_filter(tag: str, attribute: str, value: str) -> str | None:
-    # Картинки только встроенные: внешняя картинка в документе — пиксель слежения.
-    if tag == "img" and attribute == "src" and not value.lower().startswith("data:image/"):
-        return None
+    # Картинки только свои: внешняя картинка в документе — пиксель слежения.
+    if tag == "img" and attribute == "src":
+        lowered = value.lower()
+        if not (lowered.startswith("data:image/") or lowered.startswith(f"{IMAGE_SCHEME}:")):
+            return None
     # data: допустим только для картинок, не для ссылок.
     if tag == "a" and attribute == "href" and value.lower().startswith("data:"):
         return None
@@ -104,15 +110,58 @@ def sanitize(markup: str) -> str:
         markup,
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRIBUTES,
-        url_schemes={"http", "https", "mailto", "data"},
+        url_schemes={"http", "https", "mailto", "data", IMAGE_SCHEME},
         link_rel="noopener noreferrer",
         attribute_filter=_attribute_filter,
     )
 
 
-def _docx_html(data: bytes) -> str:
-    result = mammoth.convert_to_html(io.BytesIO(data))
-    return sanitize(result.value)
+def _sniff_image(data: bytes) -> str | None:
+    for kind, media_type in IMAGE_TYPES.items():
+        if detect_kind(f"x.{kind}", data) == kind:
+            return media_type
+    return None
+
+
+def _docx_html(data: bytes) -> tuple[str, list[dict[str, str]]]:
+    """HTML без вшитых картинок и список картинок: отпечаток и тип для выдачи по запросу."""
+    images: list[dict[str, str]] = []
+
+    def convert(image: Any) -> dict[str, str]:
+        alt = image.alt_text or ""
+        if len(images) >= MAX_DOC_IMAGES:
+            return {"alt": alt}
+        try:
+            with image.open() as stream:
+                raw = stream.read()
+        except Exception:
+            return {"alt": alt}
+        media_type = _sniff_image(raw)
+        if media_type is None:
+            # EMF, WMF, TIFF браузер не покажет — остаётся подпись.
+            return {"alt": alt or "[рисунок]"}
+        images.append({"sha256": hashlib.sha256(raw).hexdigest(), "type": media_type})
+        return {"src": f"{IMAGE_SCHEME}:{len(images) - 1}", "alt": alt}
+
+    result = mammoth.convert_to_html(io.BytesIO(data), convert_image=mammoth.images.img_element(convert))
+    return sanitize(result.value), images
+
+
+def docx_image(data: bytes, preview: dict[str, Any] | None, number: int) -> tuple[bytes, str] | None:
+    """Картинка N из просмотра docx: ищется в архиве по отпечатку, тип проверяется по содержимому."""
+    images = (preview or {}).get("images") or []
+    if not 0 <= number < len(images) or not _zip_is_safe(data):
+        return None
+    wanted = images[number]
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        for entry in archive.infolist():
+            if entry.is_dir() or entry.file_size > MAX_UNZIPPED:
+                continue
+            raw = archive.read(entry)
+            if hashlib.sha256(raw).hexdigest() == wanted.get("sha256"):
+                media_type = _sniff_image(raw)
+                return (raw, media_type) if media_type else None
+    return None
 
 
 def _xlsx_html(data: bytes) -> str:
@@ -142,10 +191,14 @@ def build_preview(kind: str, data: bytes) -> dict[str, Any]:
         if kind in {"docx", "xlsx"}:
             if not _zip_is_safe(data):
                 return {"kind": "none", "reason": "unsafe_archive"}
-            markup = _docx_html(data) if kind == "docx" else _xlsx_html(data)
+            images: list[dict[str, str]] = []
+            if kind == "docx":
+                markup, images = _docx_html(data)
+            else:
+                markup = _xlsx_html(data)
             if len(markup) > MAX_PREVIEW_HTML:
                 return {"kind": "none", "reason": "too_large"}
-            return {"kind": "html", "html": markup}
+            return {"kind": "html", "html": markup, "images": images, "format": 2}
         if kind in {"text", "markdown"}:
             return {"kind": kind, "text": data[:MAX_PREVIEW_TEXT].decode("utf-8", errors="replace")}
         if kind == "pdf":

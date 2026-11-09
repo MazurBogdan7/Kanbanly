@@ -14,7 +14,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Board, Project
+from app.models import Board, Project, User
 from app.repositories import access
 from app.services import cards as card_service
 from app.services import templates as template_service
@@ -39,6 +39,11 @@ async def board_csv(db: AsyncSession, board_id: UUID) -> bytes:
     index = build_index(board)
     cards = await template_service.board_cards(db, board_id)
     rows = await card_service.serialize_many(db, cards, index)
+    assignees = {card.assignee_id for card in rows if card.assignee_id}
+    people: dict[UUID, str] = {}
+    if assignees:
+        found = await db.execute(select(User.id, User.display_name, User.email).where(User.id.in_(assignees)))
+        people = {user_id: name or email for user_id, name, email in found}
     order = {column.key: number for number, column in enumerate(board.columns)}
     rows.sort(key=lambda card: (order.get(card.column, 0), card.position))
     buffer = io.StringIO()
@@ -50,6 +55,7 @@ async def board_csv(db: AsyncSession, board_id: UUID) -> bytes:
             "Колонка",
             *[dimension.name for dimension in board.dimensions],
             *[field.name for field in board.fields],
+            assignee_header(board),
             "Срок",
             "Создана",
             "Завершена",
@@ -77,6 +83,7 @@ async def board_csv(db: AsyncSession, board_id: UUID) -> bytes:
                     index.columns_by_key[card.column].name,
                     *dimensions,
                     *fields,
+                    people.get(card.assignee_id) if card.assignee_id else None,
                     card.due_date,
                     card.created_at.date(),
                     card.completed_at.date() if card.completed_at else None,
@@ -84,6 +91,14 @@ async def board_csv(db: AsyncSession, board_id: UUID) -> bytes:
             ]
         )
     return (BOM + buffer.getvalue()).encode("utf-8")
+
+
+def assignee_header(board: Board) -> str:
+    """У шаблона может быть своё измерение «Исполнитель» (список имён): столбцы не должны совпасть."""
+    taken = {item.name.strip().lower() for item in board.dimensions} | {
+        item.name.strip().lower() for item in board.fields
+    }
+    return "Исполнитель (участник проекта)" if "исполнитель" in taken else "Исполнитель"
 
 
 def safe_name(name: str, fallback: str) -> str:

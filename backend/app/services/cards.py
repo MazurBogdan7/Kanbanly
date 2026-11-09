@@ -26,6 +26,7 @@ from app.models import (
     Comment,
     Dimension,
     FieldDefinition,
+    ProjectMember,
     ProjectTag,
 )
 from app.schemas.api import CardCreate, CardDetail, CardMove, CardOut, CardUpdate
@@ -109,6 +110,7 @@ def serialize(card: Card, index: BoardIndex, comments: int = 0, attachments: int
         cover_url=card.cover_url,
         color=card.color,
         tags=[link.tag_id for link in card.tags],
+        assignee_id=card.assignee_id,
         values={key: [k for _, k in sorted(ranks)] for key, ranks in values.items()},
         fields={
             index.fields_by_id[row.field_id].key: row.value
@@ -208,6 +210,20 @@ async def resolve_tags(db: AsyncSession, project_id: UUID, ids: list[UUID]) -> l
     if len(found) != len(unique):
         raise ApiError(422, "unknown_tag", "Тег не найден в этом проекте")
     return unique
+
+
+async def check_assignee(db: AsyncSession, project_id: UUID, user_id: UUID | None) -> UUID | None:
+    """Исполнителем может быть только участник проекта."""
+    if user_id is None:
+        return None
+    found = await db.execute(
+        select(ProjectMember.id).where(
+            ProjectMember.project_id == project_id, ProjectMember.user_id == user_id
+        )
+    )
+    if found.first() is None:
+        raise ApiError(422, "unknown_assignee", "Исполнитель должен быть участником проекта")
+    return user_id
 
 
 def set_tags(card: Card, tag_ids: list[UUID]) -> None:
@@ -374,6 +390,7 @@ async def create(
         due_date=payload.due_date,
         cover_url=payload.cover_url,
         color=payload.color,
+        assignee_id=await check_assignee(db, board.project_id, payload.assignee_id),
         created_by=user_id,
         dimension_values=[],
         field_values=[],
@@ -397,7 +414,7 @@ def update(card: Card, board: Board, index: BoardIndex, payload: CardUpdate) -> 
     if "tags" in data and data["tags"] is not None:
         set_tags(card, data["tags"])
         changed.append("tags")
-    for name in ("title", "description", "due_date", "cover_url", "color"):
+    for name in ("title", "description", "due_date", "cover_url", "color", "assignee_id"):
         if name in data and getattr(card, name) != data[name]:
             setattr(card, name, data[name])
             changed.append(name)

@@ -165,6 +165,12 @@ async def _board_document(db: AsyncSession, board_id: UUID) -> dict[str, Any]:
     )
     cards = (await db.execute(statement)).scalars().all()
     tag_names = {tag.id: tag.name for tag in await _project_tags(db, board.project_id)}
+    assignees = {card.assignee_id for card in cards if card.assignee_id}
+    emails: dict[UUID, str] = {}
+    if assignees:
+        rows = await db.execute(select(User.id, User.email).where(User.id.in_(assignees)))
+        for user_id, email in rows:
+            emails[user_id] = email
     document = {
         "source_id": str(board.id),
         "project_source_id": str(board.project_id),
@@ -173,7 +179,7 @@ async def _board_document(db: AsyncSession, board_id: UUID) -> dict[str, Any]:
         "is_favorite": board.is_favorite,
         "source_template": board.source_template,
         "config": _json_config(board),
-        "cards": [_card_document(card, index, tag_names) for card in cards],
+        "cards": [_card_document(card, index, tag_names, emails) for card in cards],
         "created_at": _iso(board.created_at),
         "updated_at": _iso(board.updated_at),
     }
@@ -236,11 +242,14 @@ async def _project_document(db: AsyncSession, project: Project, *, with_document
     }
 
 
-def _card_document(card: Card, index: BoardIndex, tag_names: dict[UUID, str]) -> dict[str, Any]:
+def _card_document(
+    card: Card, index: BoardIndex, tag_names: dict[UUID, str], emails: dict[UUID, str]
+) -> dict[str, Any]:
     data = card_service.serialize(card, index)
     return {
         "source_id": str(card.id),
         "color": card.color,
+        "assignee_email": emails.get(card.assignee_id) if card.assignee_id else None,
         "tags": sorted(tag_names[link.tag_id] for link in card.tags if link.tag_id in tag_names),
         "column": data.column,
         "title": card.title,
@@ -604,8 +613,25 @@ async def _restore_documents(
     await db.flush()
 
 
+async def project_people(db: AsyncSession, project_id: UUID) -> dict[str, UUID]:
+    """Участники проекта по email: исполнители из бэкапа назначаются только им."""
+    rows = await db.execute(
+        select(User.email, User.id)
+        .join(ProjectMember, ProjectMember.user_id == User.id)
+        .where(ProjectMember.project_id == project_id)
+    )
+    people: dict[str, UUID] = {}
+    for email, user_id in rows:
+        people[email] = user_id
+    return people
+
+
 async def restore_board(
-    db: AsyncSession, project: Project, source: BackupBoard, tags: dict[str, UUID]
+    db: AsyncSession,
+    project: Project,
+    source: BackupBoard,
+    tags: dict[str, UUID],
+    people: dict[str, UUID] | None = None,
 ) -> Board:
     board = Board(
         project_id=project.id,
@@ -625,14 +651,21 @@ async def restore_board(
     await apply_config(db, board, source.config)
     board = await load_board(db, board.id)
     index = build_index(board)
+    people = people if people is not None else await project_people(db, project.id)
     for card in source.cards:
-        db.add(_restore_card(board, index, card, tags))
+        db.add(_restore_card(board, index, card, tags, people))
     board.updated_at = source.updated_at
     await db.flush()
     return board
 
 
-def _restore_card(board: Board, index: BoardIndex, source: BackupCard, tags: dict[str, UUID]) -> Card:
+def _restore_card(
+    board: Board,
+    index: BoardIndex,
+    source: BackupCard,
+    tags: dict[str, UUID],
+    people: dict[str, UUID],
+) -> Card:
     column = index.columns_by_key.get(source.column)
     if column is None:
         raise ApiError(422, "invalid_backup", f"Колонка «{source.column}» не найдена в доске «{board.name}»")
@@ -646,6 +679,7 @@ def _restore_card(board: Board, index: BoardIndex, source: BackupCard, tags: dic
         completed_at=source.completed_at,
         cover_url=source.cover_url,
         color=source.color,
+        assignee_id=people.get(source.assignee_email) if source.assignee_email else None,
         created_at=source.created_at,
         updated_at=source.updated_at,
         tags=[CardTag(tag_id=tags[name]) for name in dict.fromkeys(source.tags) if name in tags],

@@ -590,6 +590,28 @@
   font-weight: 600;
 }
 
+.kb-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: 7px;
+  margin-right: 8px;
+  color: var(--t-text-muted);
+  font-size: 11px;
+}
+
+.kb-assignee .kb-avatar {
+  margin-right: 0;
+  border-color: transparent;
+}
+
+.kb-assignee-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .kb-assignees {
   display: flex;
   margin-top: 7px;

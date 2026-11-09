@@ -14,6 +14,8 @@ class User(IdMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(254), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     display_name: Mapped[str] = mapped_column(String(120), default="")
+    # Ник для приглашений (@nick): строчные латинские буквы, цифры, «_», «.», «-».
+    username: Mapped[str | None] = mapped_column(String(32), unique=True, default=None)
     locale: Mapped[str] = mapped_column(String(8), default="ru")
     totp_secret: Mapped[str | None] = mapped_column(String(255), default=None)
     totp_enabled: Mapped[bool] = mapped_column(default=False)

@@ -54,6 +54,11 @@ export async function api(page: Page) {
       expect(response.ok(), await response.text()).toBeTruthy();
       return (await response.json()) as T;
     },
+    patch: async <T>(path: string, data: unknown): Promise<T> => {
+      const response = await request.patch(`/api/v1${path}`, { data, headers });
+      expect(response.ok(), await response.text()).toBeTruthy();
+      return (await response.json()) as T;
+    },
   };
 }
 

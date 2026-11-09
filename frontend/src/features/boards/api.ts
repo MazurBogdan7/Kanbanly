@@ -280,6 +280,7 @@ export function useCreateCard(boardId: string) {
             cover_url: null,
             color: typeof payload.color === "string" ? payload.color : null,
             tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+            assignee_id: typeof payload.assignee_id === "string" ? payload.assignee_id : null,
             values: {},
             fields: {},
             checklist_done: 0,

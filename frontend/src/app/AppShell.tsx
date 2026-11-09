@@ -10,6 +10,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIncomingInvites } from "@/features/projects/Inbox";
 
 import { Button, cx, Modal, Skeleton } from "@/components/ui";
 import { Toaster } from "@/components/ui/toast";
@@ -179,6 +180,18 @@ export function AppShell() {
   const { t } = useT();
   const me = useMe();
   const nav = me.data?.is_admin ? [...NAV, ADMIN_NAV] : NAV;
+  const invites = useIncomingInvites(!!me.data);
+  const pending = invites.data?.length ?? 0;
+  // Значок на «Профиле»: в профиле лежат входящие приглашения.
+  const badge = (to: string) =>
+    to === "/profile" && pending > 0 ? (
+      <span
+        className="rounded-full bg-brand px-1.5 text-[10px] leading-4 font-semibold text-white"
+        aria-label={t("inbox.badge", { count: pending })}
+      >
+        {pending}
+      </span>
+    ) : null;
   const signOut = useSignOut();
   const path = useRouterState({ select: (state) => state.location.pathname });
   const href = useRouterState({ select: (state) => state.location.href });
@@ -237,6 +250,7 @@ export function AppShell() {
             >
               <Icon className="size-4" aria-hidden />
               {t(label)}
+              {badge(to)}
             </Link>
           ))}
         </nav>
@@ -273,7 +287,10 @@ export function AppShell() {
               path === to ? "text-brand" : "text-ink-soft",
             )}
           >
-            <Icon className="size-5" aria-hidden />
+            <span className="relative">
+              <Icon className="size-5" aria-hidden />
+              <span className="absolute -top-1.5 -right-3">{badge(to)}</span>
+            </span>
             {t(label)}
           </Link>
         ))}

@@ -78,7 +78,13 @@ export const routeTree = rootRoute.addChildren([
     createRoute({ getParentRoute: () => appRoute, path: "/admin", component: AdminPage }),
     createRoute({ getParentRoute: () => appRoute, path: "/templates", component: TemplatesPage }),
     createRoute({ getParentRoute: () => appRoute, path: "/trash", component: TrashPage }),
-    createRoute({ getParentRoute: () => appRoute, path: "/profile", component: ProfilePage }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/profile",
+      component: ProfilePage,
+      validateSearch: (search: Record<string, unknown>): { tab?: string } =>
+        typeof search.tab === "string" ? { tab: search.tab } : {},
+    }),
     createRoute({ getParentRoute: () => appRoute, path: "/invite/$token", component: InvitePage }),
   ]),
 ]);

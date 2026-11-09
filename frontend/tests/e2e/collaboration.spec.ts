@@ -36,7 +36,7 @@ test("приглашение: второй участник входит по с
 
   await page.goto(`/projects/${board.project_id}`);
   const guestEmail = uniqueEmail();
-  await page.getByLabel("Email приглашённого").fill(guestEmail);
+  await page.getByLabel("Email или ник").fill(guestEmail);
   await page.getByRole("button", { name: "Пригласить" }).click();
   const link = (await page.getByTestId("invite-link").locator("code").innerText()).trim();
   expect(link).toMatch(/\/invite\/[\w-]+$/);
@@ -154,7 +154,7 @@ test("скачивание: таблица CSV доски и JSON проекта
   expect(text.charCodeAt(0)).toBe(0xfeff);
   const lines = text.trim().split("\r\n");
   expect(lines[0]).toBe(
-    "Название;Описание;Колонка;Эпик;Веха;Тип;Исполнитель;Срок;Создана;Завершена",
+    "Название;Описание;Колонка;Эпик;Веха;Тип;Исполнитель;Исполнитель (участник проекта);Срок;Создана;Завершена",
   );
   expect(lines).toHaveLength(154);
 

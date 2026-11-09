@@ -338,7 +338,15 @@ export function DocumentPage() {
   const newVersion = useMutation({
     mutationFn: (file: File) =>
       uploadFile<DocumentDetail>(`/documents/${documentId}/versions`, file),
-    onSuccess: (detail) => {
+    // Загрузка документа, начатая раньше (например, после правки описания), иначе вернёт
+    // прежнюю версию поверх только что загруженной.
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: workspaceKeys.document(documentId), exact: true }),
+    onSuccess: async (detail) => {
+      await queryClient.cancelQueries({
+        queryKey: workspaceKeys.document(documentId),
+        exact: true,
+      });
       queryClient.setQueryData(workspaceKeys.document(documentId), detail);
       void queryClient.invalidateQueries({ queryKey: workspaceKeys.documents(detail.project_id) });
       setSelected(null);

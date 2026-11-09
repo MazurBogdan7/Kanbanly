@@ -1,10 +1,10 @@
 /**
- * Панель администратора: пользователи, блокировки, регистрация, журнал безопасности.
- * Содержимое чужих проектов администратору не показывается — только учётные записи и счётчики.
+ * Панель администратора: пользователи, блокировки, регистрация, журнал безопасности,
+ * бэкапы досок и аккаунтов. Каждая выгрузка чужих данных записывается в журнал.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Lock, LogOut, Search, ShieldCheck, Trash2, Unlock, UserX } from "lucide-react";
+import { Download, Lock, LogOut, Search, ShieldCheck, Trash2, Unlock, UserX } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 
 import {
@@ -20,14 +20,22 @@ import {
 } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import { useLocale, useT, type MessageKey } from "@/i18n";
-import { api, ApiError } from "@/lib/api/client";
-import type { AdminEvent, AdminSettings, AdminStats, AdminUser, Page } from "@/lib/api/types";
+import { api, ApiError, downloadFrom } from "@/lib/api/client";
+import type {
+  AdminBoard,
+  AdminEvent,
+  AdminSettings,
+  AdminStats,
+  AdminUser,
+  Page,
+} from "@/lib/api/types";
 
 import { formatSize } from "../workspace/api";
 
 const adminKeys = {
   stats: ["admin", "stats"] as const,
   users: (q: string) => ["admin", "users", q] as const,
+  boards: (q: string) => ["admin", "boards", q] as const,
   audit: ["admin", "audit"] as const,
   settings: ["admin", "settings"] as const,
 };
@@ -188,6 +196,15 @@ function UserRow({ user, onDelete }: { user: AdminUser; onDelete: () => void }) 
               {t("admin.unlock")}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={t("admin.userBackup", { email: user.email })}
+            title={t("admin.userBackup", { email: user.email })}
+            onClick={() => void downloadFrom(`/admin/users/${user.id}/backup`).catch(toast.error)}
+          >
+            <Download className="size-3.5" aria-hidden />
+          </Button>
           {!user.is_you && (
             <>
               <Button
@@ -328,7 +345,89 @@ const ACTION_KEYS: Record<string, MessageKey> = {
   "admin.user_deleted": "admin.event.deleted",
   "admin.user_logged_out": "admin.event.sessionsRevoked",
   "admin.settings_changed": "admin.event.settings",
+  "admin.board_exported": "admin.event.boardExported",
+  "admin.user_exported": "admin.event.userExported",
 };
+
+/** Все доски сервера с владельцами: бэкап любой доски одной кнопкой. */
+function Boards() {
+  const { t } = useT();
+  const locale = useLocale((state) => state.locale);
+  const [query, setQuery] = useState("");
+  const q = useDeferredValue(query.trim());
+  const boards = useQuery({
+    queryKey: adminKeys.boards(q),
+    queryFn: () => api.get<Page<AdminBoard>>("/admin/boards", { q: q || undefined }),
+  });
+  return (
+    <Section title={t("admin.boards")} description={t("admin.boardsHint")}>
+      <label className="relative block max-w-sm">
+        <Search className="absolute top-2.5 left-2.5 size-4 text-ink-soft" aria-hidden />
+        <Input
+          aria-label={t("admin.boardsSearch")}
+          placeholder={t("admin.boardsSearch")}
+          className="pl-8"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </label>
+      {boards.isPending ? (
+        <Skeleton className="h-32" />
+      ) : boards.isError ? (
+        <ErrorNote message={t("common.error")} onRetry={() => void boards.refetch()} />
+      ) : boards.data.items.length === 0 ? (
+        <p className="text-sm text-ink-soft">{t("admin.boardsEmpty")}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs text-ink-soft">
+              <tr>
+                <th className="pb-2 font-medium">{t("admin.board")}</th>
+                <th className="pb-2 font-medium">{t("admin.owner")}</th>
+                <th className="hidden pb-2 font-medium md:table-cell">{t("admin.updated")}</th>
+                <th className="pb-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {boards.data.items.map((board) => (
+                <tr
+                  key={board.id}
+                  className="border-t border-line align-top"
+                  data-testid="admin-board"
+                >
+                  <td className="py-2 pr-3">
+                    <div className="font-medium [overflow-wrap:anywhere]">{board.name}</div>
+                    <div className="text-xs text-ink-soft">
+                      {board.project_name} · {board.cards}
+                    </div>
+                  </td>
+                  <td className="py-2 pr-3">
+                    <div>{board.owner_name}</div>
+                    <div className="text-xs break-all text-ink-soft">{board.owner_email}</div>
+                  </td>
+                  <td className="hidden py-2 pr-3 text-xs text-ink-soft md:table-cell">
+                    {new Date(board.updated_at).toLocaleString(locale)}
+                  </td>
+                  <td className="py-2 text-right">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        void downloadFrom(`/admin/boards/${board.id}/backup`).catch(toast.error)
+                      }
+                    >
+                      <Download className="size-3.5" aria-hidden />
+                      {t("admin.boardBackup")}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
+  );
+}
 
 function Audit() {
   const { t } = useT();
@@ -402,6 +501,7 @@ export function AdminPage() {
         />
       </div>
       <Users />
+      <Boards />
       <div className="grid gap-8 lg:grid-cols-2">
         <Registration />
         <Audit />

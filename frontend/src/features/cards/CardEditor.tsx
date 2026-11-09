@@ -22,6 +22,7 @@ import type { BoardConfig, CardOut, DimensionTemplate, FieldTemplate } from "@/l
 import { SafeMarkdown } from "@/lib/markdown";
 
 import { isConflict, keys, useCardDetail, useCreateCard, useDeleteCard } from "../boards/api";
+import { memberLabel, useProjectMembers } from "../projects/people";
 import { ColorSwatches, TagChip, TagPicker, useProjectTag } from "../workspace/tags";
 import { CardExtras } from "./CardExtras";
 
@@ -33,6 +34,7 @@ interface Draft {
   cover_url: string;
   color: string | null;
   tags: string[];
+  assignee_id: string | null;
   values: Record<string, string[]>;
   fields: Record<string, unknown>;
 }
@@ -42,14 +44,63 @@ function ReadOnlyTag({ id }: { id: string }) {
   return tag ? <TagChip tag={tag} /> : null;
 }
 
-/** Цвет карточки и теги проекта. Цвет текста на карточке подбирается автоматически. */
-function Appearance({
+/** Исполнитель — один из участников проекта. */
+/** Своё измерение «Исполнитель» у шаблона (список имён) не должно совпасть по подписи с полем. */
+export function assigneeLabelKey(config: BoardConfig): "card.assignee" | "card.assigneeMember" {
+  const names = [...(config.dimensions ?? []), ...(config.fields ?? [])].map((item) =>
+    item.name.trim().toLowerCase(),
+  );
+  return names.includes("исполнитель") || names.includes("assignee")
+    ? "card.assigneeMember"
+    : "card.assignee";
+}
+
+function AssigneeSelect({
   projectId,
+  config,
   draft,
   setDraft,
   readOnly,
 }: {
   projectId: string;
+  config: BoardConfig;
+  draft: Draft;
+  setDraft: (draft: Draft) => void;
+  readOnly?: boolean;
+}) {
+  const { t } = useT();
+  const members = useProjectMembers(projectId);
+  const list = members.data ?? [];
+  const known = !draft.assignee_id || list.some((member) => member.user_id === draft.assignee_id);
+  return (
+    <SelectField
+      label={t(assigneeLabelKey(config))}
+      disabled={readOnly}
+      value={draft.assignee_id ?? ""}
+      onChange={(event) => setDraft({ ...draft, assignee_id: event.target.value || null })}
+    >
+      <option value="">{t("card.noAssignee")}</option>
+      {list.map((member) => (
+        <option key={member.user_id} value={member.user_id}>
+          {memberLabel(member)}
+          {member.is_you ? ` (${t("members.you")})` : ""}
+        </option>
+      ))}
+      {!known && <option value={draft.assignee_id ?? ""}>{t("card.formerMember")}</option>}
+    </SelectField>
+  );
+}
+
+/** Цвет карточки и теги проекта. Цвет текста на карточке подбирается автоматически. */
+function Appearance({
+  projectId,
+  config,
+  draft,
+  setDraft,
+  readOnly,
+}: {
+  projectId: string;
+  config: BoardConfig;
   draft: Draft;
   setDraft: (draft: Draft) => void;
   readOnly?: boolean;
@@ -57,6 +108,13 @@ function Appearance({
   const { t } = useT();
   return (
     <div className="grid gap-3 rounded-md border border-line p-3">
+      <AssigneeSelect
+        projectId={projectId}
+        config={config}
+        draft={draft}
+        setDraft={setDraft}
+        readOnly={readOnly}
+      />
       <div className="grid gap-1.5 text-sm">
         <span className="font-medium">{t("tags.title")}</span>
         {readOnly ? (
@@ -321,6 +379,7 @@ export function CardEditor({
     cover_url: card?.cover_url ?? "",
     color: card?.color ?? null,
     tags: card?.tags ?? [],
+    assignee_id: card?.assignee_id ?? null,
     values: card ? { ...card.values } : defaultValues(config),
     fields: card
       ? { ...card.fields }
@@ -350,6 +409,7 @@ export function CardEditor({
           cover_url: draft.cover_url || null,
           color: draft.color,
           tags: draft.tags,
+          assignee_id: draft.assignee_id,
           values: draft.values,
           fields: Object.fromEntries(
             Object.entries(draft.fields).map(([key, value]) => [key, value ?? null]),
@@ -392,6 +452,7 @@ export function CardEditor({
       cover_url: draft.cover_url || null,
       color: draft.color,
       tags: draft.tags,
+      assignee_id: draft.assignee_id,
     });
     onClose();
   };
@@ -543,7 +604,13 @@ export function CardEditor({
         >
           {grid}
         </div>
-        <Appearance projectId={projectId} draft={draft} setDraft={setDraft} readOnly={readOnly} />
+        <Appearance
+          projectId={projectId}
+          config={config}
+          draft={draft}
+          setDraft={setDraft}
+          readOnly={readOnly}
+        />
         {problem && <ErrorNote message={problem} />}
         {!readOnly && (
           <div className="flex items-center justify-between gap-2">

@@ -1,6 +1,7 @@
 """Аккаунты, сессии, 2FA и сброс пароля."""
 
 import logging
+import re
 from datetime import timedelta
 from uuid import UUID
 
@@ -13,6 +14,7 @@ from app.core.config import Settings
 from app.core.db import utcnow
 from app.core.errors import ApiError
 from app.models import PasswordResetToken, RecoveryCode, User, UserSession
+from app.schemas.auth import USERNAME_PATTERN
 from app.security import passwords
 from app.security.tokens import (
     decrypt_secret,
@@ -291,3 +293,24 @@ async def delete_account(db: AsyncSession, user: User, password: str) -> None:
     if not passwords.verify_password(user.password_hash, password):
         raise ApiError(400, "invalid_password", "Пароль указан неверно")
     await db.execute(delete(User).where(User.id == user.id))
+
+
+def normalize_username(value: str) -> str:
+    return value.strip().removeprefix("@").lower()
+
+
+async def set_username(db: AsyncSession, user: User, value: str) -> str | None:
+    """Ник уникален без учёта регистра; занятый ник — 409, неверный формат — 422."""
+    username = normalize_username(value)
+    if not username:
+        return None
+    if not re.fullmatch(USERNAME_PATTERN, username):
+        raise ApiError(
+            422,
+            "invalid_username",
+            "Ник: от 3 до 32 символов — латинские буквы, цифры, «_», «.» или «-»",
+        )
+    taken = await db.execute(select(User.id).where(User.username == username, User.id != user.id))
+    if taken.first() is not None:
+        raise ApiError(409, "username_taken", "Этот ник уже занят")
+    return username

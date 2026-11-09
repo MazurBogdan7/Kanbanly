@@ -14,6 +14,7 @@ import type {
 } from "@/lib/api/types";
 import { blend, ensureContrast, readableOpacity, readableText, strongText } from "@/lib/contrast";
 
+import { avatarColor, initials, memberLabel, useMember } from "../../projects/people";
 import { ProjectTagsContext } from "../../workspace/tags";
 import { isSafeImageUrl } from "@/lib/templateFile";
 
@@ -171,13 +172,22 @@ function FaceFields({ card, config }: { card: CardOut; config: BoardConfig }) {
   );
 }
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+/** Исполнитель — участник проекта: цветной кружок с инициалами и имя. */
+function CardAssignee({ id }: { id: string }) {
+  const member = useMember(id);
+  if (!member) return null;
+  const label = memberLabel(member);
+  return (
+    <span className="kb-assignee" data-testid="card-assignee" title={label}>
+      <span
+        className="kb-avatar"
+        style={{ background: avatarColor(member.user_id), color: "#FFFFFF" }}
+      >
+        {initials(label)}
+      </span>
+      <span className="kb-assignee-name">{label}</span>
+    </span>
+  );
 }
 
 function Assignees({ card, config }: { card: CardOut; config: BoardConfig }) {
@@ -189,9 +199,10 @@ function Assignees({ card, config }: { card: CardOut; config: BoardConfig }) {
         .map((key) => dimension.values?.find((value) => value.key === key)),
     )
     .filter((value): value is DimensionValueTemplate => !!value);
-  if (!people.length) return null;
+  if (!people.length) return card.assignee_id ? <CardAssignee id={card.assignee_id} /> : null;
   return (
     <div className="kb-assignees">
+      {card.assignee_id && <CardAssignee id={card.assignee_id} />}
       {people.map((person) => (
         <span key={person.key} className="kb-avatar" title={person.name}>
           {initials(person.name)}
@@ -364,6 +375,9 @@ export const CardFace = memo(function CardFace({ card, config, column }: CardFac
       )}
       {face.map((name) => slot(name, card, config, tokens, titleStyle))}
       {card.tags?.length ? <CardTags ids={card.tags} /> : null}
+      {card.assignee_id && !face.includes("assignees") ? (
+        <CardAssignee id={card.assignee_id} />
+      ) : null}
     </>
   );
 });

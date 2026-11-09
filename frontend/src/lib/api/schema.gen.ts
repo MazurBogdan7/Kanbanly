@@ -425,6 +425,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/invites": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Incoming Invites */
+    get: operations["incoming_invites_api_v1_me_invites_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/invites/{invite_id}/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept Incoming */
+    post: operations["accept_incoming_api_v1_me_invites__invite_id__accept_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/invites/{invite_id}/decline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Decline Incoming */
+    post: operations["decline_incoming_api_v1_me_invites__invite_id__decline_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/invites/{token}": {
     parameters: {
       query?: never;
@@ -1538,6 +1589,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/boards": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Boards
+     * @description Все доски сервера: название, проект и владелец — для выгрузки бэкапа.
+     */
+    get: operations["list_boards_api_v1_admin_boards_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/boards/{board_id}/backup": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Export Board
+     * @description Бэкап чужой доски. Каждая выгрузка пишется в журнал безопасности.
+     */
+    get: operations["export_board_api_v1_admin_boards__board_id__backup_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/users/{user_id}/backup": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Export User
+     * @description Бэкап всего аккаунта пользователя: его проекты, доски, документы и шаблоны.
+     */
+    get: operations["export_user_api_v1_admin_users__user_id__backup_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/search": {
     parameters: {
       query?: never;
@@ -1627,6 +1738,39 @@ export interface components {
       reset?: boolean;
     } & {
       [key: string]: unknown;
+    };
+    /** AdminBoard */
+    AdminBoard: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string;
+      /** Project Name */
+      project_name: string;
+      /**
+       * Owner Id
+       * Format: uuid
+       */
+      owner_id: string;
+      /** Owner Email */
+      owner_email: string;
+      /** Owner Name */
+      owner_name: string;
+      /** Cards */
+      cards: number;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
     };
     /** AdminDelete */
     AdminDelete: {
@@ -2364,6 +2508,8 @@ export interface components {
        * @default []
        */
       tags?: string[];
+      /** Assignee Id */
+      assignee_id?: string | null;
       /** After Id */
       after_id?: string | null;
     };
@@ -2428,6 +2574,8 @@ export interface components {
        * @default []
        */
       tags?: string[];
+      /** Assignee Id */
+      assignee_id?: string | null;
       /** Checklists */
       checklists: components["schemas"]["ChecklistOut"][];
       /** Comments */
@@ -2604,6 +2752,8 @@ export interface components {
        * @default []
        */
       tags?: string[];
+      /** Assignee Id */
+      assignee_id?: string | null;
     };
     /** CardUpdate */
     CardUpdate: {
@@ -2629,6 +2779,8 @@ export interface components {
       tags?: string[] | null;
       /** Column */
       column?: string | null;
+      /** Assignee Id */
+      assignee_id?: string | null;
     };
     /** ChecklistCreate */
     ChecklistCreate: {
@@ -3270,13 +3422,41 @@ export interface components {
     } & {
       [key: string]: unknown;
     };
+    /** IncomingInvite */
+    IncomingInvite: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string;
+      /** Project Name */
+      project_name: string;
+      /** Role */
+      role: string;
+      /** Inviter */
+      inviter: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Expires At
+       * Format: date-time
+       */
+      expires_at: string;
+    };
     /** InviteCreate */
     InviteCreate: {
-      /**
-       * Email
-       * Format: email
-       */
-      email: string;
+      /** Target */
+      target?: string | null;
+      /** Email */
+      email?: string | null;
       /**
        * Role
        * @default editor
@@ -3307,6 +3487,16 @@ export interface components {
       created_at: string;
       /** Link */
       link?: string | null;
+      /** Invitee Name */
+      invitee_name?: string | null;
+      /** Invitee Username */
+      invitee_username?: string | null;
+      /**
+       * Status
+       * @default pending
+       * @enum {string}
+       */
+      status?: "pending" | "declined";
     };
     /** InvitePreview */
     InvitePreview: {
@@ -3459,6 +3649,8 @@ export interface components {
        * @default false
        */
       is_you?: boolean;
+      /** Username */
+      username?: string | null;
     };
     /** MemberUpdate */
     MemberUpdate: {
@@ -3492,6 +3684,13 @@ export interface components {
        * @default true
        */
       ok?: boolean;
+    };
+    /** Page[AdminBoard] */
+    Page_AdminBoard_: {
+      /** Items */
+      items: components["schemas"]["AdminBoard"][];
+      /** Next Cursor */
+      next_cursor?: string | null;
     };
     /** Page[AdminUser] */
     Page_AdminUser_: {
@@ -3550,6 +3749,8 @@ export interface components {
     ProfileUpdate: {
       /** Display Name */
       display_name?: string | null;
+      /** Username */
+      username?: string | null;
       /** Locale */
       locale?: string | null;
     };
@@ -4170,6 +4371,8 @@ export interface components {
       email: string;
       /** Display Name */
       display_name: string;
+      /** Username */
+      username?: string | null;
       /** Locale */
       locale: string;
       /** Totp Enabled */
@@ -5244,6 +5447,88 @@ export interface operations {
       header?: never;
       path: {
         project_id: string;
+        invite_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  incoming_invites_api_v1_me_invites_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["IncomingInvite"][];
+        };
+      };
+    };
+  };
+  accept_incoming_api_v1_me_invites__invite_id__accept_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        invite_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProjectOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  decline_incoming_api_v1_me_invites__invite_id__decline_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
         invite_id: string;
       };
       cookie?: never;
@@ -7936,6 +8221,101 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdminSettings"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_boards_api_v1_admin_boards_get: {
+    parameters: {
+      query?: {
+        q?: string;
+        cursor?: string | null;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Page_AdminBoard_"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  export_board_api_v1_admin_boards__board_id__backup_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        board_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  export_user_api_v1_admin_users__user_id__backup_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
         };
       };
       /** @description Validation Error */

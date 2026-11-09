@@ -179,6 +179,19 @@
           "title": "Tags",
           "type": "array"
         },
+        "assignee_email": {
+          "anyOf": [
+            {
+              "maxLength": 254,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assignee Email"
+        },
         "column": {
           "maxLength": 64,
           "title": "Column",

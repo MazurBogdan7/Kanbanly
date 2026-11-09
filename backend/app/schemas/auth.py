@@ -26,14 +26,21 @@ class UserOut(BaseModel):
     id: UUID
     email: str
     display_name: str
+    username: str | None = None
     locale: str
     totp_enabled: bool
     is_admin: bool
     created_at: datetime
 
 
+# Ник: 3–32 символа, латиница в нижнем регистре, цифры, «_», «.», «-»; начинается с буквы или цифры.
+USERNAME_PATTERN = r"^[a-z0-9][a-z0-9_.-]{2,31}$"
+
+
 class ProfileUpdate(BaseModel):
     display_name: Annotated[str, Field(min_length=1, max_length=120)] | None = None
+    # Пустая строка снимает ник.
+    username: Annotated[str, Field(max_length=33)] | None = None
     locale: Annotated[str, Field(pattern=r"^(ru|en)$")] | None = None
 
 

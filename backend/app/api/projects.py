@@ -21,6 +21,7 @@ from app.models import Board, BoardColumn, Card, Project, ProjectInvite, Project
 from app.repositories import access
 from app.schemas.api import (
     BoardSummary,
+    IncomingInvite,
     InviteCreate,
     InviteOut,
     InvitePreview,
@@ -188,6 +189,7 @@ def _member_out(member: ProjectMember, user: User, current_id: UUID) -> MemberOu
         email=user.email,
         role=member.role,
         is_you=user.id == current_id,
+        username=user.username,
     )
 
 
@@ -220,7 +222,7 @@ async def remove_member(project_id: UUID, user_id: UUID, current: Current, db: D
     return Ok()
 
 
-def _invite_out(invite: ProjectInvite, link: str | None = None) -> InviteOut:
+def _invite_out(invite: ProjectInvite, invitee: User | None, link: str | None = None) -> InviteOut:
     return InviteOut(
         id=invite.id,
         email=invite.email,
@@ -228,13 +230,16 @@ def _invite_out(invite: ProjectInvite, link: str | None = None) -> InviteOut:
         expires_at=invite.expires_at,
         created_at=invite.created_at,
         link=link,
+        invitee_name=invitee.display_name if invitee else None,
+        invitee_username=invitee.username if invitee else None,
+        status="declined" if invite.declined_at else "pending",
     )
 
 
 @router.get("/projects/{project_id}/invites")
 async def list_invites(project_id: UUID, current: Current, db: Db) -> list[InviteOut]:
     await access.get_project(db, current.id, project_id, "owner")
-    return [_invite_out(invite) for invite in await members.pending_invites(db, project_id)]
+    return [_invite_out(invite, user) for invite, user in await members.project_invites(db, project_id)]
 
 
 @router.post("/projects/{project_id}/invites", status_code=201)
@@ -248,17 +253,63 @@ async def create_invite(
 ) -> InviteOut:
     found = await access.get_project(db, current.id, project_id, "owner")
     invite, token = await members.create_invite(
-        db, settings, mailer, found.project, current.user, payload.email, payload.role
+        db, settings, mailer, found.project, current.user, payload.recipient, payload.role
     )
     audit(db, current.id, "project.invite_created", target_type="project", target_id=project_id)
+    invitee = await db.get(User, invite.invitee_id) if invite.invitee_id else None
     # Ссылка показывается один раз: в базе хранится только хэш токена.
-    return _invite_out(invite, members.invite_link(settings, token))
+    return _invite_out(invite, invitee, members.invite_link(settings, token))
 
 
 @router.delete("/projects/{project_id}/invites/{invite_id}")
 async def revoke_invite(project_id: UUID, invite_id: UUID, current: Current, db: Db) -> Ok:
     await access.get_project(db, current.id, project_id, "owner")
     await members.revoke_invite(db, project_id, invite_id)
+    return Ok()
+
+
+@router.get("/me/invites")
+async def incoming_invites(current: Current, db: Db) -> list[IncomingInvite]:
+    return [
+        IncomingInvite(
+            id=invite.id,
+            project_id=project.id,
+            project_name=project.name,
+            role=invite.role,
+            inviter=(inviter.display_name or inviter.email) if inviter else "",
+            created_at=invite.created_at,
+            expires_at=invite.expires_at,
+        )
+        for invite, project, inviter in await members.inbox(db, current.user)
+    ]
+
+
+@router.post("/me/invites/{invite_id}/accept")
+async def accept_incoming(invite_id: UUID, request: Request, current: Current, db: Db) -> ProjectOut:
+    project = await members.accept_by_id(db, current.user, invite_id)
+    audit(
+        db,
+        current.id,
+        "project.invite_accepted",
+        ip=client_ip(request),
+        target_type="project",
+        target_id=project.id,
+    )
+    role = (await access.get_project(db, current.id, project.id)).role
+    return _out(project, role)
+
+
+@router.post("/me/invites/{invite_id}/decline")
+async def decline_incoming(invite_id: UUID, request: Request, current: Current, db: Db) -> Ok:
+    project = await members.decline_by_id(db, current.user, invite_id)
+    audit(
+        db,
+        current.id,
+        "project.invite_declined",
+        ip=client_ip(request),
+        target_type="project",
+        target_id=project.id,
+    )
     return Ok()
 
 

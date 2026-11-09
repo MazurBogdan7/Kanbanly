@@ -1,7 +1,7 @@
 /** Участники проекта и приглашения. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, RotateCcw, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import {
@@ -20,6 +20,7 @@ import { api, ApiError } from "@/lib/api/client";
 import type { InviteOut, InvitePreview, MemberOut, ProjectOut } from "@/lib/api/types";
 
 import { keys } from "../boards/api";
+import { Avatar, membersKey } from "./people";
 
 type Role = "editor" | "viewer";
 
@@ -28,10 +29,10 @@ export function ProjectMembers({ project }: { project: ProjectOut }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isOwner = project.role === "owner";
-  const membersKey = [...keys.project(project.id), "members"];
+  const listKey = membersKey(project.id);
   const invitesKey = [...keys.project(project.id), "invites"];
   const members = useQuery({
-    queryKey: membersKey,
+    queryKey: listKey,
     queryFn: () => api.get<MemberOut[]>(`/projects/${project.id}/members`),
   });
   const invites = useQuery({
@@ -39,19 +40,26 @@ export function ProjectMembers({ project }: { project: ProjectOut }) {
     queryFn: () => api.get<InviteOut[]>(`/projects/${project.id}/invites`),
     enabled: isOwner,
   });
-  const [email, setEmail] = useState("");
+  const [target, setTarget] = useState("");
   const [role, setRole] = useState<Role>("editor");
   const [link, setLink] = useState<string | null>(null);
   const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: membersKey });
+    void queryClient.invalidateQueries({ queryKey: listKey });
     void queryClient.invalidateQueries({ queryKey: invitesKey });
   };
 
   const invite = useMutation({
-    mutationFn: () => api.post<InviteOut>(`/projects/${project.id}/invites`, { email, role }),
+    mutationFn: (body: { target: string; role: Role }) =>
+      api.post<InviteOut>(`/projects/${project.id}/invites`, body),
     onSuccess: (created) => {
-      setLink(created.link ?? null);
-      setEmail("");
+      // Зарегистрированному приглашение пришло во входящие; ссылка нужна только новичку.
+      if (created.invitee_name !== null && created.invitee_name !== undefined) {
+        setLink(null);
+        toast.info(t("members.sentInApp", { name: created.invitee_name || created.email }));
+      } else {
+        setLink(created.link ?? null);
+      }
+      setTarget("");
       refresh();
     },
   });
@@ -100,12 +108,16 @@ export function ProjectMembers({ project }: { project: ProjectOut }) {
               key={member.user_id}
               className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-panel p-2"
             >
-              <span className="min-w-0">
+              <Avatar member={member} className="size-8 text-xs" />
+              <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">
                   {member.display_name}
                   {member.is_you && ` (${t("members.you")})`}
                 </span>
-                <span className="block truncate text-xs text-ink-soft">{member.email}</span>
+                <span className="block truncate text-xs text-ink-soft">
+                  {member.username ? `@${member.username} · ` : ""}
+                  {member.email}
+                </span>
               </span>
               <span className="flex items-center gap-1">
                 {member.role === "owner" || !isOwner ? (
@@ -159,15 +171,16 @@ export function ProjectMembers({ project }: { project: ProjectOut }) {
             onSubmit={(event: FormEvent) => {
               event.preventDefault();
               setLink(null);
-              invite.mutate();
+              invite.mutate({ target, role });
             }}
           >
             <TextField
-              label={t("members.inviteEmail")}
-              type="email"
+              label={t("members.inviteTarget")}
+              placeholder={t("members.inviteTargetPlaceholder")}
+              autoComplete="off"
               required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={target}
+              onChange={(event) => setTarget(event.target.value)}
             />
             <SelectField
               label={t("members.roleLabel")}
@@ -198,13 +211,37 @@ export function ProjectMembers({ project }: { project: ProjectOut }) {
             <div className="grid gap-1">
               <p className="text-xs font-medium text-ink-soft">{t("members.pending")}</p>
               {invites.data?.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="truncate">
+                <div
+                  key={item.id}
+                  data-testid="project-invite"
+                  className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                >
+                  <span className="min-w-0 truncate">
+                    {item.invitee_name ? `${item.invitee_name} · ` : ""}
+                    {item.invitee_username ? `@${item.invitee_username} · ` : ""}
                     {item.email} · {t(`members.role.${item.role as "editor"}`)}
+                    {item.status === "declined" && (
+                      <span className="ml-2 rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger">
+                        {t("members.declined")}
+                      </span>
+                    )}
                   </span>
-                  <Button size="sm" variant="ghost" onClick={() => revoke.mutate(item.id)}>
-                    {t("members.revoke")}
-                  </Button>
+                  <span className="flex gap-1">
+                    {item.status === "declined" && (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          invite.mutate({ target: item.email, role: item.role as Role })
+                        }
+                      >
+                        <RotateCcw className="size-3.5" aria-hidden />
+                        {t("members.inviteAgain")}
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => revoke.mutate(item.id)}>
+                      {t("members.revoke")}
+                    </Button>
+                  </span>
                 </div>
               ))}
             </div>

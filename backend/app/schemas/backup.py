@@ -46,6 +46,8 @@ class BackupCard(Node):
     source_id: UUID
     color: HexColor | None = None
     tags: Annotated[list[Annotated[str, Field(max_length=60)]], Field(max_length=50)] = []
+    # Исполнитель по email: при восстановлении назначается, если он участник проекта.
+    assignee_email: Annotated[str, Field(max_length=254)] | None = None
     column: Annotated[str, Field(max_length=64)]
     title: Annotated[str, Field(min_length=1, max_length=500)]
     description: Annotated[str, Field(max_length=200000)] = ""

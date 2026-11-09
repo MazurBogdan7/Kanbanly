@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import {
@@ -21,14 +22,16 @@ import { PasswordMeter } from "../auth/AuthPages";
 import { useMe, useSignOut } from "../auth/session";
 import { DataBackups } from "../backup/DataBackups";
 import { keys } from "../boards/api";
+import { IncomingInvites, useIncomingInvites } from "../projects/Inbox";
 
 function Account({ user }: { user: UserOut }) {
   const { t } = useT();
   const queryClient = useQueryClient();
   const setLocale = useLocale((state) => state.setLocale);
   const [name, setName] = useState(user.display_name);
+  const [nick, setNick] = useState(user.username ?? "");
   const save = useMutation({
-    mutationFn: (payload: { display_name?: string; locale?: string }) =>
+    mutationFn: (payload: { display_name?: string; locale?: string; username?: string }) =>
       api.patch<UserOut>("/auth/me", payload),
     onSuccess: (saved) => {
       queryClient.setQueryData(keys.me, saved);
@@ -44,6 +47,15 @@ function Account({ user }: { user: UserOut }) {
         value={name}
         onChange={(event) => setName(event.target.value)}
       />
+      <TextField
+        label={t("profile.username")}
+        hint={t("profile.usernameHint")}
+        autoComplete="off"
+        maxLength={33}
+        placeholder="nickname"
+        value={nick}
+        onChange={(event) => setNick(event.target.value)}
+      />
       <SelectField
         label={t("profile.language")}
         value={user.locale}
@@ -58,7 +70,7 @@ function Account({ user }: { user: UserOut }) {
       <Button
         variant="primary"
         loading={save.isPending}
-        onClick={() => save.mutate({ display_name: name })}
+        onClick={() => save.mutate({ display_name: name, username: nick })}
       >
         {t("common.save")}
       </Button>
@@ -276,16 +288,40 @@ function Danger() {
   );
 }
 
+const TABS = ["account", "invites", "security", "sessions", "data", "danger"] as const;
+type ProfileTab = (typeof TABS)[number];
+
 export function ProfilePage() {
   const { t } = useT();
   const me = useMe();
+  const navigate = useNavigate();
+  const search: { tab?: string } = useSearch({ strict: false });
+  const tab: ProfileTab = TABS.includes(search.tab as ProfileTab)
+    ? (search.tab as ProfileTab)
+    : "account";
+  const invites = useIncomingInvites(!!me.data);
+  const pending = invites.data?.length ?? 0;
   if (!me.data) return null;
   return (
     <div className="mx-auto grid max-w-2xl gap-4 p-4 md:p-8">
       <h1 className="text-xl font-semibold">{t("profile.title")}</h1>
-      <Tabs defaultValue="account" className="grid gap-4">
+      <Tabs
+        value={tab}
+        onValueChange={(next) =>
+          void navigate({ to: "/profile", search: next === "account" ? {} : { tab: next } })
+        }
+        className="grid gap-4"
+      >
         <TabsList label={t("profile.title")}>
           <TabsTrigger value="account">{t("profile.account")}</TabsTrigger>
+          <TabsTrigger value="invites">
+            {t("profile.invites")}
+            {pending > 0 && (
+              <span className="ml-1.5 rounded-full bg-brand px-1.5 text-xs text-white">
+                {pending}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="security">{t("profile.security")}</TabsTrigger>
           <TabsTrigger value="sessions">{t("profile.sessions")}</TabsTrigger>
           <TabsTrigger value="data">{t("profile.data")}</TabsTrigger>
@@ -293,6 +329,9 @@ export function ProfilePage() {
         </TabsList>
         <TabsContent value="account">
           <Account user={me.data} />
+        </TabsContent>
+        <TabsContent value="invites">
+          <IncomingInvites />
         </TabsContent>
         <TabsContent value="security">
           <Security user={me.data} />

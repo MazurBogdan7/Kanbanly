@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { cardColorVars } from "@/features/boards/engine/CardFace";
 import { overflowSource, splitOverflow } from "@/features/boards/engine/model";
+import { AVATAR_COLORS, avatarColor, initials } from "@/features/projects/people";
 import { SWATCHES } from "@/features/workspace/tags";
 import { filenameFrom } from "@/lib/api/client";
 import type { TagOut } from "@/lib/api/types";
@@ -49,6 +50,16 @@ describe("просмотр Word и Excel", () => {
     expect(html).toContain('src="data:image/png;base64,AAAA"');
     expect(html).toContain('colspan="2"');
     expect(html).toContain("Текст");
+  });
+
+  it("картинки Word берутся только из самого документа", () => {
+    const own = "/api/v1/documents/0d1c-aa/versions/2/images/0";
+    const html = sanitizeOfficeHtml(
+      `<img src="${own}" alt="схема"><img src="/api/v1/auth/me"><img src="https://evil.example${own}">`,
+    );
+    expect(html).toContain(`src="${own}"`);
+    expect(html).toContain('loading="lazy"');
+    expect(html).not.toMatch(/auth\/me|evil\.example/);
   });
 });
 
@@ -130,5 +141,20 @@ describe("длинная колонка", () => {
     const split = splitOverflow(cards, byTags, tags, "c21");
     expect(split?.groups.map((group) => group.label)).toEqual(["Срочно", null]);
     expect(split?.head.map((item) => item.id)).toContain("c21");
+  });
+});
+
+describe("аватар исполнителя", () => {
+  it("белые инициалы читаются на каждом цвете", () => {
+    for (const color of AVATAR_COLORS) {
+      expect(contrastRatio("#FFFFFF", color), color).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
+  });
+
+  it("цвет и инициалы стабильны для человека", () => {
+    expect(avatarColor("u1")).toBe(avatarColor("u1"));
+    expect(initials("Анна Петрова")).toBe("АП");
+    expect(initials("mallory@example.com")).toBe("ME");
+    expect(initials("")).toBe("?");
   });
 });

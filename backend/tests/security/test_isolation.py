@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from tests.api.test_boards import add_card, make_board, make_project
+from tests.api.test_document_images import PNG, docx_with_images
 from tests.conftest import Api
 
 # Параметр пути → ключ в словаре ресурсов жертвы.
@@ -32,6 +33,7 @@ PARAMS = {
     "tag_id": "tag",
     "document_id": "document",
     "number": "version",
+    "index": "image",
     "document_comment_id": "document_comment",
 }
 DELETE_BODIES: dict[str, Any] = {
@@ -132,8 +134,9 @@ async def victim(client: Api) -> dict[str, str]:
     document = (
         await client.post(
             f"/projects/{project['id']}/documents",
-            content="Тайный документ".encode(),
-            headers={"X-File-Name": "secret.txt", "Content-Type": "application/octet-stream"},
+            # Word с картинкой: проверяется и выдача картинок из документа.
+            content=docx_with_images({"image1.png": PNG + b"secret"}),
+            headers={"X-File-Name": "secret.docx", "Content-Type": "application/octet-stream"},
         )
     ).json()
     document_comment = (
@@ -143,6 +146,7 @@ async def victim(client: Api) -> dict[str, str]:
         "tag": tag["id"],
         "document": document["id"],
         "version": "1",
+        "image": "0",
         "document_comment": document_comment["id"],
         "member": member["id"],
         "invite": invite["id"],
@@ -199,8 +203,8 @@ async def test_missing_ids_are_indistinguishable_from_foreign(app: Any, client: 
             kwargs["json"] = BODIES[path]
         elif method == "DELETE" and path in DELETE_BODIES:
             kwargs["json"] = DELETE_BODIES[path]
-        # Номер версии — число, остальные параметры — несуществующий UUID.
-        target = re.sub(r"\{(\w+)\}", lambda m: "1" if m.group(1) == "number" else missing, path)
+        # Номер версии и картинки — числа, остальные параметры — несуществующий UUID.
+        target = re.sub(r"\{(\w+)\}", lambda m: "1" if m.group(1) in {"number", "index"} else missing, path)
         response = await client.request(method, target, **kwargs)
         assert response.status_code == 404, f"{method} {path}: {response.status_code}"
         assert response.json()["error"]["message"] == "Не найдено"

@@ -109,6 +109,7 @@ function defaultRoutes(): Record<string, Handler> {
   return {
     "GET /auth/csrf": () => ({ csrf_token: "t" }),
     "GET /auth/me": () => USER,
+    "GET /me/invites": () => [],
     "PATCH /auth/me": () => USER,
     "GET /projects": () => ({ items: [PROJECT], next_cursor: null }),
     "POST /projects": () => ({ ...PROJECT, id: "p2", boards: [] }),
@@ -149,8 +150,9 @@ function defaultRoutes(): Record<string, Handler> {
     ],
     "POST /projects/p1/invites": (body) => ({
       id: "i10",
-      email: (body as { email: string }).email,
+      email: (body as { target: string }).target,
       role: "editor",
+      invitee_name: (body as { target: string }).target.startsWith("@") ? "Ника" : null,
       expires_at: "2026-12-01T00:00:00Z",
       created_at: "2026-11-01T00:00:00Z",
       link: "http://localhost/invite/tok",
@@ -1018,13 +1020,87 @@ describe("совместная работа", () => {
     await user.click(screen.getByRole("button", { name: "Убрать из проекта: Сергей" }));
     await waitFor(() => expect(sent("DELETE", "/projects/p1/members/u2")).toBeTruthy());
 
-    await user.type(screen.getByLabelText("Email приглашённого"), "new@example.com");
+    await user.type(screen.getByLabelText("Email или ник"), "new@example.com");
     await user.click(screen.getByRole("button", { name: "Пригласить" }));
     expect(await screen.findByTestId("invite-link")).toHaveTextContent(
       "http://localhost/invite/tok",
     );
+    expect(sent("POST", "/projects/p1/invites")?.body).toEqual({
+      target: "new@example.com",
+      role: "editor",
+    });
     await user.click(screen.getByRole("button", { name: "Отозвать" }));
     await waitFor(() => expect(sent("DELETE", "/projects/p1/invites/i9")).toBeTruthy());
+  });
+
+  it("приглашение по нику уходит во входящие, отклонённое можно отправить снова", async () => {
+    const user = userEvent.setup();
+    routes["GET /projects/p1/invites"] = () => [
+      {
+        id: "i8",
+        email: "nika@example.com",
+        role: "viewer",
+        expires_at: "2026-12-01T00:00:00Z",
+        created_at: "2026-11-01T00:00:00Z",
+        invitee_name: "Ника",
+        invitee_username: "nika",
+        status: "declined",
+      },
+    ];
+    renderAt("/projects/p1");
+    const row = await screen.findByTestId("project-invite");
+    expect(row).toHaveTextContent("@nika");
+    expect(row).toHaveTextContent("отклонено");
+    await user.click(within(row).getByRole("button", { name: "Пригласить снова" }));
+    await waitFor(() =>
+      expect(sent("POST", "/projects/p1/invites")?.body).toEqual({
+        target: "nika@example.com",
+        role: "viewer",
+      }),
+    );
+    calls.length = 0;
+    await user.type(screen.getByLabelText("Email или ник"), "@nika");
+    await user.click(screen.getByRole("button", { name: "Пригласить" }));
+    expect(await screen.findByText(/Ника увидит его в профиле/)).toBeInTheDocument();
+    expect(screen.queryByTestId("invite-link")).not.toBeInTheDocument();
+  });
+
+  it("входящие приглашения: принять и отклонить, значок в меню", async () => {
+    const user = userEvent.setup();
+    const incoming = [
+      {
+        id: "x1",
+        project_id: "p1",
+        project_name: "Игра",
+        role: "editor",
+        inviter: "Анна",
+        created_at: "2026-11-01T00:00:00Z",
+        expires_at: "2026-11-08T00:00:00Z",
+      },
+      {
+        id: "x2",
+        project_id: "p3",
+        project_name: "Сайт",
+        role: "viewer",
+        inviter: "Борис",
+        created_at: "2026-11-01T00:00:00Z",
+        expires_at: "2026-11-08T00:00:00Z",
+      },
+    ];
+    routes["GET /me/invites"] = () => incoming;
+    routes["POST /me/invites/x2/decline"] = () => {
+      incoming.splice(1, 1);
+      return { ok: true };
+    };
+    routes["POST /me/invites/x1/accept"] = () => ({ ...PROJECT, name: "Игра" });
+    const router = renderAt("/profile?tab=invites");
+    expect((await screen.findAllByLabelText("Новых приглашений: 2")).length).toBeGreaterThan(0);
+    const rows = await screen.findAllByTestId("incoming-invite");
+    expect(rows[0]).toHaveTextContent("Пригласил(а) Анна, роль: редактор");
+    await user.click(within(rows[1]!).getByRole("button", { name: "Отклонить" }));
+    await waitFor(() => expect(screen.getAllByTestId("incoming-invite")).toHaveLength(1));
+    await user.click(screen.getByRole("button", { name: "Принять" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/projects/p1"));
   });
 
   it("участник без прав владельца видит роли текстом и может выйти", async () => {

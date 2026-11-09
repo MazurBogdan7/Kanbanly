@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.schemas.template import BoardConfig, BoardTemplate, SafeUrl, ViewTemplate
 
@@ -60,6 +60,7 @@ class MemberOut(BaseModel):
     email: str
     role: str
     is_you: bool = False
+    username: str | None = None
 
 
 AssignableRole = Literal["editor", "viewer"]
@@ -70,8 +71,20 @@ class MemberUpdate(BaseModel):
 
 
 class InviteCreate(BaseModel):
-    email: EmailStr
+    # Email или ник (с «@» или без). Поле email оставлено для совместимости со старыми клиентами.
+    target: Annotated[str, Field(min_length=1, max_length=254)] | None = None
+    email: EmailStr | None = None
     role: AssignableRole = "editor"
+
+    @model_validator(mode="after")
+    def _need_target(self) -> "InviteCreate":
+        if not (self.target or self.email):
+            raise ValueError("Укажите email или ник")
+        return self
+
+    @property
+    def recipient(self) -> str:
+        return self.target or self.email or ""
 
 
 class InviteOut(BaseModel):
@@ -81,6 +94,20 @@ class InviteOut(BaseModel):
     expires_at: datetime
     created_at: datetime
     link: str | None = None
+    # Зарегистрированный адресат: приглашение пришло ему во входящие.
+    invitee_name: str | None = None
+    invitee_username: str | None = None
+    status: Literal["pending", "declined"] = "pending"
+
+
+class IncomingInvite(BaseModel):
+    id: UUID
+    project_id: UUID
+    project_name: str
+    role: str
+    inviter: str
+    created_at: datetime
+    expires_at: datetime
 
 
 class InvitePreview(BaseModel):
@@ -220,6 +247,8 @@ class CardOut(BaseModel):
     updated_at: datetime
     color: str | None = None
     tags: list[UUID] = []
+    # Исполнитель — участник проекта (id пользователя).
+    assignee_id: UUID | None = None
 
 
 class BoardImportResult(BaseModel):
@@ -246,6 +275,7 @@ class CardCreate(BaseModel):
     cover_url: SafeUrl | None = None
     color: HexColor6 | None = None
     tags: TagIds = []
+    assignee_id: UUID | None = None
     # Размещение: сосед сверху; без него карточка идёт в конец колонки.
     after_id: UUID | None = None
 
@@ -260,6 +290,8 @@ class CardUpdate(BaseModel):
     color: HexColor6 | None = None
     tags: TagIds | None = None
     column: KeyStr | None = None
+    # null снимает исполнителя.
+    assignee_id: UUID | None = None
 
 
 class CardMove(BaseModel):

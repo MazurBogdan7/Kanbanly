@@ -170,7 +170,7 @@ test("функциональность прототипа: прогресс, ч�
   await column(page, "done").getByText(title).click();
   const form = page.getByTestId("card-form");
   await form.getByLabel("Название").fill(`${title} изменено`);
-  await form.getByLabel("Исполнитель").selectOption("sergo");
+  await form.getByLabel("Исполнитель", { exact: true }).selectOption("sergo");
   await form.getByRole("button", { name: "Сохранить" }).click();
   await expect(column(page, "done").getByText(`${title} изменено`)).toBeVisible();
   await expect(column(page, "done").locator(".kb-tag", { hasText: "SERGO" })).toBeVisible();
