@@ -333,7 +333,18 @@ test.describe("производительность", () => {
     }));
     const boardId = await createBoardViaApi(page, {
       name: "Тысяча",
-      template: { ...ZIF_TEMPLATE, sample_cards: samples },
+      // Худший случай: все 1000 карточек на экране, без сворачивания длинных колонок.
+      template: {
+        ...ZIF_TEMPLATE,
+        layout: {
+          ...(ZIF_TEMPLATE.layout as object),
+          column: {
+            ...((ZIF_TEMPLATE.layout as { column?: object }).column ?? {}),
+            overflow: { enabled: false },
+          },
+        },
+        sample_cards: samples,
+      },
     });
     await page.goto("/");
     await page.waitForLoadState("networkidle");

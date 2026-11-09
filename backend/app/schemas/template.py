@@ -301,6 +301,24 @@ class HeaderLayout(Node):
 ColumnHeaderStyle = Literal["flat-with-divider", "pill", "color-bar"]
 
 
+OverflowSource = Annotated[
+    str, Field(max_length=80, pattern=r"^(auto|tags|dimension:[A-Za-z0-9][A-Za-z0-9_-]{0,63})$")
+]
+
+
+class ColumnOverflow(Node):
+    """Длинная колонка: сверху первые карточки, остальные — в раскрывающихся блоках по тегу.
+
+    by: auto — измерение фильтр-чипов (иначе акцента, иначе первое), tags — теги проекта,
+    dimension:<key> — значения конкретного измерения. Карточки без значения — в блоке «Без тега».
+    """
+
+    enabled: bool = True
+    threshold: Annotated[int, Field(ge=2, le=1000)] = 20
+    visible: Annotated[int, Field(ge=0, le=100)] = 5
+    by: OverflowSource = "auto"
+
+
 class ColumnLayout(Node):
     min_width: Annotated[int, Field(ge=120, le=800)] = 280
     fixed_width: Annotated[int, Field(ge=120, le=800)] | None = None
@@ -310,6 +328,7 @@ class ColumnLayout(Node):
     show_wip: bool = True
     collapsible: bool = False
     empty_text: ShortText = "Пусто"
+    overflow: ColumnOverflow = ColumnOverflow()
 
 
 # ---------- карточка ----------

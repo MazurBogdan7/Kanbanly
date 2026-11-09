@@ -358,9 +358,52 @@
           "maxLength": 300,
           "title": "Empty Text",
           "type": "string"
+        },
+        "overflow": {
+          "$ref": "#/$defs/ColumnOverflow",
+          "default": {
+            "enabled": true,
+            "threshold": 20,
+            "visible": 5,
+            "by": "auto"
+          }
         }
       },
       "title": "ColumnLayout",
+      "type": "object"
+    },
+    "ColumnOverflow": {
+      "additionalProperties": true,
+      "description": "Длинная колонка: сверху первые карточки, остальные — в раскрывающихся блоках по тегу.\n\nby: auto — измерение фильтр-чипов (иначе акцента, иначе первое), tags — теги проекта,\ndimension:<key> — значения конкретного измерения. Карточки без значения — в блоке «Без тега».",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "threshold": {
+          "default": 20,
+          "maximum": 1000,
+          "minimum": 2,
+          "title": "Threshold",
+          "type": "integer"
+        },
+        "visible": {
+          "default": 5,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Visible",
+          "type": "integer"
+        },
+        "by": {
+          "default": "auto",
+          "maxLength": 80,
+          "pattern": "^(auto|tags|dimension:[A-Za-z0-9][A-Za-z0-9_-]{0,63})$",
+          "title": "By",
+          "type": "string"
+        }
+      },
+      "title": "ColumnOverflow",
       "type": "object"
     },
     "EditorLayout": {
@@ -627,7 +670,13 @@
             "show_count": true,
             "show_wip": true,
             "collapsible": false,
-            "empty_text": "Пусто"
+            "empty_text": "Пусто",
+            "overflow": {
+              "by": "auto",
+              "enabled": true,
+              "threshold": 20,
+              "visible": 5
+            }
           }
         },
         "card": {
@@ -1478,6 +1527,12 @@
           "fixed_width": null,
           "header_style": "flat-with-divider",
           "min_width": 280,
+          "overflow": {
+            "by": "auto",
+            "enabled": true,
+            "threshold": 20,
+            "visible": 5
+          },
           "radius": 10,
           "show_count": true,
           "show_wip": true

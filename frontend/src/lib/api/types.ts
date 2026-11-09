@@ -36,6 +36,7 @@ export type TypeRole = S["TypeRole"];
 export type Layout = S["Layout"];
 export type CardLayout = S["CardLayout"];
 export type ColumnLayout = S["ColumnLayout"];
+export type ColumnOverflow = S["ColumnOverflow"];
 export type ColumnTemplate = S["ColumnTemplate"];
 export type DimensionTemplate = S["DimensionTemplate"];
 export type DimensionValueTemplate = S["DimensionValueTemplate"];

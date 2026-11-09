@@ -1,0 +1,60 @@
+/** Длинная колонка: 5 карточек сверху, остальные — раскрывающимися блоками по тегу. */
+import { expect, test } from "@playwright/test";
+
+import { column, createBoardViaApi, dragCard, openBoard, register, ZIF_TEMPLATE } from "./helpers";
+
+test("бэклог из 139 карточек сворачивается в блоки по эпикам", async ({ page }) => {
+  await register(page);
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
+  await openBoard(page, boardId);
+  const backlog = column(page, "backlog");
+
+  // Сверху ровно 5 карточек, всё остальное спрятано в блоки.
+  await expect(backlog.locator(".kb-card")).toHaveCount(5);
+  const groups = backlog.locator(".kb-group");
+  await expect(groups).toHaveCount(15);
+  const counts = await groups
+    .locator(".kb-group-head em")
+    .evaluateAll((nodes) => nodes.map((node) => Number(node.textContent)));
+  expect(counts.reduce((sum, count) => sum + count, 0)).toBe(134);
+  // Короткие колонки не трогаются.
+  await expect(column(page, "todo").locator(".kb-group")).toHaveCount(0);
+
+  const sisyphus = groups.filter({ hasText: "Сизиф" });
+  const head = sisyphus.locator(".kb-group-head");
+  await expect(head).toHaveAttribute("aria-expanded", "false");
+  await head.click();
+  await expect(head).toHaveAttribute("aria-expanded", "true");
+  const inside = sisyphus.locator(".kb-card");
+  await expect(inside).toHaveCount(2);
+  await expect(backlog.locator(".kb-card")).toHaveCount(7);
+
+  // Карточку из раскрытого блока можно перетащить в другую колонку.
+  const title = await inside.first().locator(".kb-card-title").innerText();
+  await dragCard(page, inside.first(), column(page, "doing").locator(".kb-list"));
+  await expect(column(page, "doing").getByText(title)).toBeVisible();
+  await expect(sisyphus.locator(".kb-card")).toHaveCount(1);
+
+  await head.click();
+  await expect(backlog.locator(".kb-card")).toHaveCount(5);
+
+  // Поиск сужает колонку — найденное показывается сразу, без блоков.
+  await page.getByRole("searchbox").fill("Ламия — босс");
+  await expect(backlog.locator(".kb-group")).toHaveCount(0);
+  await page.getByRole("searchbox").fill("");
+  await expect(backlog.locator(".kb-group")).toHaveCount(15);
+});
+
+test("порог и число карточек сверху меняются в конструкторе", async ({ page }) => {
+  await register(page);
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
+  await openBoard(page, boardId);
+  await page.getByRole("button", { name: "Конструктор" }).click();
+  const panel = page.getByTestId("constructor");
+  await panel.getByRole("tab", { name: "Колонки" }).click();
+  await panel.getByText("Длинные колонки").click();
+  await panel.getByLabel("Показывать сверху").fill("10");
+  await expect(column(page, "backlog").locator(".kb-card")).toHaveCount(10);
+  await panel.getByLabel("Сворачивать хвост длинной колонки").uncheck();
+  await expect(column(page, "backlog").locator(".kb-group")).toHaveCount(0);
+});

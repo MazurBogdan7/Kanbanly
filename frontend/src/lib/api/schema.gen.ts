@@ -1952,6 +1952,12 @@ export interface components {
        *         "empty_text": "Пусто",
        *         "header_style": "flat-with-divider",
        *         "min_width": 280,
+       *         "overflow": {
+       *           "by": "auto",
+       *           "enabled": true,
+       *           "threshold": 20,
+       *           "visible": 5
+       *         },
        *         "radius": 10,
        *         "show_count": true,
        *         "show_wip": true
@@ -2199,6 +2205,12 @@ export interface components {
        *         "empty_text": "Пусто",
        *         "header_style": "flat-with-divider",
        *         "min_width": 280,
+       *         "overflow": {
+       *           "by": "auto",
+       *           "enabled": true,
+       *           "threshold": 20,
+       *           "visible": 5
+       *         },
        *         "radius": 10,
        *         "show_count": true,
        *         "show_wip": true
@@ -2742,6 +2754,46 @@ export interface components {
        * @default Пусто
        */
       empty_text?: string;
+      /**
+       * @default {
+       *       "enabled": true,
+       *       "threshold": 20,
+       *       "visible": 5,
+       *       "by": "auto"
+       *     }
+       */
+      overflow?: components["schemas"]["ColumnOverflow"];
+    } & {
+      [key: string]: unknown;
+    };
+    /**
+     * ColumnOverflow
+     * @description Длинная колонка: сверху первые карточки, остальные — в раскрывающихся блоках по тегу.
+     *
+     *     by: auto — измерение фильтр-чипов (иначе акцента, иначе первое), tags — теги проекта,
+     *     dimension:<key> — значения конкретного измерения. Карточки без значения — в блоке «Без тега».
+     */
+    ColumnOverflow: {
+      /**
+       * Enabled
+       * @default true
+       */
+      enabled?: boolean;
+      /**
+       * Threshold
+       * @default 20
+       */
+      threshold?: number;
+      /**
+       * Visible
+       * @default 5
+       */
+      visible?: number;
+      /**
+       * By
+       * @default auto
+       */
+      by?: string;
     } & {
       [key: string]: unknown;
     };
@@ -3294,7 +3346,13 @@ export interface components {
        *       "show_count": true,
        *       "show_wip": true,
        *       "collapsible": false,
-       *       "empty_text": "Пусто"
+       *       "empty_text": "Пусто",
+       *       "overflow": {
+       *         "by": "auto",
+       *         "enabled": true,
+       *         "threshold": 20,
+       *         "visible": 5
+       *       }
        *     }
        */
       column?: components["schemas"]["ColumnLayout"];

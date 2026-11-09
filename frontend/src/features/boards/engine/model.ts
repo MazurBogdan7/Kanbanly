@@ -2,9 +2,11 @@
 import type {
   BoardConfig,
   CardOut,
+  ColumnOverflow,
   ColumnTemplate,
   DimensionTemplate,
   DimensionValueTemplate,
+  TagOut,
   ViewTemplate,
 } from "@/lib/api/types";
 
@@ -168,4 +170,104 @@ export function groupCards(
 
 export function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+// ---------- длинные колонки ----------
+
+export const OVERFLOW_DEFAULTS: Required<ColumnOverflow> = {
+  enabled: true,
+  threshold: 20,
+  visible: 5,
+  by: "auto",
+};
+
+export type OverflowSource =
+  { type: "dimension"; dimension: DimensionTemplate } | { type: "tags" } | null;
+
+export interface OverflowGroup {
+  key: string;
+  label: string | null;
+  color: string | null;
+  cards: CardOut[];
+}
+
+export function overflowSettings(config: BoardConfig): Required<ColumnOverflow> {
+  return { ...OVERFLOW_DEFAULTS, ...(config.layout?.column?.overflow ?? {}) };
+}
+
+/**
+ * По чему раскладывать хвост колонки. auto: измерение фильтр-чипов (это «теги» в шапке доски),
+ * затем акцента карточки, затем первое неупорядоченное; если измерений нет — теги проекта.
+ */
+export function overflowSource(config: BoardConfig, cards: CardOut[]): OverflowSource {
+  const by = overflowSettings(config).by;
+  const dimensions = config.dimensions ?? [];
+  const find = (key: string | undefined) => dimensions.find((item) => item.key === key);
+  if (by === "tags") return { type: "tags" };
+  if (by.startsWith("dimension:")) {
+    const chosen = find(by.slice("dimension:".length));
+    if (chosen) return { type: "dimension", dimension: chosen };
+  }
+  const widgets = config.layout?.header?.widgets ?? [];
+  const chips = widgets.find((widget) => widget.type === "filter_chips") as
+    { dimension?: string } | undefined;
+  const accent = config.layout?.card?.accent?.source ?? "";
+  const auto =
+    find(chips?.dimension) ??
+    (accent.startsWith("dimension:") ? find(accent.slice("dimension:".length)) : undefined) ??
+    dimensions.find(
+      (item) => item.type !== "ordered_select" && !item.ordered && item.type !== "user",
+    );
+  if (auto) return { type: "dimension", dimension: auto };
+  if (cards.some((card) => (card.tags ?? []).length > 0)) return { type: "tags" };
+  return dimensions[0] ? { type: "dimension", dimension: dimensions[0] } : null;
+}
+
+/**
+ * Делит колонку на «голову» (первые visible карточек) и блоки по значению тега.
+ * Карточка попадает в блок своего первого значения, чтобы не дублироваться.
+ * Возвращает null, если колонка короткая или группировка выключена.
+ */
+export function splitOverflow(
+  cards: CardOut[],
+  config: BoardConfig,
+  tags: Map<string, TagOut>,
+  pinned: string | null = null,
+): { head: CardOut[]; groups: OverflowGroup[] } | null {
+  const settings = overflowSettings(config);
+  if (!settings.enabled || cards.length <= settings.threshold) return null;
+  const source = overflowSource(config, cards);
+  const head = cards.slice(0, settings.visible);
+  const rest = cards.slice(settings.visible);
+  const order: { key: string; label: string; color: string | null }[] = [];
+  const firstKey = (card: CardOut): string | undefined => {
+    if (!source) return undefined;
+    if (source.type === "tags") return (card.tags ?? []).find((id) => tags.has(id));
+    const keys = card.values[source.dimension.key] ?? [];
+    return (source.dimension.values ?? []).find((value) => keys.includes(value.key))?.key;
+  };
+  if (source?.type === "dimension") {
+    for (const value of source.dimension.values ?? []) {
+      order.push({ key: value.key, label: value.name, color: value.color ?? null });
+    }
+  } else if (source?.type === "tags") {
+    for (const tag of tags.values()) order.push({ key: tag.id, label: tag.name, color: tag.color });
+  }
+  const buckets = new Map<string, CardOut[]>();
+  const none: CardOut[] = [];
+  for (const card of rest) {
+    // Перетаскиваемая карточка всегда видна, иначе она исчезнет из-под курсора.
+    if (card.id === pinned) {
+      head.push(card);
+      continue;
+    }
+    const key = firstKey(card);
+    if (key === undefined) none.push(card);
+    else buckets.set(key, [...(buckets.get(key) ?? []), card]);
+  }
+  const groups: OverflowGroup[] = order
+    .filter((item) => buckets.has(item.key))
+    .map((item) => ({ ...item, cards: buckets.get(item.key) ?? [] }));
+  if (none.length) groups.push({ key: "__none", label: null, color: null, cards: none });
+  return { head, groups };
 }

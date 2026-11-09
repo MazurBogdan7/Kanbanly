@@ -68,7 +68,14 @@
       "show_count": true,
       "show_wip": true,
       "collapsible": true,
-      "empty_text": "Пусто"
+      "empty_text": "Пусто",
+      "overflow": {
+        "_comment": "Длинная колонка: если карточек больше threshold, сверху остаются visible, остальные — в раскрывающихся блоках. by: auto (измерение фильтр-чипов) | tags (теги проекта) | dimension:<ключ>.",
+        "enabled": true,
+        "threshold": 20,
+        "visible": 5,
+        "by": "auto"
+      }
     },
     "card": {
       "_comment": "face — слоты лицевой стороны в порядке показа. shadow: none | sm | md. hover: none | border | lift | glow.",

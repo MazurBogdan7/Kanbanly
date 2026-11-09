@@ -22,13 +22,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight, Plus } from "lucide-react";
-import { memo, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { memo, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { useT } from "@/i18n";
 import type { BoardConfig, CardOut, ColumnTemplate, DimensionTemplate } from "@/lib/api/types";
 
 import { cardShellProps, CardFace } from "./CardFace";
-import { groupByColumn, groupCards, hasRule } from "./model";
+import { ProjectTagsContext } from "../../workspace/tags";
+import { groupByColumn, groupCards, hasRule, splitOverflow, type OverflowGroup } from "./model";
 import { resolveColor } from "./theme";
 
 export interface MoveRequest {
@@ -164,6 +165,46 @@ function QuickAdd({ column, onAdd }: { column: ColumnTemplate; onAdd: (title: st
   );
 }
 
+/** Свёрнутый блок хвоста длинной колонки: карточки с одним тегом. */
+function OverflowBlock({
+  group,
+  open,
+  onToggle,
+  children,
+}: {
+  group: OverflowGroup;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  const { t, plural } = useT();
+  const label = group.label ?? t("board.noTag");
+  return (
+    <div className="kb-group" data-group={group.key} data-open={open || undefined}>
+      <button
+        type="button"
+        className="kb-group-head"
+        aria-expanded={open}
+        aria-label={t("board.groupToggle", {
+          name: label,
+          count: plural("plural.cards", group.cards.length),
+        })}
+        onClick={onToggle}
+      >
+        <ChevronRight className="kb-group-chevron" aria-hidden />
+        <span
+          className="kb-group-dot"
+          aria-hidden
+          style={{ background: resolveColor(group.color) ?? "var(--t-text-muted)" }}
+        />
+        <span className="kb-group-name">{label}</span>
+        <em>{group.cards.length}</em>
+      </button>
+      {open && <div className="kb-group-list">{children}</div>}
+    </div>
+  );
+}
+
 function ColumnHeader({
   column,
   config,
@@ -234,7 +275,55 @@ function Column({
     "--col-grow": width ? 0 : 1,
     "--col-color": resolveColor(column.color),
   } as React.CSSProperties;
-  const ids = useMemo(() => cards.map((card) => card.id), [cards]);
+  const tagIndex = useContext(ProjectTagsContext);
+  const split = useMemo(
+    () => splitOverflow(cards, config, tagIndex, draggingId),
+    [cards, config, tagIndex, draggingId],
+  );
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const toggleGroup = (key: string) =>
+    setOpen((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  // Новая карточка (создана здесь или пришла с другой колонки) не должна пропасть в свёрнутом
+  // блоке: её блок раскрывается сам. Массовые появления (снятие фильтра) блоки не трогают.
+  const seen = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const ids = cards.map((card) => card.id);
+    if (seen.current === null || draggingId !== null) {
+      seen.current = new Set([...(seen.current ?? []), ...ids]);
+      return;
+    }
+    const known = seen.current;
+    const fresh = ids.filter((id) => !known.has(id));
+    for (const id of fresh) known.add(id);
+    if (!split || fresh.length === 0 || fresh.length > 3) return;
+    const groups = split.groups
+      .filter((group) => group.cards.some((card) => fresh.includes(card.id)))
+      .map((group) => group.key);
+    if (groups.length) setOpen((current) => new Set([...current, ...groups]));
+  }, [cards, split, draggingId]);
+  // Порядок для сортировки совпадает с порядком на экране: голова, затем раскрытые блоки.
+  const rendered = useMemo(
+    () =>
+      split
+        ? [
+            ...split.head,
+            ...split.groups.flatMap((group) => (open.has(group.key) ? group.cards : [])),
+          ]
+        : cards,
+    [split, open, cards],
+  );
+  const ids = useMemo(() => rendered.map((card) => card.id), [rendered]);
+  const renderCard = (card: CardOut) =>
+    interactive ? (
+      <SortableCard key={card.id} card={card} config={config} column={column} onOpen={onOpen} />
+    ) : (
+      <StaticCard key={card.id} card={card} config={config} column={column} />
+    );
   const list = (
     <div
       ref={setNodeRef}
@@ -245,12 +334,20 @@ function Column({
       {cards.length === 0 && (
         <div className="kb-empty">{column.empty_text ?? layout.empty_text ?? t("board.empty")}</div>
       )}
-      {cards.map((card) =>
-        interactive ? (
-          <SortableCard key={card.id} card={card} config={config} column={column} onOpen={onOpen} />
-        ) : (
-          <StaticCard key={card.id} card={card} config={config} column={column} />
-        ),
+      {(split ? split.head : cards).map(renderCard)}
+      {split && split.groups.length > 0 && (
+        <div className="kb-groups" role="group" aria-label={t("board.groupsLabel")}>
+          {split.groups.map((group) => (
+            <OverflowBlock
+              key={group.key}
+              group={group}
+              open={open.has(group.key)}
+              onToggle={() => toggleGroup(group.key)}
+            >
+              {group.cards.map(renderCard)}
+            </OverflowBlock>
+          ))}
+        </div>
       )}
     </div>
   );

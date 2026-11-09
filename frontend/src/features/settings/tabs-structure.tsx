@@ -25,6 +25,7 @@ import {
   RemoveButton,
   SortableList,
 } from "./controls";
+import { overflowSettings } from "../boards/engine/model";
 import { useDraft } from "./draft";
 
 const COLUMN_KINDS: ColumnKind[] = ["backlog", "todo", "in_progress", "review", "done", "custom"];
@@ -221,6 +222,9 @@ export function ColumnsTab({ config }: { config: BoardConfig }) {
       draft.layout ??= {};
       draft.layout.column = { ...draft.layout.column, ...patch };
     });
+  const overflow = overflowSettings(config);
+  const setOverflow = (patch: Partial<typeof overflow>) =>
+    common({ overflow: { ...overflow, ...patch } });
   return (
     <div className="grid gap-3">
       <p className="text-xs text-ink-soft">{t("ctor.dropColumnWarning")}</p>
@@ -296,6 +300,43 @@ export function ColumnsTab({ config }: { config: BoardConfig }) {
           checked={layout.collapsible ?? false}
           onChange={(collapsible) => common({ collapsible })}
         />
+      </Collapsible>
+      <Collapsible title={t("ctor.overflow")}>
+        <p className="text-xs text-ink-soft">{t("ctor.overflowHint")}</p>
+        <Toggle
+          label={t("ctor.overflowEnabled")}
+          checked={overflow.enabled}
+          onChange={(enabled) => setOverflow({ enabled })}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <NumberField
+            label={t("ctor.overflowThreshold")}
+            min={2}
+            max={1000}
+            value={overflow.threshold}
+            onChange={(threshold) => threshold && setOverflow({ threshold })}
+          />
+          <NumberField
+            label={t("ctor.overflowVisible")}
+            min={0}
+            max={100}
+            value={overflow.visible}
+            onChange={(visible) => setOverflow({ visible: visible ?? 0 })}
+          />
+        </div>
+        <SelectField
+          label={t("ctor.overflowBy")}
+          value={overflow.by}
+          onChange={(event) => setOverflow({ by: event.target.value })}
+        >
+          <option value="auto">{t("ctor.overflowAuto")}</option>
+          <option value="tags">{t("ctor.overflowTags")}</option>
+          {(config.dimensions ?? []).map((dimension) => (
+            <option key={dimension.key} value={`dimension:${dimension.key}`}>
+              {dimension.name}
+            </option>
+          ))}
+        </SelectField>
       </Collapsible>
     </div>
   );

@@ -5903,6 +5903,12 @@
                 "empty_text": "Пусто",
                 "header_style": "flat-with-divider",
                 "min_width": 280,
+                "overflow": {
+                  "by": "auto",
+                  "enabled": true,
+                  "threshold": 20,
+                  "visible": 5
+                },
                 "radius": 10,
                 "show_count": true,
                 "show_wip": true
@@ -6341,6 +6347,12 @@
                 "empty_text": "Пусто",
                 "header_style": "flat-with-divider",
                 "min_width": 280,
+                "overflow": {
+                  "by": "auto",
+                  "enabled": true,
+                  "threshold": 20,
+                  "visible": 5
+                },
                 "radius": 10,
                 "show_count": true,
                 "show_wip": true
@@ -7521,11 +7533,54 @@
             "maxLength": 300,
             "title": "Empty Text",
             "default": "Пусто"
+          },
+          "overflow": {
+            "$ref": "#/components/schemas/ColumnOverflow",
+            "default": {
+              "enabled": true,
+              "threshold": 20,
+              "visible": 5,
+              "by": "auto"
+            }
           }
         },
         "additionalProperties": true,
         "type": "object",
         "title": "ColumnLayout"
+      },
+      "ColumnOverflow": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "threshold": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 2.0,
+            "title": "Threshold",
+            "default": 20
+          },
+          "visible": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Visible",
+            "default": 5
+          },
+          "by": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^(auto|tags|dimension:[A-Za-z0-9][A-Za-z0-9_-]{0,63})$",
+            "title": "By",
+            "default": "auto"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ColumnOverflow",
+        "description": "Длинная колонка: сверху первые карточки, остальные — в раскрывающихся блоках по тегу.\n\nby: auto — измерение фильтр-чипов (иначе акцента, иначе первое), tags — теги проекта,\ndimension:<key> — значения конкретного измерения. Карточки без значения — в блоке «Без тега»."
       },
       "ColumnTemplate": {
         "properties": {
@@ -8655,7 +8710,13 @@
               "show_count": true,
               "show_wip": true,
               "collapsible": false,
-              "empty_text": "Пусто"
+              "empty_text": "Пусто",
+              "overflow": {
+                "by": "auto",
+                "enabled": true,
+                "threshold": 20,
+                "visible": 5
+              }
             }
           },
           "card": {
