@@ -200,7 +200,7 @@ export function ConstructorPanel({ board, onClose }: { board: BoardOut; onClose:
     <aside
       aria-label={t("ctor.title")}
       data-testid="constructor"
-      className="anim-drawer flex w-full max-w-[420px] shrink-0 flex-col border-l border-line bg-panel max-md:fixed max-md:inset-0 max-md:z-30 max-md:max-w-none"
+      className="anim-drawer flex w-full max-w-[420px] shrink-0 flex-col border-l border-line bg-panel max-md:fixed max-md:inset-0 max-md:z-40 max-md:max-w-none"
     >
       <div className="flex items-center gap-1 border-b border-line px-3 py-2">
         <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">{t("ctor.title")}</h2>

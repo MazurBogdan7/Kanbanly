@@ -60,40 +60,30 @@ function ProjectCard({
     <article
       data-testid="project-card"
       className={cx(
-        "grid content-start gap-3 rounded-lg border border-line bg-panel p-4",
+        "flex flex-col gap-3 rounded-lg border border-line bg-panel p-4",
         expanded && "col-span-full",
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <span
           aria-hidden
           className="grid size-10 shrink-0 place-items-center rounded-md bg-brand-soft text-brand"
         >
           <FolderKanban className="size-5" />
         </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold">
-            <Link
-              to="/projects/$projectId"
-              params={{ projectId: project.id }}
-              className="hover:text-brand"
-            >
-              {project.name}
-            </Link>
-          </h2>
-          <p className="truncate text-xs text-ink-soft">
-            {plural("plural.boards", boards.length)} · {plural("plural.cards", cards)}
-          </p>
-        </div>
-        <Link
-          to="/projects/$projectId"
-          params={{ projectId: project.id }}
-          aria-label={t("home.openProjectNamed", { name: project.name })}
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-line px-2.5 text-sm font-medium hover:border-line-strong hover:bg-raised"
+        {/* Длинное название переносится на вторую строку, а не наезжает на кнопки. */}
+        <h2
+          className="line-clamp-2 min-w-0 flex-1 self-center text-base font-semibold leading-snug [overflow-wrap:anywhere]"
+          title={project.name}
         >
-          <span className="hidden sm:inline">{t("home.openProject")}</span>
-          <ArrowRight className="size-4" aria-hidden />
-        </Link>
+          <Link
+            to="/projects/$projectId"
+            params={{ projectId: project.id }}
+            className="hover:text-brand"
+          >
+            {project.name}
+          </Link>
+        </h2>
         <button
           type="button"
           aria-expanded={expanded}
@@ -111,6 +101,20 @@ function ProjectCard({
             aria-hidden
           />
         </button>
+      </div>
+      <div className="mt-auto flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate text-xs text-ink-soft">
+          {plural("plural.boards", boards.length)} · {plural("plural.cards", cards)}
+        </p>
+        <Link
+          to="/projects/$projectId"
+          params={{ projectId: project.id }}
+          aria-label={t("home.openProjectNamed", { name: project.name })}
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-line px-2.5 text-sm font-medium hover:border-line-strong hover:bg-raised"
+        >
+          {t("home.openProject")}
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
       </div>
       {expanded && (
         <div id={listId}>
@@ -263,7 +267,7 @@ export function HomePage() {
       )}
       {(projects.data?.length ?? 0) > 0 && (
         <Section title={t("home.projects")}>
-          <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))]">
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))]">
             {projects.data?.map((project) => (
               <ProjectCard
                 key={project.id}

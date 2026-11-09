@@ -158,6 +158,9 @@ function neighbours(
 export function useMoveCard(boardId: string) {
   const queryClient = useQueryClient();
   const mutation = useMutation({
+    // Перемещения доски уходят на сервер строго по очереди: иначе быстрый Ctrl+Z обгоняет
+    // ещё не завершённый перенос, и сервер применяет их в обратном порядке.
+    scope: { id: `move:${boardId}` },
     mutationFn: (move: MoveInput) =>
       api.post<CardOut>(`/cards/${move.cardId}/move`, {
         column: move.column,
@@ -212,20 +215,33 @@ export function useMoveCard(boardId: string) {
 export function useDeleteCard(boardId: string) {
   const queryClient = useQueryClient();
   return (card: CardOut) => {
-    queryClient.setQueryData<CardOut[]>(keys.cards(boardId), (cards = []) =>
-      cards.filter((item) => item.id !== card.id),
-    );
+    const hide = () =>
+      queryClient.setQueryData<CardOut[]>(keys.cards(boardId), (cards = []) =>
+        cards.filter((item) => item.id !== card.id),
+      );
+    // Загрузка списка, начатая до удаления, иначе вернёт карточку обратно.
+    void queryClient.cancelQueries({ queryKey: keys.cards(boardId) });
+    hide();
+    const deleted = api
+      .delete(`/cards/${card.id}`)
+      .then(() => {
+        hide();
+        return true;
+      })
+      .catch((error: unknown) => {
+        toast.error(error);
+        void queryClient.invalidateQueries({ queryKey: keys.cards(boardId) });
+        return false;
+      });
     const restore = async () => {
+      // «Отменить» может быть нажато раньше, чем сервер удалил карточку.
+      if (!(await deleted)) return;
       const restored = await api.post<CardOut>(`/cards/${card.id}/restore`);
       queryClient.setQueryData<CardOut[]>(keys.cards(boardId), (cards = []) => [
-        ...cards,
+        ...cards.filter((item) => item.id !== restored.id),
         restored,
       ]);
     };
-    api.delete(`/cards/${card.id}`).catch((error: unknown) => {
-      toast.error(error);
-      void queryClient.invalidateQueries({ queryKey: keys.cards(boardId) });
-    });
     useUndo.getState().push({ label: t("card.deleted"), undo: restore });
     toast.info(t("card.deleted"), {
       label: t("common.undo"),

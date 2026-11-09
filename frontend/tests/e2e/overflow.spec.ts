@@ -58,3 +58,19 @@ test("порог и число карточек сверху меняются в
   await panel.getByLabel("Сворачивать хвост длинной колонки").uncheck();
   await expect(column(page, "backlog").locator(".kb-group")).toHaveCount(0);
 });
+
+test("на телефоне низ конструктора не закрыт нижним меню", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await register(page);
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
+  await openBoard(page, boardId);
+  await page.getByRole("button", { name: "Конструктор" }).click();
+  const panel = page.getByTestId("constructor");
+  await panel.getByRole("tab", { name: "Колонки" }).click();
+  await panel.getByText("Общие настройки колонок").click();
+  const last = panel.getByText("Длинные колонки");
+  await last.scrollIntoViewIfNeeded();
+  // Нажатие должно попасть в саму секцию, а не в меню поверх неё.
+  await last.click();
+  await expect(panel.getByLabel("Показывать сверху")).toBeVisible();
+});
