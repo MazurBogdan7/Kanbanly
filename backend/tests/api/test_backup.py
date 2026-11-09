@@ -14,6 +14,7 @@ from app.security import backup_crypto
 from app.services import backup as service
 from tests.api.test_boards import add_card, all_cards, make_board, make_project
 from tests.conftest import Api
+from tests.reference import zif_template
 
 VOLATILE = {"source_id", "project_source_id"}
 
@@ -40,7 +41,9 @@ def data_of(document: dict[str, Any]) -> Any:
 @pytest.fixture
 async def seeded(client: Api) -> dict[str, Any]:
     project = await make_project(client, "Игра")
-    board = await make_board(client, project["id"], name="ZIF", preset="zif-gamedev", include_samples=False)
+    board = await make_board(
+        client, project["id"], name="ZIF", template=zif_template(), include_samples=False
+    )
     example = (await client.get("/templates/example")).json()
     rich = await make_board(client, project["id"], name="Пример", template=example)
     second = await make_project(client, "Личное")

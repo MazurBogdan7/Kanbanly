@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { column, createBoardViaApi, dragCard, openBoard, register } from "./helpers";
+import { column, createBoardViaApi, dragCard, openBoard, register, ZIF_TEMPLATE } from "./helpers";
 
 const PROTOTYPE = path.resolve(import.meta.dirname, "../../../docs/reference/ZIF_kanban.html");
 const OUTPUT = path.resolve(import.meta.dirname, "../../test-results/zif");
@@ -86,7 +86,7 @@ async function diffRatio(page: Page, a: Buffer, b: Buffer): Promise<number> {
 async function compare(page: Page, viewport: { width: number; height: number }, label: string) {
   await page.setViewportSize(viewport);
   await register(page);
-  const boardId = await createBoardViaApi(page, { preset: "zif-gamedev", name: "ZIF" });
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
   const canvas = await openBoard(page, boardId);
   await page.mouse.move(0, 0);
   // Сравнивается доска: оболочка приложения скрыта, внутренний скролл развёрнут как в прототипе.
@@ -125,7 +125,7 @@ test("функциональность прототипа: прогресс, ч�
   page,
 }) => {
   await register(page);
-  const boardId = await createBoardViaApi(page, { preset: "zif-gamedev", name: "ZIF" });
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
   await openBoard(page, boardId);
 
   await expect(page.getByTestId("progress-m1")).toHaveText(/^6\/\d+$/);

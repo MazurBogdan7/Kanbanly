@@ -2,6 +2,8 @@
  * Lighthouse по основным экранам. Сервер: uv run python scripts/e2e_server.py (порт 8123).
  * Запуск: npm run lighthouse. Падает, если accessibility или best-practices ниже 95.
  */
+import fs from "node:fs";
+
 import { chromium } from "@playwright/test";
 import lighthouse from "lighthouse";
 
@@ -25,7 +27,13 @@ const headers = { "X-CSRF-Token": csrf };
 const post = async (path, data) =>
   (await context.request.post(`${BASE}/api/v1${path}`, { data, headers })).json();
 const project = await post("/projects", { name: "Lighthouse" });
-const board = await post(`/projects/${project.id}/boards`, { name: "ZIF", preset: "zif-gamedev" });
+const zif = JSON.parse(
+  fs.readFileSync(
+    new URL("../../docs/reference/preset-zif-gamedev.json", import.meta.url),
+    "utf-8",
+  ),
+);
+const board = await post(`/projects/${project.id}/boards`, { name: "ZIF", template: zif });
 
 const session = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
 const targets = ["/login", "/", "/templates", "/profile", `/boards/${board.id}`];

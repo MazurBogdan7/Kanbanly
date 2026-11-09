@@ -23,6 +23,7 @@ export const keys = {
   project: (id: string) => ["projects", id] as const,
   board: (id: string) => ["boards", id] as const,
   cards: (id: string) => ["boards", id, "cards"] as const,
+  preview: (id: string) => ["boards", id, "preview"] as const,
   card: (id: string) => ["cards", id] as const,
   activity: (id: string) => ["cards", id, "activity"] as const,
   templates: ["templates"] as const,

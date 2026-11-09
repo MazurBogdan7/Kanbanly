@@ -13,6 +13,8 @@ import {
   PASSWORD,
   register,
   uniqueEmail,
+  ZIF_FILE,
+  ZIF_TEMPLATE,
 } from "./helpers";
 
 const BASE = "http://127.0.0.1:8123";
@@ -28,7 +30,7 @@ test("приглашение: второй участник входит по с
   browser,
 }) => {
   await register(page);
-  const boardId = await createBoardViaApi(page, { preset: "zif-gamedev", name: "Общая" });
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "Общая" });
   const client = await api(page);
   const board = await client.get<{ project_id: string }>(`/boards/${boardId}`);
 
@@ -93,7 +95,8 @@ test("одна структура в разных темах: оформлени
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Новая доска" }).first().click();
     const dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: /ZIF/ }).click();
+    await dialog.getByRole("button", { name: "Из файла (JSON, CSV)" }).click();
+    await dialog.getByLabel("Доска из файла").setInputFiles(ZIF_FILE);
     await dialog.getByLabel("Название доски").fill(name);
     await dialog.getByRole("button", { name: "Продолжить" }).click();
     if (look)
@@ -140,7 +143,7 @@ test("одна структура в разных темах: оформлени
 
 test("скачивание: таблица CSV доски и JSON проекта", async ({ page }) => {
   await register(page);
-  const boardId = await createBoardViaApi(page, { preset: "zif-gamedev", name: "ZIF" });
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
   await openBoard(page, boardId);
   await page.getByRole("button", { name: "Экспорт", exact: true }).first().click();
   const [csv] = await Promise.all([
@@ -230,7 +233,7 @@ test("импорт экспорта из исходного прототипа Z
 
   await register(page);
   const boardId = await createBoardViaApi(page, {
-    preset: "zif-gamedev",
+    template: ZIF_TEMPLATE,
     name: "ZIF",
     includeSamples: false,
   });

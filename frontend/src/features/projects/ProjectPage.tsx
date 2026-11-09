@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Download, MoreHorizontal, Plus } from "lucide-react";
+import { Download, FileUp, MoreHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
 
 import { Button, EmptyState, ErrorNote, Menu, MenuItem, Skeleton } from "@/components/ui";
@@ -11,7 +11,7 @@ import { api, downloadFrom } from "@/lib/api/client";
 import { keys, useProject } from "../boards/api";
 import { ProjectDocuments } from "../workspace/Documents";
 import { ProjectTags } from "../workspace/tags";
-import { BoardTile } from "./HomePage";
+import { BoardTile, TILE_GRID } from "./BoardTile";
 import { ProjectMembers } from "./Members";
 import { NewBoardWizard } from "./NewBoardWizard";
 
@@ -21,7 +21,7 @@ export function ProjectPage() {
   const queryClient = useQueryClient();
   const { projectId } = useParams({ strict: false }) as { projectId: string };
   const project = useProject(projectId);
-  const [wizard, setWizard] = useState(false);
+  const [wizard, setWizard] = useState<"preset" | "file" | null>(null);
   const remove = useMutation({
     mutationFn: () => api.delete(`/projects/${projectId}`),
     onSuccess: () => {
@@ -55,14 +55,20 @@ export function ProjectPage() {
   }
   const boards = project.data.boards ?? [];
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-6 p-4 md:p-8">
+    <div className="mx-auto grid w-full max-w-7xl gap-6 p-4 md:p-8">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold">{project.data.name}</h1>
           <p className="text-sm text-ink-soft">{t("project.boards")}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="primary" onClick={() => setWizard(true)}>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {project.data.role !== "viewer" && (
+            <Button onClick={() => setWizard("file")}>
+              <FileUp className="size-4" aria-hidden />
+              {t("project.importBoard")}
+            </Button>
+          )}
+          <Button variant="primary" onClick={() => setWizard("preset")}>
             <Plus className="size-4" aria-hidden />
             {t("project.newBoard")}
           </Button>
@@ -105,13 +111,13 @@ export function ProjectPage() {
         <EmptyState
           title={t("project.empty")}
           action={
-            <Button variant="primary" onClick={() => setWizard(true)}>
+            <Button variant="primary" onClick={() => setWizard("preset")}>
               {t("project.emptyCta")}
             </Button>
           }
         />
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        <div className={TILE_GRID}>
           {boards.map((board) => (
             <BoardTile key={board.id} board={board} />
           ))}
@@ -120,7 +126,13 @@ export function ProjectPage() {
       <ProjectDocuments projectId={projectId} canEdit={project.data.role !== "viewer"} />
       <ProjectTags projectId={projectId} canEdit={project.data.role !== "viewer"} />
       <ProjectMembers project={project.data} />
-      {wizard && <NewBoardWizard projectId={projectId} onClose={() => setWizard(false)} />}
+      {wizard && (
+        <NewBoardWizard
+          projectId={projectId}
+          initialSource={wizard}
+          onClose={() => setWizard(null)}
+        />
+      )}
     </div>
   );
 }

@@ -476,6 +476,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/projects/{project_id}/boards/import": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Import Board
+     * @description Тело запроса — файл CSV или JSON (шаблон, бэкап Kanbanly или массив задач).
+     */
+    post: operations["import_board_api_v1_projects__project_id__boards_import_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/boards/{board_id}/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Board Preview */
+    get: operations["board_preview_api_v1_boards__board_id__preview_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/boards/{board_id}": {
     parameters: {
       query?: never;
@@ -2005,6 +2042,16 @@ export interface components {
        */
       include_samples?: boolean;
     };
+    /** BoardImportResult */
+    BoardImportResult: {
+      /** Boards */
+      boards: components["schemas"]["BoardOut"][];
+      /**
+       * Warnings
+       * @default []
+       */
+      warnings?: string[];
+    };
     /** BoardLayout */
     BoardLayout: {
       /** Swimlanes */
@@ -2054,6 +2101,22 @@ export interface components {
        * @default []
        */
       warnings?: string[];
+    };
+    /**
+     * BoardPreview
+     * @description Миниатюра доски: настройки и первые карточки каждой колонки.
+     */
+    BoardPreview: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
+      config: components["schemas"]["BoardConfig"];
+      /** Cards */
+      cards: components["schemas"]["CardOut"][];
     };
     /** BoardReset */
     BoardReset: {
@@ -5233,6 +5296,73 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["BoardOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  import_board_api_v1_projects__project_id__boards_import_post: {
+    parameters: {
+      query?: {
+        name?: string | null;
+      };
+      header?: {
+        "X-File-Name"?: string | null;
+        "X-Backup-Password"?: string | null;
+      };
+      path: {
+        project_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BoardImportResult"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  board_preview_api_v1_boards__board_id__preview_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        board_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BoardPreview"];
         };
       };
       /** @description Validation Error */

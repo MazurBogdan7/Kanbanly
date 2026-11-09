@@ -7,6 +7,7 @@ import pytest
 from app.services import presets
 from tests.api.test_boards import add_card, all_cards, make_board, make_project
 from tests.conftest import Api
+from tests.reference import zif_template
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ async def project(client: Api) -> dict[str, Any]:
 
 
 async def test_board_from_zif_preset(client: Api, project: dict[str, Any]) -> None:
-    board = await make_board(client, project["id"], name="ZIF", preset="zif-gamedev")
+    board = await make_board(client, project["id"], name="ZIF", template=zif_template())
     config = board["config"]
     assert [c["name"] for c in config["columns"]] == ["Бэклог", "К работе", "В работе", "Проверка", "Готово"]
     assert config["columns"][4]["card_style"]["title_strikethrough"] is True
@@ -47,7 +48,10 @@ async def test_preset_without_samples(client: Api, project: dict[str, Any]) -> N
 
 async def test_presets_endpoint(client: Api) -> None:
     listing = (await client.get("/presets")).json()
-    assert len(listing) == 5
+    assert len(listing) == 4
+    # ZIF — шаблон одного заказчика, в общий каталог не входит.
+    assert "zif-gamedev" not in {item["key"] for item in listing}
+    assert (await client.get("/presets/zif-gamedev")).status_code == 404
     assert (await client.get("/presets/nope")).status_code == 404
 
 
@@ -65,7 +69,7 @@ async def test_example_downloads_and_imports(client: Api, project: dict[str, Any
 
 
 async def test_export_reimport_is_equivalent(client: Api, project: dict[str, Any]) -> None:
-    source = await make_board(client, project["id"], name="Источник", preset="zif-gamedev")
+    source = await make_board(client, project["id"], name="Источник", template=zif_template())
     exported = (await client.get(f"/boards/{source['id']}/template", params={"include_cards": True})).json()
     assert len(exported["sample_cards"]) == 153
     clone = await make_board(client, project["id"], name="Копия", template=exported)
@@ -133,7 +137,7 @@ async def test_two_source_conflict(client: Api, project: dict[str, Any]) -> None
 
 async def test_partial_apply_changes_only_its_section(client: Api, project: dict[str, Any]) -> None:
     target = await make_board(client, project["id"], preset="scrum-lite")
-    theme_source = (await client.get("/presets/zif-gamedev")).json()["data"]
+    theme_source = zif_template()
     before = target["config"]
     response = await client.post(
         f"/boards/{target['id']}/template/apply", json={"template": theme_source, "parts": ["theme"]}
@@ -146,7 +150,7 @@ async def test_partial_apply_changes_only_its_section(client: Api, project: dict
 
 async def test_partial_typography(client: Api, project: dict[str, Any]) -> None:
     target = await make_board(client, project["id"], preset="scrum-lite")
-    source = (await client.get("/presets/zif-gamedev")).json()["data"]
+    source = zif_template()
     after = (
         await client.post(
             f"/boards/{target['id']}/template/apply", json={"template": source, "parts": ["typography"]}
@@ -157,7 +161,7 @@ async def test_partial_typography(client: Api, project: dict[str, Any]) -> None:
 
 
 async def test_partial_structure_prunes_dangling_layout(client: Api, project: dict[str, Any]) -> None:
-    target = await make_board(client, project["id"], preset="zif-gamedev", include_samples=False)
+    target = await make_board(client, project["id"], template=zif_template(), include_samples=False)
     source = (await client.get("/presets/personal")).json()["data"]
     response = await client.post(
         f"/boards/{target['id']}/template/apply", json={"template": source, "parts": ["structure"]}

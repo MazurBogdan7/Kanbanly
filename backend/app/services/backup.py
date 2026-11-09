@@ -355,7 +355,7 @@ class ParsedBackup:
     encrypted: bool
 
 
-def _load(raw: bytes, settings: Settings) -> Any:
+def load_json(raw: bytes, settings: Settings) -> Any:
     limit = settings.backup_max_bytes
     if len(raw) > limit:
         raise ApiError(413, "payload_too_large", "Файл больше допустимого размера")
@@ -372,7 +372,7 @@ def _load(raw: bytes, settings: Settings) -> Any:
 
 
 def read_backup(raw: bytes, settings: Settings, password: str | None) -> ParsedBackup:
-    document = _load(raw, settings)
+    document = load_json(raw, settings)
     if not isinstance(document, dict):
         raise ApiError(422, "invalid_backup", "Ожидается JSON-объект бэкапа")
     encrypted = document.get("format") == ENCRYPTED_FORMAT
@@ -384,7 +384,7 @@ def read_backup(raw: bytes, settings: Settings, password: str | None) -> ParsedB
         except ValidationError as exc:
             problems = format_validation_errors(list(exc.errors()))
             raise ApiError(422, "corrupted_backup", "Файл бэкапа повреждён", problems) from exc
-        document = _load(backup_crypto.decrypt(wrapper, password), settings)
+        document = load_json(backup_crypto.decrypt(wrapper, password), settings)
         if not isinstance(document, dict):
             raise ApiError(422, "invalid_backup", "Ожидается JSON-объект бэкапа")
     if document.get("format") != BACKUP_FORMAT:
@@ -540,7 +540,7 @@ async def _restore_project(db: AsyncSession, user_id: UUID, source: BackupProjec
     return project
 
 
-async def _ensure_tags(db: AsyncSession, project: Project, tags: list[Any]) -> dict[str, UUID]:
+async def ensure_tags(db: AsyncSession, project: Project, tags: list[Any]) -> dict[str, UUID]:
     """Теги проекта по именам: существующие используются, недостающие создаются."""
     existing = {tag.name: tag for tag in await _project_tags(db, project.id)}
     last = max((tag.position for tag in existing.values()), default=None)
@@ -604,9 +604,9 @@ async def _restore_documents(
     await db.flush()
 
 
-async def _restore_board(
+async def restore_board(
     db: AsyncSession, project: Project, source: BackupBoard, tags: dict[str, UUID]
-) -> None:
+) -> Board:
     board = Board(
         project_id=project.id,
         name=source.name,
@@ -629,6 +629,7 @@ async def _restore_board(
         db.add(_restore_card(board, index, card, tags))
     board.updated_at = source.updated_at
     await db.flush()
+    return board
 
 
 def _restore_card(board: Board, index: BoardIndex, source: BackupCard, tags: dict[str, UUID]) -> Card:
@@ -718,10 +719,10 @@ async def restore(
     tag_maps: dict[UUID, dict[str, UUID]] = {}
     for source in document.data.projects:
         project = created[source.source_id]
-        tag_maps[source.source_id] = await _ensure_tags(db, project, source.tags)
+        tag_maps[source.source_id] = await ensure_tags(db, project, source.tags)
         await _restore_documents(db, settings, project, source, tag_maps[source.source_id])
     for board in document.data.boards:
-        await _restore_board(db, created[board.project_source_id], board, tag_maps[board.project_source_id])
+        await restore_board(db, created[board.project_source_id], board, tag_maps[board.project_source_id])
     existing_templates = await db.execute(
         select(Template.name).where(Template.owner_id == user.id, Template.deleted_at.is_(None))
     )

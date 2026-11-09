@@ -3,7 +3,7 @@ import fs from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { api, column, createBoardViaApi, openBoard, register } from "./helpers";
+import { api, column, createBoardViaApi, openBoard, register, ZIF_TEMPLATE } from "./helpers";
 
 async function openConstructor(page: Page) {
   await page.getByRole("button", { name: "Конструктор" }).click();
@@ -88,7 +88,7 @@ test("доска с нуля через UI: экспорт совпадает с
 
 test("смена токена перекрашивает все элементы", async ({ page }) => {
   await register(page);
-  const boardId = await createBoardViaApi(page, { preset: "zif-gamedev", name: "ZIF" });
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
   const canvas = await openBoard(page, boardId);
   const panel = await openConstructor(page);
   const title = canvas.locator(".kb-title");
@@ -116,7 +116,7 @@ test("смена токена перекрашивает все элементы
 test("изменение роли измерения показывает и убирает виджет", async ({ page }) => {
   await register(page);
   const boardId = await createBoardViaApi(page, {
-    preset: "zif-gamedev",
+    template: ZIF_TEMPLATE,
     name: "ZIF",
     includeSamples: false,
   });
@@ -137,7 +137,7 @@ test("частичный импорт меняет только свой раз�
   const client = await api(page);
   const boardId = await createBoardViaApi(page, { preset: "scrum-lite", name: "Скрам" });
   const before = await client.get<any>(`/boards/${boardId}`);
-  const zif = await client.get<any>("/presets/zif-gamedev");
+  const zif = { data: ZIF_TEMPLATE };
   const file = testInfo.outputPath("zif.json");
   fs.writeFileSync(file, JSON.stringify(zif.data));
 

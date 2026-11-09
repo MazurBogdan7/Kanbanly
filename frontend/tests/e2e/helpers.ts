@@ -1,5 +1,15 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import type { APIRequestContext, Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
+
+/** Эталонный шаблон ZIF: в каталоге пресетов его нет, тесты берут исходный файл. */
+export const ZIF_FILE = path.resolve(
+  import.meta.dirname,
+  "../../../docs/reference/preset-zif-gamedev.json",
+);
+export const ZIF_TEMPLATE: Record<string, unknown> = JSON.parse(fs.readFileSync(ZIF_FILE, "utf-8"));
 
 export const PASSWORD = "correct-horse-battery-7";
 

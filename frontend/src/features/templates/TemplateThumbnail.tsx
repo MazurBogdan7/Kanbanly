@@ -1,5 +1,5 @@
 /** Живая миниатюра: рендерит настоящий движок доски, уменьшенный CSS-трансформацией. */
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { BoardConfig, BoardTemplate, CardOut } from "@/lib/api/types";
 
@@ -36,6 +36,8 @@ export function cardsFromTemplate(template: BoardTemplate): CardOut[] {
       due_date: sample.due_date ?? null,
       completed_at: null,
       cover_url: null,
+      color: sample.color ?? null,
+      tags: [],
       values,
       fields: sample.fields ?? {},
       checklist_done: 0,
@@ -49,41 +51,94 @@ export function cardsFromTemplate(template: BoardTemplate): CardOut[] {
   return cards;
 }
 
+/** Ширина контейнера; null, пока элемент не измерен. */
+function useWidth(fixed: number | undefined) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState<number | null>(fixed ?? null);
+  useEffect(() => {
+    if (fixed !== undefined) return;
+    const node = ref.current;
+    if (!node) return;
+    const measure = () => setWidth(node.clientWidth || null);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fixed]);
+  return { ref, width };
+}
+
+/**
+ * Уменьшенная копия доски. Без `width` занимает всю ширину родителя (пропорции 16:10),
+ * поэтому подходит для резиновых сеток.
+ */
+export function BoardMiniature({
+  name,
+  config,
+  cards,
+  width,
+  testId = "template-thumbnail",
+}: {
+  name: string;
+  config: BoardConfig;
+  cards: CardOut[];
+  width?: number;
+  testId?: string;
+}) {
+  const { ref, width: measured } = useWidth(width);
+  const scale = (measured ?? 0) / CANVAS_WIDTH;
+  return (
+    <div
+      ref={ref}
+      inert
+      aria-hidden
+      data-testid={testId}
+      className="pointer-events-none relative overflow-hidden rounded-sm border border-line"
+      style={
+        width === undefined
+          ? { width: "100%", aspectRatio: "16 / 10" }
+          : { width, height: CANVAS_HEIGHT * (width / CANVAS_WIDTH) }
+      }
+    >
+      {measured !== null && (
+        <div
+          className="absolute left-0 top-0"
+          style={{
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <BoardCanvas
+            name={name}
+            config={config}
+            cards={cards}
+            filters={EMPTY_FILTERS}
+            onFilters={NOOP}
+            thumbnail
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TemplateThumbnail({
   template,
-  width = 320,
+  width,
 }: {
   template: BoardTemplate;
   width?: number;
 }) {
-  const scale = width / CANVAS_WIDTH;
   const cards = useMemo(() => cardsFromTemplate(template), [template]);
-  const config = template as BoardConfig;
   return (
-    <div
-      inert
-      aria-hidden
-      data-testid="template-thumbnail"
-      className="pointer-events-none overflow-hidden rounded-sm border border-line"
-      style={{ width, height: CANVAS_HEIGHT * scale }}
-    >
-      <div
-        style={{
-          width: CANVAS_WIDTH,
-          height: CANVAS_HEIGHT,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-        }}
-      >
-        <BoardCanvas
-          name={template.meta.name}
-          config={config}
-          cards={cards}
-          filters={EMPTY_FILTERS}
-          onFilters={NOOP}
-          thumbnail
-        />
-      </div>
-    </div>
+    <BoardMiniature
+      name={template.meta.name}
+      config={template as BoardConfig}
+      cards={cards}
+      width={width}
+    />
   );
 }

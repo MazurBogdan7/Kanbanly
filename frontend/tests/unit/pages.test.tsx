@@ -115,6 +115,12 @@ function defaultRoutes(): Record<string, Handler> {
     "GET /projects/p1": () => PROJECT,
     "DELETE /projects/p1": () => ({ ok: true }),
     "GET /boards/b1": () => BOARD,
+    "GET /boards/b1/preview": () => ({
+      id: "b1",
+      name: "Доска",
+      config: BOARD.config,
+      cards: [CARD],
+    }),
     "GET /boards/b1/revision": () => ({ revision: "r1" }),
     "GET /projects/p1/members": () => [
       {
@@ -429,7 +435,46 @@ describe("главная и проект", () => {
     expect(await screen.findByRole("heading", { name: "Избранное" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Недавние доски" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Проект" })).toBeInTheDocument();
-    expect(screen.getAllByText("2 карточки").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/2 карточки/).length).toBeGreaterThan(0);
+  });
+
+  it("проект раскрывается стрелкой и открывается отдельной кнопкой", async () => {
+    const user = userEvent.setup();
+    const router = renderAt("/");
+    const card = await screen.findByTestId("project-card");
+    const toggle = within(card).getByRole("button", { name: "Показать доски проекта «Проект»" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(card).queryByTestId("board-tile")).not.toBeInTheDocument();
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(within(card).getByTestId("board-tile")).toHaveTextContent("Доска");
+    await waitFor(() => expect(sent("GET", "/boards/b1/preview")).toBeTruthy());
+    await user.click(within(card).getByRole("link", { name: "Открыть проект «Проект»" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/projects/p1"));
+  });
+
+  it("новый проект сразу с доской из CSV", async () => {
+    const user = userEvent.setup();
+    routes["POST /projects/p2/boards/import"] = () => ({
+      boards: [{ ...BOARD, id: "b9", project_id: "p2", name: "Спринт" }],
+      warnings: [],
+    });
+    const router = renderAt("/");
+    await user.click(await screen.findByRole("button", { name: "Новый проект" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.upload(
+      within(dialog).getByLabelText("Доска из файла"),
+      new File(["Название;Статус\nА;Готово"], "Спринт.csv", { type: "text/csv" }),
+    );
+    expect(within(dialog).getByLabelText("Название проекта")).toHaveAttribute(
+      "placeholder",
+      "Спринт",
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Создать и импортировать" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/boards/b9"));
+    expect(sent("POST", "/projects")?.body).toEqual({ name: "Спринт" });
+    const upload = sent("POST", "/projects/p2/boards/import");
+    expect(decodeURIComponent(upload?.headers["X-File-Name"] ?? "")).toBe("Спринт.csv");
   });
 
   it("создаёт проект", async () => {
@@ -479,9 +524,15 @@ describe("главная и проект", () => {
     renderAt("/projects/p1");
     await user.click(await screen.findByRole("button", { name: "Новая доска" }));
     const dialog = await screen.findByRole("dialog");
-    await user.click(within(dialog).getByRole("button", { name: "Из файла JSON" }));
-    const input = within(dialog).getByLabelText("Из файла JSON");
-    await user.upload(input, new File(["{bad"], "x.json", { type: "application/json" }));
+    await user.click(within(dialog).getByRole("button", { name: "Из файла (JSON, CSV)" }));
+    const input = within(dialog).getByLabelText("Доска из файла");
+    // Шаблон Kanbanly с ошибкой разбирается в браузере и показывает проблемы.
+    await user.upload(
+      input,
+      new File(['{"format":"kanbanly.board-template","version":1}'], "x.json", {
+        type: "application/json",
+      }),
+    );
     expect(await within(dialog).findByRole("alert")).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Мой шаблон" }));
     await user.click(await within(dialog).findByRole("button", { name: "Мой" }));
@@ -501,6 +552,27 @@ describe("главная и проект", () => {
       "in_progress",
       "done",
     ]);
+  });
+
+  it("мастер импортирует CSV через сервер и открывает конструктор", async () => {
+    const user = userEvent.setup();
+    routes["POST /projects/p1/boards/import"] = () => ({
+      boards: [{ ...BOARD, id: "b1" }],
+      warnings: ["Пропущено строк без названия: 1"],
+    });
+    const router = renderAt("/projects/p1");
+    await user.click(await screen.findByRole("button", { name: "Импорт из файла" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.upload(
+      within(dialog).getByLabelText("Доска из файла"),
+      new File(["Название;Статус"], "Задачи.csv", { type: "text/csv" }),
+    );
+    expect(within(dialog).getByRole("status")).toHaveTextContent("Колонки, карточки");
+    expect(within(dialog).getByLabelText("Название доски")).toHaveValue("Задачи");
+    await user.click(within(dialog).getByRole("button", { name: "Импортировать" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/boards/b1"));
+    expect(sent("POST", "/projects/p1/boards/import")).toBeTruthy();
+    expect(await screen.findByText("Пропущено строк без названия: 1")).toBeInTheDocument();
   });
 
   it("удаляет проект с возможностью отмены", async () => {

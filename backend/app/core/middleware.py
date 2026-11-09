@@ -97,7 +97,7 @@ class BodyGuardMiddleware:
         self.settings = settings
 
     def _limit(self, path: str) -> int:
-        if path.startswith("/api/v1/import/"):
+        if path.startswith("/api/v1/import/") or path.endswith("/boards/import"):
             return self.settings.backup_max_bytes
         if path.endswith(("/documents", "/versions")):
             return self.settings.file_max_bytes

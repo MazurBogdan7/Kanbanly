@@ -4,7 +4,7 @@ import fs from "node:fs";
 
 import { expect, test, type Download, type Page } from "@playwright/test";
 
-import { api, column, dragCard, PASSWORD, register, uniqueEmail } from "./helpers";
+import { api, column, dragCard, PASSWORD, register, uniqueEmail, ZIF_FILE } from "./helpers";
 
 async function saved(
   download: Promise<Download>,
@@ -26,10 +26,13 @@ async function createProject(page: Page, name: string) {
   await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
 }
 
-async function createBoardFromPreset(page: Page, preset: string, name: string) {
+/** Шаблон из файла проходит те же шаги мастера, что и пресет. */
+async function createBoardFromFile(page: Page, file: string, name: string) {
   await page.getByRole("button", { name: "Новая доска" }).click();
   const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: new RegExp(preset) }).click();
+  await dialog.getByRole("button", { name: "Из файла (JSON, CSV)" }).click();
+  await dialog.getByLabel("Доска из файла").setInputFiles(file);
+  await expect(dialog.getByText("Шаблон:")).toBeVisible();
   await dialog.getByLabel("Название доски").fill(name);
   for (let step = 0; step < 3; step += 1) {
     await dialog.getByRole("button", { name: "Продолжить" }).click();
@@ -56,7 +59,7 @@ test("полный цикл: регистрация → пресет → кар�
 }) => {
   await register(page);
   await createProject(page, "Игра");
-  await createBoardFromPreset(page, "ZIF", "ZIF");
+  await createBoardFromFile(page, ZIF_FILE, "ZIF");
 
   // карточки и drag & drop
   await page.getByRole("button", { name: "+ Карточка" }).click();
@@ -212,7 +215,7 @@ test("пример шаблона скачивается, импортирует
 test("галерея показывает живые миниатюры всех пресетов", async ({ page }) => {
   await register(page);
   await page.goto("/templates");
-  await expect(page.getByTestId("template-thumbnail")).toHaveCount(5);
+  await expect(page.getByTestId("template-thumbnail")).toHaveCount(4);
   await expect(
     page.getByTestId("template-thumbnail").first().locator(".kb-card").first(),
   ).toBeAttached();

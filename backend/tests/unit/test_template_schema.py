@@ -17,8 +17,7 @@ from app.schemas.template import BoardTemplate, Node
 from app.services import presets
 from app.services.board_config import dimension_roles
 from app.services.json_import import parse_json, parse_template, validate_template
-
-ZIF_PATH = Path(presets.PRESETS_DIR) / "preset-zif-gamedev.json"
+from tests.reference import ZIF_PATH
 
 
 def minimal() -> dict[str, Any]:
@@ -47,7 +46,7 @@ def test_zif_preset_imports_unmodified() -> None:
 
 def test_all_presets_are_diverse() -> None:
     all_presets = presets.list_presets()
-    assert set(all_presets) == {"zif-gamedev", "design-studio", "scrum-lite", "personal", "content-plan"}
+    assert set(all_presets) == {"design-studio", "scrum-lite", "personal", "content-plan"}
     assert len({t.typography.board_title.font for t in all_presets.values()}) >= 4
     assert len({t.theme.density for t in all_presets.values()}) == 3
     assert {t.theme.mode for t in all_presets.values()} == {"light", "dark", "both"}

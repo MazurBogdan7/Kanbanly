@@ -2,7 +2,15 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-import { api, column, createBoardViaApi, dragCard, openBoard, register } from "./helpers";
+import {
+  api,
+  column,
+  createBoardViaApi,
+  dragCard,
+  openBoard,
+  register,
+  ZIF_TEMPLATE,
+} from "./helpers";
 
 async function expectNoSeriousViolations(page: Page, scope?: string) {
   let builder = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]);
@@ -47,7 +55,8 @@ test.describe("axe: 0 serious/critical", () => {
   for (const preset of ["zif-gamedev", "design-studio", "scrum-lite", "personal", "content-plan"]) {
     test(`доска ${preset}`, async ({ page }) => {
       await register(page);
-      const boardId = await createBoardViaApi(page, { preset });
+      const source = preset === "zif-gamedev" ? { template: ZIF_TEMPLATE } : { preset };
+      const boardId = await createBoardViaApi(page, source);
       await openBoard(page, boardId);
       await expect(page.locator(".kb-card").first()).toBeVisible();
       await expectNoSeriousViolations(page);
@@ -180,7 +189,7 @@ test.describe("UX", () => {
 
   test("стрелки двигают фокус, E открывает карточку", async ({ page }) => {
     await register(page);
-    const boardId = await createBoardViaApi(page, { preset: "zif-gamedev" });
+    const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE });
     await openBoard(page, boardId);
     await page.keyboard.press("ArrowDown");
     const first = column(page, "backlog").locator(".kb-card").first();
@@ -195,7 +204,7 @@ test.describe("UX", () => {
 
   test("drag & drop с клавиатуры", async ({ page }) => {
     await register(page);
-    const boardId = await createBoardViaApi(page, { preset: "zif-gamedev" });
+    const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE });
     await openBoard(page, boardId);
     const card = column(page, "doing").locator(".kb-card");
     await expect(card).toHaveCount(0);
@@ -212,7 +221,7 @@ test.describe("UX", () => {
 
   test("Ctrl+Z отменяет перемещение и удаление, откат при ошибке сервера", async ({ page }) => {
     await register(page);
-    const boardId = await createBoardViaApi(page, { preset: "zif-gamedev" });
+    const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE });
     await openBoard(page, boardId);
     const card = column(page, "todo").locator(".kb-card").first();
     const title = await card.locator(".kb-card-title").innerText();
@@ -247,7 +256,7 @@ test.describe("UX", () => {
 
   test("быстрое создание, сохранённое представление, корзина, избранное", async ({ page }) => {
     await register(page);
-    const boardId = await createBoardViaApi(page, { preset: "zif-gamedev", name: "Рабочая" });
+    const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "Рабочая" });
     await openBoard(page, boardId);
     await column(page, "doing").hover();
     await column(page, "doing").getByRole("button", { name: "Добавить карточку" }).click();
@@ -294,7 +303,7 @@ test.describe("UX", () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await register(page);
-    const boardId = await createBoardViaApi(page, { preset: "zif-gamedev" });
+    const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE });
     await openBoard(page, boardId);
     await expect(page.getByRole("navigation", { name: "Основная навигация" }).last()).toBeVisible();
     const columns = page.locator(".kb-columns");
@@ -315,7 +324,6 @@ test.describe("производительность", () => {
     page,
   }) => {
     await register(page);
-    const client = await api(page);
     const samples = Array.from({ length: 1000 }, (_, index) => ({
       key: `k${index}`,
       column: ["backlog", "todo", "doing", "review", "done"][index % 5],
@@ -323,10 +331,9 @@ test.describe("производительность", () => {
       description: "Описание карточки для проверки производительности доски.",
       values: { epic: "core", milestone: "m1" },
     }));
-    const zif = await client.get<any>("/presets/zif-gamedev");
     const boardId = await createBoardViaApi(page, {
       name: "Тысяча",
-      template: { ...zif.data, sample_cards: samples },
+      template: { ...ZIF_TEMPLATE, sample_cards: samples },
     });
     await page.goto("/");
     await page.waitForLoadState("networkidle");

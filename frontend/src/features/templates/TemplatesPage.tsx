@@ -109,10 +109,10 @@ function TemplateCard({
   const { t } = useT();
   return (
     <article
-      className="grid gap-2 rounded-lg border border-line bg-panel p-3"
+      className="grid min-w-0 content-start gap-2 rounded-lg border border-line bg-panel p-3"
       data-template={template.meta.name}
     >
-      <TemplateThumbnail template={template} width={300} />
+      <TemplateThumbnail template={template} />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold">{template.meta.name}</h3>
@@ -131,7 +131,7 @@ function TemplateCard({
 
 function Gallery({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid justify-start gap-4 [grid-template-columns:repeat(auto-fill,326px)]">
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))]">
       {children}
     </div>
   );
@@ -176,7 +176,7 @@ export function TemplatesPage() {
 
   return (
     <div
-      className="mx-auto grid max-w-7xl gap-8 p-4 md:p-8"
+      className="mx-auto grid w-full max-w-7xl gap-8 p-4 md:p-8"
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         event.preventDefault();

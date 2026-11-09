@@ -1,7 +1,7 @@
 /** Визуальные снимки: анимации отключены, даты и данные фиксированы примерами пресетов. */
 import { expect, test, type Page } from "@playwright/test";
 
-import { createBoardViaApi, openBoard, register } from "../e2e/helpers";
+import { createBoardViaApi, openBoard, register, ZIF_TEMPLATE } from "../e2e/helpers";
 
 async function snapshot(page: Page, name: string) {
   await page.addStyleTag({
@@ -29,7 +29,8 @@ for (const [preset, label, device, width] of CASES) {
   test(`${preset} · ${label} · ${device}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await register(page);
-    const boardId = await createBoardViaApi(page, { preset, name: "Снимок" });
+    const source = preset === "zif-gamedev" ? { template: ZIF_TEMPLATE } : { preset };
+    const boardId = await createBoardViaApi(page, { ...source, name: "Снимок" });
     await openBoard(page, boardId);
     await page.mouse.move(0, 0);
     await snapshot(page, `${preset}-${device}.png`);

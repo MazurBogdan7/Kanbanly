@@ -7,9 +7,7 @@
   "paths": {
     "/api/v1/health": {
       "get": {
-        "tags": [
-          "system"
-        ],
+        "tags": ["system"],
         "summary": "Health",
         "operationId": "health_api_v1_health_get",
         "responses": {
@@ -32,9 +30,7 @@
     },
     "/api/v1/auth/csrf": {
       "get": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Csrf",
         "operationId": "csrf_api_v1_auth_csrf_get",
         "responses": {
@@ -53,9 +49,7 @@
     },
     "/api/v1/auth/registration": {
       "get": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Registration",
         "description": "Открыта ли регистрация: страница регистрации заранее объясняет, если нет.",
         "operationId": "registration_api_v1_auth_registration_get",
@@ -75,9 +69,7 @@
     },
     "/api/v1/auth/password-strength": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Password Strength",
         "description": "Отдельно от регистрации: индикатор силы спрашивает только факт наличия в утечках.",
         "operationId": "password_strength_api_v1_auth_password_strength_post",
@@ -121,9 +113,7 @@
     },
     "/api/v1/auth/register": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Register",
         "operationId": "register_api_v1_auth_register_post",
         "requestBody": {
@@ -162,9 +152,7 @@
     },
     "/api/v1/auth/login": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Login",
         "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
@@ -203,9 +191,7 @@
     },
     "/api/v1/auth/logout": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Logout",
         "operationId": "logout_api_v1_auth_logout_post",
         "responses": {
@@ -224,9 +210,7 @@
     },
     "/api/v1/auth/logout-all": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Logout All",
         "operationId": "logout_all_api_v1_auth_logout_all_post",
         "responses": {
@@ -245,9 +229,7 @@
     },
     "/api/v1/auth/me": {
       "get": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Me",
         "operationId": "me_api_v1_auth_me_get",
         "responses": {
@@ -264,9 +246,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Delete Me",
         "operationId": "delete_me_api_v1_auth_me_delete",
         "requestBody": {
@@ -303,9 +283,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Update Me",
         "operationId": "update_me_api_v1_auth_me_patch",
         "requestBody": {
@@ -344,9 +322,7 @@
     },
     "/api/v1/auth/password": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Change Password",
         "operationId": "change_password_api_v1_auth_password_post",
         "requestBody": {
@@ -385,9 +361,7 @@
     },
     "/api/v1/auth/password-reset/request": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Password Reset Request",
         "operationId": "password_reset_request_api_v1_auth_password_reset_request_post",
         "requestBody": {
@@ -426,9 +400,7 @@
     },
     "/api/v1/auth/password-reset/confirm": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Password Reset Confirm",
         "operationId": "password_reset_confirm_api_v1_auth_password_reset_confirm_post",
         "requestBody": {
@@ -467,9 +439,7 @@
     },
     "/api/v1/auth/2fa/setup": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Totp Setup",
         "operationId": "totp_setup_api_v1_auth_2fa_setup_post",
         "responses": {
@@ -488,9 +458,7 @@
     },
     "/api/v1/auth/2fa/enable": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Totp Enable",
         "operationId": "totp_enable_api_v1_auth_2fa_enable_post",
         "requestBody": {
@@ -529,9 +497,7 @@
     },
     "/api/v1/auth/2fa/disable": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Totp Disable",
         "operationId": "totp_disable_api_v1_auth_2fa_disable_post",
         "requestBody": {
@@ -570,9 +536,7 @@
     },
     "/api/v1/auth/sessions": {
       "get": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Sessions",
         "operationId": "sessions_api_v1_auth_sessions_get",
         "responses": {
@@ -595,9 +559,7 @@
     },
     "/api/v1/auth/sessions/{session_id}": {
       "delete": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Revoke Session",
         "operationId": "revoke_session_api_v1_auth_sessions__session_id__delete",
         "parameters": [
@@ -638,9 +600,7 @@
     },
     "/api/v1/projects": {
       "get": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "List Projects",
         "operationId": "list_projects_api_v1_projects_get",
         "parameters": [
@@ -698,9 +658,7 @@
         }
       },
       "post": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Create Project",
         "operationId": "create_project_api_v1_projects_post",
         "requestBody": {
@@ -739,9 +697,7 @@
     },
     "/api/v1/projects/{project_id}": {
       "get": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Get Project",
         "operationId": "get_project_api_v1_projects__project_id__get",
         "parameters": [
@@ -780,9 +736,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Update Project",
         "operationId": "update_project_api_v1_projects__project_id__patch",
         "parameters": [
@@ -847,9 +801,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Delete Project",
         "operationId": "delete_project_api_v1_projects__project_id__delete",
         "parameters": [
@@ -890,9 +842,7 @@
     },
     "/api/v1/projects/{project_id}/restore": {
       "post": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Restore Project",
         "operationId": "restore_project_api_v1_projects__project_id__restore_post",
         "parameters": [
@@ -933,9 +883,7 @@
     },
     "/api/v1/projects/{project_id}/members": {
       "get": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "List Members",
         "operationId": "list_members_api_v1_projects__project_id__members_get",
         "parameters": [
@@ -980,9 +928,7 @@
     },
     "/api/v1/projects/{project_id}/members/{user_id}": {
       "patch": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Update Member",
         "operationId": "update_member_api_v1_projects__project_id__members__user_id__patch",
         "parameters": [
@@ -1041,9 +987,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Remove Member",
         "operationId": "remove_member_api_v1_projects__project_id__members__user_id__delete",
         "parameters": [
@@ -1094,9 +1038,7 @@
     },
     "/api/v1/projects/{project_id}/invites": {
       "get": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "List Invites",
         "operationId": "list_invites_api_v1_projects__project_id__invites_get",
         "parameters": [
@@ -1139,9 +1081,7 @@
         }
       },
       "post": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Create Invite",
         "operationId": "create_invite_api_v1_projects__project_id__invites_post",
         "parameters": [
@@ -1192,9 +1132,7 @@
     },
     "/api/v1/projects/{project_id}/invites/{invite_id}": {
       "delete": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Revoke Invite",
         "operationId": "revoke_invite_api_v1_projects__project_id__invites__invite_id__delete",
         "parameters": [
@@ -1245,9 +1183,7 @@
     },
     "/api/v1/invites/{token}": {
       "get": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Preview Invite",
         "operationId": "preview_invite_api_v1_invites__token__get",
         "parameters": [
@@ -1288,9 +1224,7 @@
     },
     "/api/v1/invites/{token}/accept": {
       "post": {
-        "tags": [
-          "projects"
-        ],
+        "tags": ["projects"],
         "summary": "Accept Invite",
         "operationId": "accept_invite_api_v1_invites__token__accept_post",
         "parameters": [
@@ -1331,9 +1265,7 @@
     },
     "/api/v1/projects/{project_id}/boards": {
       "post": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Create Board",
         "operationId": "create_board_api_v1_projects__project_id__boards_post",
         "parameters": [
@@ -1382,11 +1314,143 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/boards/import": {
+      "post": {
+        "tags": ["boards"],
+        "summary": "Import Board",
+        "description": "Тело запроса — файл CSV или JSON (шаблон, бэкап Kanbanly или массив задач).",
+        "operationId": "import_board_api_v1_projects__project_id__boards_import_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Name"
+            }
+          },
+          {
+            "name": "X-File-Name",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 1024
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-File-Name"
+            }
+          },
+          {
+            "name": "X-Backup-Password",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 256
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Backup-Password"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/boards/{board_id}/preview": {
+      "get": {
+        "tags": ["boards"],
+        "summary": "Board Preview",
+        "operationId": "board_preview_api_v1_boards__board_id__preview_get",
+        "parameters": [
+          {
+            "name": "board_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Board Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardPreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/boards/{board_id}": {
       "get": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Get Board",
         "operationId": "get_board_api_v1_boards__board_id__get",
         "parameters": [
@@ -1425,9 +1489,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Update Board",
         "operationId": "update_board_api_v1_boards__board_id__patch",
         "parameters": [
@@ -1492,9 +1554,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Delete Board",
         "operationId": "delete_board_api_v1_boards__board_id__delete",
         "parameters": [
@@ -1535,9 +1595,7 @@
     },
     "/api/v1/boards/{board_id}/config": {
       "put": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Put Config",
         "operationId": "put_config_api_v1_boards__board_id__config_put",
         "parameters": [
@@ -1604,9 +1662,7 @@
     },
     "/api/v1/boards/{board_id}/template/apply": {
       "post": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Apply Template Parts",
         "operationId": "apply_template_parts_api_v1_boards__board_id__template_apply_post",
         "parameters": [
@@ -1657,9 +1713,7 @@
     },
     "/api/v1/boards/{board_id}/reset": {
       "post": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Reset Board",
         "operationId": "reset_board_api_v1_boards__board_id__reset_post",
         "parameters": [
@@ -1710,9 +1764,7 @@
     },
     "/api/v1/boards/{board_id}/restore": {
       "post": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Restore Board",
         "operationId": "restore_board_api_v1_boards__board_id__restore_post",
         "parameters": [
@@ -1753,9 +1805,7 @@
     },
     "/api/v1/boards/{board_id}/cards": {
       "get": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "List Cards",
         "operationId": "list_cards_api_v1_boards__board_id__cards_get",
         "parameters": [
@@ -1823,9 +1873,7 @@
         }
       },
       "post": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Create Card",
         "operationId": "create_card_api_v1_boards__board_id__cards_post",
         "parameters": [
@@ -1876,9 +1924,7 @@
     },
     "/api/v1/boards/{board_id}/template": {
       "get": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Download Template",
         "operationId": "download_template_api_v1_boards__board_id__template_get",
         "parameters": [
@@ -1944,9 +1990,7 @@
     },
     "/api/v1/boards/{board_id}/template/save": {
       "post": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Save As Template",
         "operationId": "save_as_template_api_v1_boards__board_id__template_save_post",
         "parameters": [
@@ -2001,9 +2045,7 @@
     },
     "/api/v1/boards/{board_id}/views": {
       "get": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "List Views",
         "operationId": "list_views_api_v1_boards__board_id__views_get",
         "parameters": [
@@ -2046,9 +2088,7 @@
         }
       },
       "post": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Create View",
         "operationId": "create_view_api_v1_boards__board_id__views_post",
         "parameters": [
@@ -2099,9 +2139,7 @@
     },
     "/api/v1/views/{view_id}": {
       "patch": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Update View",
         "operationId": "update_view_api_v1_views__view_id__patch",
         "parameters": [
@@ -2150,9 +2188,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Delete View",
         "operationId": "delete_view_api_v1_views__view_id__delete",
         "parameters": [
@@ -2193,9 +2229,7 @@
     },
     "/api/v1/boards/{board_id}/revision": {
       "get": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Board Revision",
         "description": "Дешёвая метка изменений: клиент опрашивает её и перезагружает доску, только когда она сменилась.",
         "operationId": "board_revision_api_v1_boards__board_id__revision_get",
@@ -2237,9 +2271,7 @@
     },
     "/api/v1/boards/{board_id}/export.csv": {
       "get": {
-        "tags": [
-          "boards"
-        ],
+        "tags": ["boards"],
         "summary": "Export Csv",
         "description": "Таблица доски для Excel. Несколько досок сразу — GET /export/csv.",
         "operationId": "export_csv_api_v1_boards__board_id__export_csv_get",
@@ -2279,9 +2311,7 @@
     },
     "/api/v1/cards/{card_id}": {
       "get": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Get Card",
         "operationId": "get_card_api_v1_cards__card_id__get",
         "parameters": [
@@ -2320,9 +2350,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Update Card",
         "operationId": "update_card_api_v1_cards__card_id__patch",
         "parameters": [
@@ -2387,9 +2415,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Delete Card",
         "operationId": "delete_card_api_v1_cards__card_id__delete",
         "parameters": [
@@ -2430,9 +2456,7 @@
     },
     "/api/v1/cards/{card_id}/move": {
       "post": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Move Card",
         "operationId": "move_card_api_v1_cards__card_id__move_post",
         "parameters": [
@@ -2483,9 +2507,7 @@
     },
     "/api/v1/cards/{card_id}/restore": {
       "post": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Restore Card",
         "operationId": "restore_card_api_v1_cards__card_id__restore_post",
         "parameters": [
@@ -2526,9 +2548,7 @@
     },
     "/api/v1/cards/{card_id}/activity": {
       "get": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Card Activity",
         "operationId": "card_activity_api_v1_cards__card_id__activity_get",
         "parameters": [
@@ -2598,9 +2618,7 @@
     },
     "/api/v1/cards/{card_id}/checklists": {
       "post": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Create Checklist",
         "operationId": "create_checklist_api_v1_cards__card_id__checklists_post",
         "parameters": [
@@ -2651,9 +2669,7 @@
     },
     "/api/v1/checklists/{checklist_id}": {
       "patch": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Update Checklist",
         "operationId": "update_checklist_api_v1_checklists__checklist_id__patch",
         "parameters": [
@@ -2706,9 +2722,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Delete Checklist",
         "operationId": "delete_checklist_api_v1_checklists__checklist_id__delete",
         "parameters": [
@@ -2749,9 +2763,7 @@
     },
     "/api/v1/checklists/{checklist_id}/items": {
       "post": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Create Item",
         "operationId": "create_item_api_v1_checklists__checklist_id__items_post",
         "parameters": [
@@ -2802,9 +2814,7 @@
     },
     "/api/v1/checklist-items/{item_id}": {
       "patch": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Update Item",
         "operationId": "update_item_api_v1_checklist_items__item_id__patch",
         "parameters": [
@@ -2853,9 +2863,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Delete Item",
         "operationId": "delete_item_api_v1_checklist_items__item_id__delete",
         "parameters": [
@@ -2896,9 +2904,7 @@
     },
     "/api/v1/cards/{card_id}/comments": {
       "post": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Create Comment",
         "operationId": "create_comment_api_v1_cards__card_id__comments_post",
         "parameters": [
@@ -2949,9 +2955,7 @@
     },
     "/api/v1/comments/{comment_id}": {
       "patch": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Update Comment",
         "operationId": "update_comment_api_v1_comments__comment_id__patch",
         "parameters": [
@@ -3000,9 +3004,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Delete Comment",
         "operationId": "delete_comment_api_v1_comments__comment_id__delete",
         "parameters": [
@@ -3043,9 +3045,7 @@
     },
     "/api/v1/cards/{card_id}/attachments": {
       "post": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Create Attachment",
         "operationId": "create_attachment_api_v1_cards__card_id__attachments_post",
         "parameters": [
@@ -3096,9 +3096,7 @@
     },
     "/api/v1/attachments/{attachment_id}": {
       "delete": {
-        "tags": [
-          "cards"
-        ],
+        "tags": ["cards"],
         "summary": "Delete Attachment",
         "operationId": "delete_attachment_api_v1_attachments__attachment_id__delete",
         "parameters": [
@@ -3139,9 +3137,7 @@
     },
     "/api/v1/presets": {
       "get": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "List Presets",
         "operationId": "list_presets_api_v1_presets_get",
         "responses": {
@@ -3164,9 +3160,7 @@
     },
     "/api/v1/presets/{key}": {
       "get": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Get Preset",
         "operationId": "get_preset_api_v1_presets__key__get",
         "parameters": [
@@ -3206,9 +3200,7 @@
     },
     "/api/v1/templates/example": {
       "get": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Example Template",
         "operationId": "example_template_api_v1_templates_example_get",
         "responses": {
@@ -3225,9 +3217,7 @@
     },
     "/api/v1/templates": {
       "get": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "List Templates",
         "operationId": "list_templates_api_v1_templates_get",
         "parameters": [
@@ -3287,9 +3277,7 @@
     },
     "/api/v1/templates/import/preview": {
       "post": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Preview Import",
         "operationId": "preview_import_api_v1_templates_import_preview_post",
         "responses": {
@@ -3308,9 +3296,7 @@
     },
     "/api/v1/templates/import": {
       "post": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Import Template",
         "operationId": "import_template_api_v1_templates_import_post",
         "responses": {
@@ -3329,9 +3315,7 @@
     },
     "/api/v1/templates/from-board": {
       "post": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Template From Board",
         "operationId": "template_from_board_api_v1_templates_from_board_post",
         "requestBody": {
@@ -3370,9 +3354,7 @@
     },
     "/api/v1/templates/{template_id}": {
       "get": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Get Template",
         "operationId": "get_template_api_v1_templates__template_id__get",
         "parameters": [
@@ -3411,9 +3393,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Update Template",
         "operationId": "update_template_api_v1_templates__template_id__patch",
         "parameters": [
@@ -3478,9 +3458,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Delete Template",
         "operationId": "delete_template_api_v1_templates__template_id__delete",
         "parameters": [
@@ -3521,9 +3499,7 @@
     },
     "/api/v1/templates/{template_id}/download": {
       "get": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Download Template",
         "operationId": "download_template_api_v1_templates__template_id__download_get",
         "parameters": [
@@ -3562,9 +3538,7 @@
     },
     "/api/v1/templates/{template_id}/duplicate": {
       "post": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Duplicate Template",
         "operationId": "duplicate_template_api_v1_templates__template_id__duplicate_post",
         "parameters": [
@@ -3605,9 +3579,7 @@
     },
     "/api/v1/templates/{template_id}/restore": {
       "post": {
-        "tags": [
-          "templates"
-        ],
+        "tags": ["templates"],
         "summary": "Restore Template",
         "operationId": "restore_template_api_v1_templates__template_id__restore_post",
         "parameters": [
@@ -3648,9 +3620,7 @@
     },
     "/api/v1/export/backup": {
       "get": {
-        "tags": [
-          "backup"
-        ],
+        "tags": ["backup"],
         "summary": "Export Backup",
         "operationId": "export_backup_api_v1_export_backup_get",
         "parameters": [
@@ -3698,9 +3668,7 @@
         }
       },
       "post": {
-        "tags": [
-          "backup"
-        ],
+        "tags": ["backup"],
         "summary": "Export Encrypted Backup",
         "description": "Пароль только в теле запроса. Шифрование требует весь документ, поэтому не стрим.",
         "operationId": "export_encrypted_backup_api_v1_export_backup_post",
@@ -3738,9 +3706,7 @@
     },
     "/api/v1/export/csv": {
       "get": {
-        "tags": [
-          "backup"
-        ],
+        "tags": ["backup"],
         "summary": "Export Tables",
         "description": "Таблицы Excel всех досок аккаунта, проекта или одной доски одним ZIP-архивом.",
         "operationId": "export_tables_api_v1_export_csv_get",
@@ -3781,9 +3747,7 @@
     },
     "/api/v1/import/backup/preview": {
       "post": {
-        "tags": [
-          "backup"
-        ],
+        "tags": ["backup"],
         "summary": "Preview Backup",
         "operationId": "preview_backup_api_v1_import_backup_preview_post",
         "parameters": [
@@ -3831,9 +3795,7 @@
     },
     "/api/v1/import/backup": {
       "post": {
-        "tags": [
-          "backup"
-        ],
+        "tags": ["backup"],
         "summary": "Import Backup",
         "operationId": "import_backup_api_v1_import_backup_post",
         "parameters": [
@@ -3842,10 +3804,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "copy",
-                "replace"
-              ],
+              "enum": ["copy", "replace"],
               "type": "string",
               "default": "copy",
               "title": "Mode"
@@ -3912,9 +3871,7 @@
     },
     "/api/v1/backups": {
       "get": {
-        "tags": [
-          "backup"
-        ],
+        "tags": ["backup"],
         "summary": "Backup History",
         "operationId": "backup_history_api_v1_backups_get",
         "responses": {
@@ -3933,9 +3890,7 @@
     },
     "/api/v1/backups/snapshots/{snapshot_id}": {
       "get": {
-        "tags": [
-          "backup"
-        ],
+        "tags": ["backup"],
         "summary": "Download Snapshot",
         "operationId": "download_snapshot_api_v1_backups_snapshots__snapshot_id__get",
         "parameters": [
@@ -3974,9 +3929,7 @@
     },
     "/api/v1/projects/{project_id}/tags": {
       "get": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "List Tags",
         "operationId": "list_tags_api_v1_projects__project_id__tags_get",
         "parameters": [
@@ -4019,9 +3972,7 @@
         }
       },
       "post": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Create Tag",
         "operationId": "create_tag_api_v1_projects__project_id__tags_post",
         "parameters": [
@@ -4072,9 +4023,7 @@
     },
     "/api/v1/tags/{tag_id}": {
       "patch": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Update Tag",
         "operationId": "update_tag_api_v1_tags__tag_id__patch",
         "parameters": [
@@ -4123,9 +4072,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Delete Tag",
         "operationId": "delete_tag_api_v1_tags__tag_id__delete",
         "parameters": [
@@ -4166,9 +4113,7 @@
     },
     "/api/v1/projects/{project_id}/documents": {
       "get": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "List Documents",
         "operationId": "list_documents_api_v1_projects__project_id__documents_get",
         "parameters": [
@@ -4211,9 +4156,7 @@
         }
       },
       "post": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Upload Document",
         "description": "Тело запроса — сам файл; имя приходит в X-File-Name (URL-кодированное).",
         "operationId": "upload_document_api_v1_projects__project_id__documents_post",
@@ -4300,9 +4243,7 @@
     },
     "/api/v1/documents/{document_id}": {
       "get": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Get Document",
         "operationId": "get_document_api_v1_documents__document_id__get",
         "parameters": [
@@ -4341,9 +4282,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Update Document",
         "operationId": "update_document_api_v1_documents__document_id__patch",
         "parameters": [
@@ -4392,9 +4331,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Delete Document",
         "operationId": "delete_document_api_v1_documents__document_id__delete",
         "parameters": [
@@ -4435,9 +4372,7 @@
     },
     "/api/v1/documents/{document_id}/restore": {
       "post": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Restore Document",
         "operationId": "restore_document_api_v1_documents__document_id__restore_post",
         "parameters": [
@@ -4478,9 +4413,7 @@
     },
     "/api/v1/documents/{document_id}/versions": {
       "post": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Upload Version",
         "description": "Новая версия не затирает старые: история остаётся доступной для просмотра и скачивания.",
         "operationId": "upload_version_api_v1_documents__document_id__versions_post",
@@ -4539,9 +4472,7 @@
     },
     "/api/v1/documents/{document_id}/versions/{number}/content": {
       "get": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Version Content",
         "operationId": "version_content_api_v1_documents__document_id__versions__number__content_get",
         "parameters": [
@@ -4601,9 +4532,7 @@
     },
     "/api/v1/documents/{document_id}/versions/{number}/preview": {
       "get": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Version Preview",
         "operationId": "version_preview_api_v1_documents__document_id__versions__number__preview_get",
         "parameters": [
@@ -4655,9 +4584,7 @@
     },
     "/api/v1/documents/{document_id}/comments": {
       "post": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Create Comment",
         "operationId": "create_comment_api_v1_documents__document_id__comments_post",
         "parameters": [
@@ -4708,9 +4635,7 @@
     },
     "/api/v1/document-comments/{document_comment_id}": {
       "patch": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Update Comment",
         "operationId": "update_comment_api_v1_document_comments__document_comment_id__patch",
         "parameters": [
@@ -4759,9 +4684,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "workspace"
-        ],
+        "tags": ["workspace"],
         "summary": "Delete Comment",
         "operationId": "delete_comment_api_v1_document_comments__document_comment_id__delete",
         "parameters": [
@@ -4802,9 +4725,7 @@
     },
     "/api/v1/admin/stats": {
       "get": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Stats",
         "operationId": "stats_api_v1_admin_stats_get",
         "responses": {
@@ -4823,9 +4744,7 @@
     },
     "/api/v1/admin/users": {
       "get": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "List Users",
         "operationId": "list_users_api_v1_admin_users_get",
         "parameters": [
@@ -4896,9 +4815,7 @@
     },
     "/api/v1/admin/users/{user_id}/unlock": {
       "post": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Unlock User",
         "operationId": "unlock_user_api_v1_admin_users__user_id__unlock_post",
         "parameters": [
@@ -4939,9 +4856,7 @@
     },
     "/api/v1/admin/users/{user_id}": {
       "patch": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Update User",
         "operationId": "update_user_api_v1_admin_users__user_id__patch",
         "parameters": [
@@ -4990,9 +4905,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Delete User",
         "operationId": "delete_user_api_v1_admin_users__user_id__delete",
         "parameters": [
@@ -5043,9 +4956,7 @@
     },
     "/api/v1/admin/users/{user_id}/logout-all": {
       "post": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Logout User",
         "operationId": "logout_user_api_v1_admin_users__user_id__logout_all_post",
         "parameters": [
@@ -5086,9 +4997,7 @@
     },
     "/api/v1/admin/audit": {
       "get": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Audit Log",
         "operationId": "audit_log_api_v1_admin_audit_get",
         "parameters": [
@@ -5135,9 +5044,7 @@
     },
     "/api/v1/admin/settings": {
       "get": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Get Settings",
         "operationId": "get_settings_api_v1_admin_settings_get",
         "responses": {
@@ -5154,9 +5061,7 @@
         }
       },
       "put": {
-        "tags": [
-          "admin"
-        ],
+        "tags": ["admin"],
         "summary": "Put Settings",
         "operationId": "put_settings_api_v1_admin_settings_put",
         "requestBody": {
@@ -5195,9 +5100,7 @@
     },
     "/api/v1/search": {
       "get": {
-        "tags": [
-          "misc"
-        ],
+        "tags": ["misc"],
         "summary": "Search",
         "operationId": "search_api_v1_search_get",
         "parameters": [
@@ -5255,9 +5158,7 @@
     },
     "/api/v1/trash": {
       "get": {
-        "tags": [
-          "misc"
-        ],
+        "tags": ["misc"],
         "summary": "Trash",
         "operationId": "trash_api_v1_trash_get",
         "responses": {
@@ -5280,9 +5181,7 @@
     },
     "/api/v1/audit": {
       "get": {
-        "tags": [
-          "misc"
-        ],
+        "tags": ["misc"],
         "summary": "Audit Log",
         "operationId": "audit_log_api_v1_audit_get",
         "parameters": [
@@ -5365,9 +5264,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "title": "ActionsWidget"
       },
       "AdminDelete": {
@@ -5379,9 +5276,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "confirm_email"
-        ],
+        "required": ["confirm_email"],
         "title": "AdminDelete"
       },
       "AdminEvent": {
@@ -5421,14 +5316,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "action",
-          "email",
-          "ip",
-          "target_type",
-          "created_at"
-        ],
+        "required": ["id", "action", "email", "ip", "target_type", "created_at"],
         "title": "AdminEvent"
       },
       "AdminSettings": {
@@ -5439,9 +5327,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "registration_open"
-        ],
+        "required": ["registration_open"],
         "title": "AdminSettings"
       },
       "AdminStats": {
@@ -5613,10 +5499,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "url"
-        ],
+        "required": ["name", "url"],
         "title": "AttachmentCreate"
       },
       "AttachmentOut": {
@@ -5641,12 +5524,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "url",
-          "created_at"
-        ],
+        "required": ["id", "name", "url", "created_at"],
         "title": "AttachmentOut"
       },
       "AuditOut": {
@@ -5680,25 +5558,14 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "action",
-          "target_type",
-          "target_id",
-          "meta",
-          "created_at"
-        ],
+        "required": ["id", "action", "target_type", "target_id", "meta", "created_at"],
         "title": "AuditOut"
       },
       "BackupConflict": {
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "project",
-              "board",
-              "template"
-            ],
+            "enum": ["project", "board", "template"],
             "title": "Type"
           },
           "name": {
@@ -5707,10 +5574,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "name"
-        ],
+        "required": ["type", "name"],
         "title": "BackupConflict"
       },
       "BackupExportIn": {
@@ -5761,10 +5625,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "events",
-          "snapshots"
-        ],
+        "required": ["events", "snapshots"],
         "title": "BackupHistory"
       },
       "BackupHistoryItem": {
@@ -5785,21 +5646,14 @@
           }
         },
         "type": "object",
-        "required": [
-          "action",
-          "created_at",
-          "meta"
-        ],
+        "required": ["action", "created_at", "meta"],
         "title": "BackupHistoryItem"
       },
       "BackupImportResult": {
         "properties": {
           "mode": {
             "type": "string",
-            "enum": [
-              "copy",
-              "replace"
-            ],
+            "enum": ["copy", "replace"],
             "title": "Mode"
           },
           "counts": {
@@ -5830,11 +5684,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "mode",
-          "counts",
-          "warnings"
-        ],
+        "required": ["mode", "counts", "warnings"],
         "title": "BackupImportResult"
       },
       "BackupPreview": {
@@ -5913,9 +5763,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "valid"
-        ],
+        "required": ["valid"],
         "title": "BackupPreview"
       },
       "BadgeConfig": {
@@ -5927,24 +5775,13 @@
           },
           "display": {
             "type": "string",
-            "enum": [
-              "name",
-              "short",
-              "icon",
-              "icon+name"
-            ],
+            "enum": ["name", "short", "icon", "icon+name"],
             "title": "Display",
             "default": "name"
           },
           "style": {
             "type": "string",
-            "enum": [
-              "per-value",
-              "neutral",
-              "outlined",
-              "filled",
-              "dot"
-            ],
+            "enum": ["per-value", "neutral", "outlined", "filled", "dot"],
             "title": "Style",
             "default": "neutral"
           },
@@ -5963,10 +5800,7 @@
           },
           "size": {
             "type": "string",
-            "enum": [
-              "sm",
-              "md"
-            ],
+            "enum": ["sm", "md"],
             "title": "Size",
             "default": "sm"
           },
@@ -5983,9 +5817,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "dimension"
-        ],
+        "required": ["dimension"],
         "title": "BadgeConfig"
       },
       "BadgeStyleOverride": {
@@ -6084,17 +5916,10 @@
                 "badges": [],
                 "border": true,
                 "custom_text": "",
-                "face": [
-                  "title",
-                  "description",
-                  "badges"
-                ],
+                "face": ["title", "description", "badges"],
                 "gap": 8,
                 "hover": "border",
-                "padding": [
-                  10,
-                  12
-                ],
+                "padding": [10, 12],
                 "radius": 8,
                 "shadow": "none"
               },
@@ -6171,9 +5996,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "columns"
-        ],
+        "required": ["columns"],
         "title": "BoardConfig",
         "description": "Всё, что настраивается в конструкторе доски (шаблон без meta и карточек)."
       },
@@ -6234,11 +6057,31 @@
           }
         },
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "title": "BoardCreate",
         "description": "Источник ровно один: preset, template_id, template (файл) или пустая доска."
+      },
+      "BoardImportResult": {
+        "properties": {
+          "boards": {
+            "items": {
+              "$ref": "#/components/schemas/BoardOut"
+            },
+            "type": "array",
+            "title": "Boards"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["boards"],
+        "title": "BoardImportResult"
       },
       "BoardLayout": {
         "properties": {
@@ -6345,6 +6188,33 @@
         ],
         "title": "BoardOut"
       },
+      "BoardPreview": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "config": {
+            "$ref": "#/components/schemas/BoardConfig"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/CardOut"
+            },
+            "type": "array",
+            "title": "Cards"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "config", "cards"],
+        "title": "BoardPreview",
+        "description": "Миниатюра доски: настройки и первые карточки каждой колонки."
+      },
       "BoardReset": {
         "properties": {
           "cards": {
@@ -6364,9 +6234,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "revision"
-        ],
+        "required": ["revision"],
         "title": "BoardRevision"
       },
       "BoardSummary": {
@@ -6486,17 +6354,10 @@
                 "badges": [],
                 "border": true,
                 "custom_text": "",
-                "face": [
-                  "title",
-                  "description",
-                  "badges"
-                ],
+                "face": ["title", "description", "badges"],
                 "gap": 8,
                 "hover": "border",
-                "padding": [
-                  10,
-                  12
-                ],
+                "padding": [10, 12],
                 "radius": 8,
                 "shadow": "none"
               },
@@ -6603,10 +6464,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "columns",
-          "meta"
-        ],
+        "required": ["columns", "meta"],
         "title": "BoardTemplate"
       },
       "BoardUpdate": {
@@ -6661,13 +6519,7 @@
           },
           "style": {
             "type": "string",
-            "enum": [
-              "left-border",
-              "top-border",
-              "background-tint",
-              "dot",
-              "full-border"
-            ],
+            "enum": ["left-border", "top-border", "background-tint", "dot", "full-border"],
             "title": "Style",
             "default": "left-border"
           },
@@ -6792,10 +6644,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "column",
-          "title"
-        ],
+        "required": ["column", "title"],
         "title": "CardCreate"
       },
       "CardDetail": {
@@ -7001,13 +6850,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "actor_name",
-          "action",
-          "data",
-          "created_at"
-        ],
+        "required": ["id", "actor_name", "action", "data", "created_at"],
         "title": "CardEventOut"
       },
       "CardLayout": {
@@ -7029,10 +6872,7 @@
             "maxItems": 2,
             "minItems": 2,
             "title": "Padding",
-            "default": [
-              10,
-              12
-            ]
+            "default": [10, 12]
           },
           "gap": {
             "type": "integer",
@@ -7043,11 +6883,7 @@
           },
           "shadow": {
             "type": "string",
-            "enum": [
-              "none",
-              "sm",
-              "md"
-            ],
+            "enum": ["none", "sm", "md"],
             "title": "Shadow",
             "default": "none"
           },
@@ -7058,12 +6894,7 @@
           },
           "hover": {
             "type": "string",
-            "enum": [
-              "none",
-              "border",
-              "lift",
-              "glow"
-            ],
+            "enum": ["none", "border", "lift", "glow"],
             "title": "Hover",
             "default": "border"
           },
@@ -7094,11 +6925,7 @@
             "type": "array",
             "maxItems": 10,
             "title": "Face",
-            "default": [
-              "title",
-              "description",
-              "badges"
-            ]
+            "default": ["title", "description", "badges"]
           },
           "badges": {
             "items": {
@@ -7153,9 +6980,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "column"
-        ],
+        "required": ["column"],
         "title": "CardMove"
       },
       "CardOut": {
@@ -7457,9 +7282,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "ChecklistCreate"
       },
       "ChecklistItemCreate": {
@@ -7472,9 +7295,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "text"
-        ],
+        "required": ["text"],
         "title": "ChecklistItemCreate"
       },
       "ChecklistItemOut": {
@@ -7498,12 +7319,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "text",
-          "done",
-          "position"
-        ],
+        "required": ["id", "text", "done", "position"],
         "title": "ChecklistItemOut"
       },
       "ChecklistItemUpdate": {
@@ -7560,12 +7376,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "title",
-          "position",
-          "items"
-        ],
+        "required": ["id", "title", "position", "items"],
         "title": "ChecklistOut"
       },
       "ChecklistUpdate": {
@@ -7578,9 +7389,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "ChecklistUpdate"
       },
       "ColorBackground": {
@@ -7599,10 +7408,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "value"
-        ],
+        "required": ["type", "value"],
         "title": "ColorBackground"
       },
       "ColumnCardStyle": {
@@ -7647,13 +7453,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "left-border",
-                  "top-border",
-                  "background-tint",
-                  "dot",
-                  "full-border"
-                ]
+                "enum": ["left-border", "top-border", "background-tint", "dot", "full-border"]
               },
               {
                 "type": "null"
@@ -7697,11 +7497,7 @@
           },
           "header_style": {
             "type": "string",
-            "enum": [
-              "flat-with-divider",
-              "pill",
-              "color-bar"
-            ],
+            "enum": ["flat-with-divider", "pill", "color-bar"],
             "title": "Header Style",
             "default": "flat-with-divider"
           },
@@ -7746,14 +7542,7 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "backlog",
-              "todo",
-              "in_progress",
-              "review",
-              "done",
-              "custom"
-            ],
+            "enum": ["backlog", "todo", "in_progress", "review", "done", "custom"],
             "title": "Kind",
             "default": "custom"
           },
@@ -7829,11 +7618,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "flat-with-divider",
-                  "pill",
-                  "color-bar"
-                ]
+                "enum": ["flat-with-divider", "pill", "color-bar"]
               },
               {
                 "type": "null"
@@ -7854,10 +7639,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "name"
-        ],
+        "required": ["key", "name"],
         "title": "ColumnTemplate"
       },
       "CommentCreate": {
@@ -7870,9 +7652,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "body"
-        ],
+        "required": ["body"],
         "title": "CommentCreate"
       },
       "CommentOut": {
@@ -7914,14 +7694,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "author_id",
-          "author_name",
-          "body",
-          "created_at",
-          "updated_at"
-        ],
+        "required": ["id", "author_id", "author_name", "body", "created_at", "updated_at"],
         "title": "CommentOut"
       },
       "CsrfOut": {
@@ -7932,9 +7705,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "csrf_token"
-        ],
+        "required": ["csrf_token"],
         "title": "CsrfOut"
       },
       "DimensionTemplate": {
@@ -7952,12 +7723,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "select",
-              "multi_select",
-              "ordered_select",
-              "user"
-            ],
+            "enum": ["select", "multi_select", "ordered_select", "user"],
             "title": "Type",
             "default": "select"
           },
@@ -8031,10 +7797,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "name"
-        ],
+        "required": ["key", "name"],
         "title": "DimensionTemplate"
       },
       "DimensionValueTemplate": {
@@ -8112,10 +7875,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "name"
-        ],
+        "required": ["key", "name"],
         "title": "DimensionValueTemplate"
       },
       "DocumentCommentOut": {
@@ -8157,14 +7917,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "author_id",
-          "author_name",
-          "body",
-          "created_at",
-          "updated_at"
-        ],
+        "required": ["id", "author_id", "author_name", "body", "created_at", "updated_at"],
         "title": "DocumentCommentOut"
       },
       "DocumentDetail": {
@@ -8322,14 +8075,7 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "html",
-              "text",
-              "markdown",
-              "pdf",
-              "image",
-              "none"
-            ],
+            "enum": ["html", "text", "markdown", "pdf", "image", "none"],
             "title": "Kind"
           },
           "html": {
@@ -8367,9 +8113,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "kind"
-        ],
+        "required": ["kind"],
         "title": "DocumentPreview"
       },
       "DocumentUpdate": {
@@ -8448,33 +8192,20 @@
           }
         },
         "type": "object",
-        "required": [
-          "number",
-          "filename",
-          "kind",
-          "size",
-          "uploader_name",
-          "created_at"
-        ],
+        "required": ["number", "filename", "kind", "size", "uploader_name", "created_at"],
         "title": "DocumentVersionOut"
       },
       "EditorLayout": {
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "modal",
-              "drawer"
-            ],
+            "enum": ["modal", "drawer"],
             "title": "Type",
             "default": "drawer"
           },
           "fields_grid": {
             "type": "integer",
-            "enum": [
-              1,
-              2
-            ],
+            "enum": [1, 2],
             "title": "Fields Grid",
             "default": 1
           },
@@ -8561,11 +8292,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "name",
-          "type"
-        ],
+        "required": ["key", "name", "type"],
         "title": "FieldTemplate"
       },
       "FieldValidation": {
@@ -8652,9 +8379,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "title": "FilterBarWidget"
       },
       "FilterChipsWidget": {
@@ -8681,21 +8406,14 @@
           },
           "chip_style": {
             "type": "string",
-            "enum": [
-              "left-border-color",
-              "filled",
-              "dot"
-            ],
+            "enum": ["left-border-color", "filled", "dot"],
             "title": "Chip Style",
             "default": "left-border-color"
           }
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "dimension"
-        ],
+        "required": ["type", "dimension"],
         "title": "FilterChipsWidget"
       },
       "HTTPValidationError": {
@@ -8791,10 +8509,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "type"
-        ],
+        "required": ["key", "type"],
         "title": "HighlightWipRule"
       },
       "ImageBackground": {
@@ -8826,10 +8541,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "url"
-        ],
+        "required": ["type", "url"],
         "title": "ImageBackground"
       },
       "InviteCreate": {
@@ -8841,18 +8553,13 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "editor",
-              "viewer"
-            ],
+            "enum": ["editor", "viewer"],
             "title": "Role",
             "default": "editor"
           }
         },
         "type": "object",
-        "required": [
-          "email"
-        ],
+        "required": ["email"],
         "title": "InviteCreate"
       },
       "InviteOut": {
@@ -8893,13 +8600,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "email",
-          "role",
-          "expires_at",
-          "created_at"
-        ],
+        "required": ["id", "email", "role", "expires_at", "created_at"],
         "title": "InviteOut"
       },
       "InvitePreview": {
@@ -8923,12 +8624,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "project_id",
-          "project_name",
-          "role",
-          "inviter"
-        ],
+        "required": ["project_id", "project_name", "role", "inviter"],
         "title": "InvitePreview"
       },
       "Layout": {
@@ -8966,10 +8662,7 @@
             "$ref": "#/components/schemas/CardLayout",
             "default": {
               "radius": 8,
-              "padding": [
-                10,
-                12
-              ],
+              "padding": [10, 12],
               "gap": 8,
               "shadow": "none",
               "border": true,
@@ -8979,11 +8672,7 @@
                 "style": "left-border",
                 "width": 3
               },
-              "face": [
-                "title",
-                "description",
-                "badges"
-              ],
+              "face": ["title", "description", "badges"],
               "badges": [],
               "custom_text": ""
             }
@@ -9021,10 +8710,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "dimension"
-        ],
+        "required": ["type", "dimension"],
         "title": "LegendWidget"
       },
       "LinearGradientBackground": {
@@ -9055,10 +8741,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "stops"
-        ],
+        "required": ["type", "stops"],
         "title": "LinearGradientBackground"
       },
       "LoginIn": {
@@ -9099,10 +8782,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
+        "required": ["email", "password"],
         "title": "LoginIn"
       },
       "MemberOut": {
@@ -9131,29 +8811,19 @@
           }
         },
         "type": "object",
-        "required": [
-          "user_id",
-          "display_name",
-          "email",
-          "role"
-        ],
+        "required": ["user_id", "display_name", "email", "role"],
         "title": "MemberOut"
       },
       "MemberUpdate": {
         "properties": {
           "role": {
             "type": "string",
-            "enum": [
-              "editor",
-              "viewer"
-            ],
+            "enum": ["editor", "viewer"],
             "title": "Role"
           }
         },
         "type": "object",
-        "required": [
-          "role"
-        ],
+        "required": ["role"],
         "title": "MemberUpdate"
       },
       "NoteWidget": {
@@ -9176,10 +8846,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "text"
-        ],
+        "required": ["type", "text"],
         "title": "NoteWidget"
       },
       "Ok": {
@@ -9215,9 +8882,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "Page[AdminUser]"
       },
       "Page_CardEventOut_": {
@@ -9242,9 +8907,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "Page[CardEventOut]"
       },
       "Page_CardOut_": {
@@ -9269,9 +8932,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "Page[CardOut]"
       },
       "Page_ProjectOut_": {
@@ -9296,9 +8957,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "Page[ProjectOut]"
       },
       "Page_TemplateOut_": {
@@ -9323,9 +8982,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "Page[TemplateOut]"
       },
       "PasswordChangeIn": {
@@ -9342,10 +8999,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "current_password",
-          "new_password"
-        ],
+        "required": ["current_password", "new_password"],
         "title": "PasswordChangeIn"
       },
       "PasswordConfirmIn": {
@@ -9357,9 +9011,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "password"
-        ],
+        "required": ["password"],
         "title": "PasswordConfirmIn"
       },
       "PresetOut": {
@@ -9373,10 +9025,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "key",
-          "data"
-        ],
+        "required": ["key", "data"],
         "title": "PresetOut"
       },
       "ProfileUpdate": {
@@ -9453,10 +9102,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "dimension"
-        ],
+        "required": ["type", "dimension"],
         "title": "ProgressWidget"
       },
       "ProjectCreate": {
@@ -9475,9 +9121,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "title": "ProjectCreate"
       },
       "ProjectOut": {
@@ -9523,15 +9167,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description",
-          "role",
-          "version",
-          "created_at",
-          "updated_at"
-        ],
+        "required": ["id", "name", "description", "role", "version", "created_at", "updated_at"],
         "title": "ProjectOut"
       },
       "ProjectUpdate": {
@@ -9586,10 +9222,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type",
-          "stops"
-        ],
+        "required": ["type", "stops"],
         "title": "RadialGradientBackground"
       },
       "RecoveryCodesOut": {
@@ -9603,9 +9236,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "recovery_codes"
-        ],
+        "required": ["recovery_codes"],
         "title": "RecoveryCodesOut"
       },
       "RegisterIn": {
@@ -9628,10 +9259,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
+        "required": ["email", "password"],
         "title": "RegisterIn"
       },
       "RegistrationOut": {
@@ -9642,9 +9270,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "open"
-        ],
+        "required": ["open"],
         "title": "RegistrationOut"
       },
       "ResetConfirmIn": {
@@ -9661,10 +9287,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "token",
-          "new_password"
-        ],
+        "required": ["token", "new_password"],
         "title": "ResetConfirmIn"
       },
       "ResetRequestIn": {
@@ -9676,9 +9299,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "email"
-        ],
+        "required": ["email"],
         "title": "ResetRequestIn"
       },
       "SampleCard": {
@@ -9786,11 +9407,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "column",
-          "title"
-        ],
+        "required": ["key", "column", "title"],
         "title": "SampleCard"
       },
       "SampleChecklist": {
@@ -9813,9 +9430,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "SampleChecklist"
       },
       "SampleChecklistItem": {
@@ -9834,19 +9449,14 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "text"
-        ],
+        "required": ["text"],
         "title": "SampleChecklistItem"
       },
       "SearchHit": {
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "board",
-              "card"
-            ],
+            "enum": ["board", "card"],
             "title": "Type"
           },
           "id": {
@@ -9869,13 +9479,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "id",
-          "board_id",
-          "title",
-          "subtitle"
-        ],
+        "required": ["type", "id", "board_id", "title", "subtitle"],
         "title": "SearchHit"
       },
       "SessionOut": {
@@ -9909,14 +9513,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "created_at",
-          "last_seen_at",
-          "user_agent",
-          "ip",
-          "current"
-        ],
+        "required": ["id", "created_at", "last_seen_at", "user_agent", "ip", "current"],
         "title": "SessionOut"
       },
       "SetCompletedRule": {
@@ -9938,24 +9535,14 @@
           },
           "column_kind": {
             "type": "string",
-            "enum": [
-              "backlog",
-              "todo",
-              "in_progress",
-              "review",
-              "done",
-              "custom"
-            ],
+            "enum": ["backlog", "todo", "in_progress", "review", "done", "custom"],
             "title": "Column Kind",
             "default": "done"
           }
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "type"
-        ],
+        "required": ["key", "type"],
         "title": "SetCompletedRule",
         "description": "При переносе в колонку данного вида — проставить дату завершения."
       },
@@ -9985,13 +9572,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "filename",
-          "reason",
-          "size",
-          "created_at"
-        ],
+        "required": ["id", "filename", "reason", "size", "created_at"],
         "title": "SnapshotOut"
       },
       "StatsWidget": {
@@ -10009,27 +9590,17 @@
           "metrics": {
             "items": {
               "type": "string",
-              "enum": [
-                "total",
-                "in_progress",
-                "overdue",
-                "wip_exceeded"
-              ]
+              "enum": ["total", "in_progress", "overdue", "wip_exceeded"]
             },
             "type": "array",
             "maxItems": 4,
             "title": "Metrics",
-            "default": [
-              "total",
-              "in_progress"
-            ]
+            "default": ["total", "in_progress"]
           }
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "title": "StatsWidget"
       },
       "TagCreate": {
@@ -10047,10 +9618,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "color"
-        ],
+        "required": ["name", "color"],
         "title": "TagCreate"
       },
       "TagOut": {
@@ -10070,11 +9638,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "color"
-        ],
+        "required": ["id", "name", "color"],
         "title": "TagOut"
       },
       "TagUpdate": {
@@ -10126,10 +9690,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "template",
-          "parts"
-        ],
+        "required": ["template", "parts"],
         "title": "TemplateApply",
         "description": "Частичный импорт: взять указанные разделы шаблона и наложить на доску."
       },
@@ -10153,10 +9714,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "board_id",
-          "name"
-        ],
+        "required": ["board_id", "name"],
         "title": "TemplateFromBoard"
       },
       "TemplateMeta": {
@@ -10192,9 +9750,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "title": "TemplateMeta"
       },
       "TemplateOut": {
@@ -10231,15 +9787,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description",
-          "version",
-          "created_at",
-          "updated_at",
-          "data"
-        ],
+        "required": ["id", "name", "description", "version", "created_at", "updated_at", "data"],
         "title": "TemplateOut"
       },
       "TemplatePreview": {
@@ -10285,9 +9833,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "valid"
-        ],
+        "required": ["valid"],
         "title": "TemplatePreview"
       },
       "TemplateUpdate": {
@@ -10325,11 +9871,7 @@
         "properties": {
           "mode": {
             "type": "string",
-            "enum": [
-              "light",
-              "dark",
-              "both"
-            ],
+            "enum": ["light", "dark", "both"],
             "title": "Mode",
             "default": "light"
           },
@@ -10361,11 +9903,7 @@
           },
           "density": {
             "type": "string",
-            "enum": [
-              "compact",
-              "comfortable",
-              "spacious"
-            ],
+            "enum": ["compact", "comfortable", "spacious"],
             "title": "Density",
             "default": "comfortable"
           },
@@ -10521,9 +10059,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "title": "TitleWidget"
       },
       "TotpEnableIn": {
@@ -10535,9 +10071,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "code"
-        ],
+        "required": ["code"],
         "title": "TotpEnableIn"
       },
       "TotpSetupOut": {
@@ -10552,23 +10086,14 @@
           }
         },
         "type": "object",
-        "required": [
-          "secret",
-          "uri"
-        ],
+        "required": ["secret", "uri"],
         "title": "TotpSetupOut"
       },
       "TrashItem": {
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "project",
-              "board",
-              "card",
-              "template",
-              "document"
-            ],
+            "enum": ["project", "board", "card", "template", "document"],
             "title": "Type"
           },
           "id": {
@@ -10592,13 +10117,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "id",
-          "name",
-          "deleted_at",
-          "purge_at"
-        ],
+        "required": ["type", "id", "name", "deleted_at", "purge_at"],
         "title": "TrashItem"
       },
       "TypeRole": {
@@ -10671,12 +10190,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "as_is",
-                  "upper",
-                  "lower",
-                  "capitalize"
-                ]
+                "enum": ["as_is", "upper", "lower", "capitalize"]
               },
               {
                 "type": "null"
@@ -10828,11 +10342,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       },
       "ValidationProblem": {
@@ -10847,10 +10357,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "path",
-          "message"
-        ],
+        "required": ["path", "message"],
         "title": "ValidationProblem"
       },
       "ViewCreate": {
@@ -10868,12 +10375,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "kanban",
-              "table",
-              "calendar",
-              "timeline"
-            ],
+            "enum": ["kanban", "table", "calendar", "timeline"],
             "title": "Type",
             "default": "kanban"
           },
@@ -10914,10 +10416,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "name"
-        ],
+        "required": ["key", "name"],
         "title": "ViewCreate"
       },
       "ViewFilters": {
@@ -10964,12 +10463,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "kanban",
-              "table",
-              "calendar",
-              "timeline"
-            ],
+            "enum": ["kanban", "table", "calendar", "timeline"],
             "title": "Type",
             "default": "kanban"
           },
@@ -11015,11 +10509,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "name",
-          "id"
-        ],
+        "required": ["key", "name", "id"],
         "title": "ViewOut"
       },
       "ViewSort": {
@@ -11031,19 +10521,14 @@
           },
           "direction": {
             "type": "string",
-            "enum": [
-              "asc",
-              "desc"
-            ],
+            "enum": ["asc", "desc"],
             "title": "Direction",
             "default": "asc"
           }
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "by"
-        ],
+        "required": ["by"],
         "title": "ViewSort"
       },
       "ViewTemplate": {
@@ -11061,12 +10546,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "kanban",
-              "table",
-              "calendar",
-              "timeline"
-            ],
+            "enum": ["kanban", "table", "calendar", "timeline"],
             "title": "Type",
             "default": "kanban"
           },
@@ -11107,10 +10587,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "name"
-        ],
+        "required": ["key", "name"],
         "title": "ViewTemplate"
       },
       "WarnMissingRule": {
@@ -11133,10 +10610,7 @@
         },
         "additionalProperties": true,
         "type": "object",
-        "required": [
-          "key",
-          "type"
-        ],
+        "required": ["key", "type"],
         "title": "WarnMissingRule"
       }
     }

@@ -3,18 +3,20 @@ import json
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, Header, Query, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select, update
 
-from app.api.deps import AppSettings, Current, Db, IfMatch, bump, check_version, set_etag
+from app.api.deps import AppSettings, Current, Db, IfMatch, bump, check_version, client_ip, set_etag
 from app.core.db import utcnow
 from app.core.errors import ApiError
 from app.models import Attachment, Board, BoardView, Card, Checklist, ChecklistItem, Comment, Template
 from app.repositories import access
 from app.schemas.api import (
     BoardCreate,
+    BoardImportResult,
     BoardOut,
+    BoardPreview,
     BoardReset,
     BoardRevision,
     BoardUpdate,
@@ -26,12 +28,13 @@ from app.schemas.api import (
 )
 from app.schemas.auth import Ok
 from app.schemas.template import BoardConfig, BoardTemplate, ViewTemplate
+from app.services import board_import, presets, spreadsheet
 from app.services import cards as card_service
-from app.services import presets, spreadsheet
 from app.services import templates as template_service
 from app.services.audit import audit
 from app.services.board_config import apply_config, export_config, load_board
 from app.services.cards import build_index
+from app.services.documents import decode_filename
 from app.services.fractional import key_between
 from app.services.json_import import check_depth, strip_extras, validate_template
 
@@ -93,6 +96,62 @@ async def create_board(
         user_id=current.id,
     )
     return board_out(board, found.role, warnings + config_warnings)
+
+
+PREVIEW_CARDS_PER_COLUMN = 6
+
+
+@router.post("/projects/{project_id}/boards/import", status_code=201)
+async def import_board(
+    project_id: UUID,
+    request: Request,
+    current: Current,
+    db: Db,
+    settings: AppSettings,
+    file_name: Annotated[str | None, Header(alias="X-File-Name", max_length=1024)] = None,
+    password: Annotated[str | None, Header(alias="X-Backup-Password", max_length=256)] = None,
+    name: Annotated[str | None, Query(max_length=200)] = None,
+) -> BoardImportResult:
+    """Тело запроса — файл CSV или JSON (шаблон, бэкап Kanbanly или массив задач)."""
+    found = await access.get_project(db, current.id, project_id, "editor")
+    filename = decode_filename(file_name)
+    result = await board_import.import_file(
+        db,
+        settings,
+        found.project,
+        current.id,
+        filename,
+        await request.body(),
+        name=name,
+        password=password,
+    )
+    audit(
+        db,
+        current.id,
+        "board.imported",
+        ip=client_ip(request),
+        target_type="project",
+        target_id=project_id,
+        boards=len(result.boards),
+    )
+    boards = [board_out(await load_board(db, board.id), found.role) for board in result.boards]
+    return BoardImportResult(boards=boards, warnings=result.warnings)
+
+
+@router.get("/boards/{board_id}/preview")
+async def board_preview(board_id: UUID, current: Current, db: Db) -> BoardPreview:
+    await access.get_board(db, current.id, board_id)
+    board = await load_board(db, board_id)
+    index = build_index(board)
+    per_column: dict[UUID, int] = {}
+    chosen = []
+    for card in await template_service.board_cards(db, board_id):
+        count = per_column.get(card.column_id, 0)
+        if count < PREVIEW_CARDS_PER_COLUMN:
+            per_column[card.column_id] = count + 1
+            chosen.append(card)
+    cards = await card_service.serialize_many(db, chosen, index)
+    return BoardPreview(id=board.id, name=board.name, config=export_config(board), cards=cards)
 
 
 @router.get("/boards/{board_id}")

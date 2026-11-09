@@ -1,13 +1,14 @@
 /** Мастер «Новая доска»: основа → тема → структура → готово. */
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button, cx, ErrorNote, Modal, TextField, Toggle } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import { useT } from "@/i18n";
 import { api } from "@/lib/api/client";
 import type {
+  BoardImportResult,
   BoardOut,
   BoardTemplate,
   ColumnTemplate,
@@ -16,9 +17,11 @@ import type {
 } from "@/lib/api/types";
 import { parseTemplateText, type FileProblem } from "@/lib/templateFile";
 
+import { keys } from "../boards/api";
 import { applyLook, PALETTES } from "../settings/config-ops";
 import { TemplateThumbnail } from "../templates/TemplateThumbnail";
 import { usePresets, useTemplates } from "../templates/TemplatesPage";
+import { BoardFilePicker, fileStem, importBoardFile, reportImport } from "./boardImport";
 
 type Source = "preset" | "mine" | "blank" | "file";
 
@@ -106,6 +109,22 @@ function suggestions(t: Translate): Suggestion[] {
   ];
 }
 
+/** Шаблон Kanbanly идёт через шаги мастера; остальные файлы импортирует сервер. */
+async function isTemplateFile(file: File): Promise<boolean> {
+  if (!/\.json$/i.test(file.name) || file.size > 1_048_576) return false;
+  try {
+    const document: unknown = JSON.parse(await file.text());
+    return (
+      typeof document === "object" &&
+      document !== null &&
+      !Array.isArray(document) &&
+      (document as { format?: unknown }).format === "kanbanly.board-template"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function Choice({
   selected,
   onClick,
@@ -130,13 +149,22 @@ function Choice({
   );
 }
 
-export function NewBoardWizard({ projectId, onClose }: { projectId: string; onClose: () => void }) {
+export function NewBoardWizard({
+  projectId,
+  onClose,
+  initialSource = "preset",
+}: {
+  projectId: string;
+  onClose: () => void;
+  initialSource?: Source;
+}) {
   const { t } = useT();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const presets = usePresets();
   const templates = useTemplates();
   const [step, setStep] = useState(1);
-  const [source, setSource] = useState<Source>("preset");
+  const [source, setSource] = useState<Source>(initialSource);
   const [base, setBase] = useState<BoardTemplate | null>(null);
   const [name, setName] = useState("");
   const [samples, setSamples] = useState(true);
@@ -146,7 +174,9 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
   const [columns, setColumns] = useState<string>("");
   const sets = useMemo(() => suggestions(t), [t]);
   const [problems, setProblems] = useState<FileProblem[]>([]);
-  const fileInput = useRef<HTMLInputElement>(null);
+  // CSV, бэкап или массив задач импортируются сервером как есть, без шагов оформления.
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<File | null>(null);
 
   const pick = (template: BoardTemplate) => {
     setBase(template);
@@ -154,10 +184,20 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
     setProblems([]);
   };
 
-  const readFile = async (file: File) => {
-    const parsed = parseTemplateText(await file.text());
-    if (parsed.ok) pick(parsed.document as unknown as BoardTemplate);
-    else setProblems(parsed.problems);
+  const readFile = async (file: File | null) => {
+    setFileName(file);
+    setBase(null);
+    setImportFile(null);
+    setProblems([]);
+    if (!file) return;
+    if (await isTemplateFile(file)) {
+      const parsed = parseTemplateText(await file.text());
+      if (parsed.ok) pick(parsed.document as unknown as BoardTemplate);
+      else setProblems(parsed.problems);
+      return;
+    }
+    setImportFile(file);
+    setName(fileStem(file.name));
   };
 
   const template = useMemo<BoardTemplate>(() => {
@@ -211,6 +251,26 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
     onError: toast.error,
   });
 
+  const importBoard = useMutation({
+    mutationFn: (): Promise<BoardImportResult> =>
+      importBoardFile(projectId, importFile as File, name),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: keys.projects });
+      reportImport(t, result);
+      const [first] = result.boards;
+      if (result.boards.length === 1 && first) {
+        void navigate({
+          to: "/boards/$boardId",
+          params: { boardId: first.id },
+          search: { builder: 1 },
+        });
+      } else {
+        onClose();
+      }
+    },
+    onError: toast.error,
+  });
+
   const sources: [Source, Parameters<typeof t>[0]][] = [
     ["preset", "wizard.sourcePreset"],
     ["mine", "wizard.sourceMine"],
@@ -250,6 +310,8 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
                 onClick={() => {
                   setSource(value);
                   setBase(null);
+                  setImportFile(null);
+                  setFileName(null);
                 }}
               >
                 {t(label)}
@@ -264,7 +326,7 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
                   selected={base?.meta.name === preset.data.meta.name}
                   onClick={() => pick(preset.data)}
                 >
-                  <TemplateThumbnail template={preset.data} width={300} />
+                  <TemplateThumbnail template={preset.data} />
                   <span className="font-medium">{preset.data.meta.name}</span>
                 </Choice>
               ))}
@@ -279,7 +341,7 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
                     selected={base?.meta.name === item.data.meta.name}
                     onClick={() => pick(item.data)}
                   >
-                    <TemplateThumbnail template={item.data} width={300} />
+                    <TemplateThumbnail template={item.data} />
                     <span className="font-medium">{item.name}</span>
                   </Choice>
                 ))}
@@ -288,29 +350,19 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
               <p className="text-sm text-ink-soft">{t("wizard.noTemplates")}</p>
             ))}
           {source === "file" && (
-            <div
-              className="grid place-items-center rounded-md border border-dashed border-line-strong p-6 text-sm"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault();
-                const file = event.dataTransfer.files[0];
-                if (file) void readFile(file);
-              }}
-            >
-              <Button onClick={() => fileInput.current?.click()}>{t("wizard.dropFile")}</Button>
-              <input
-                ref={fileInput}
-                type="file"
-                accept=".json"
-                hidden
-                aria-label={t("wizard.sourceFile")}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void readFile(file);
-                }}
-              />
-              {base && <p className="mt-2 font-medium">{base.meta.name}</p>}
-            </div>
+            <>
+              <BoardFilePicker file={fileName} onFile={(file) => void readFile(file)} />
+              {importFile && (
+                <p className="rounded-md bg-raised p-2 text-xs text-ink-soft" role="status">
+                  {t("wizard.importHint")}
+                </p>
+              )}
+              {base && (
+                <p className="text-sm">
+                  {t("wizard.templateFile")} <span className="font-medium">{base.meta.name}</span>
+                </p>
+              )}
+            </>
           )}
           {problems.length > 0 && (
             <ErrorNote
@@ -346,7 +398,7 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
                   selected={look === preset.key}
                   onClick={() => setLook(preset.key)}
                 >
-                  <TemplateThumbnail template={applyLook(template, preset.data)} width={300} />
+                  <TemplateThumbnail template={applyLook(template, preset.data)} />
                   <span className="font-medium">{preset.data.meta.name}</span>
                 </Choice>
               ))}
@@ -414,7 +466,16 @@ export function NewBoardWizard({ projectId, onClose }: { projectId: string; onCl
         <Button onClick={() => (step === 1 ? onClose() : setStep(step - 1))}>
           {step === 1 ? t("common.cancel") : t("common.back")}
         </Button>
-        {step < 4 ? (
+        {step === 1 && importFile ? (
+          <Button
+            variant="primary"
+            disabled={!name}
+            loading={importBoard.isPending}
+            onClick={() => importBoard.mutate()}
+          >
+            {t("wizard.import")}
+          </Button>
+        ) : step < 4 ? (
           <Button variant="primary" disabled={!canContinue} onClick={() => setStep(step + 1)}>
             {t("common.continue")}
           </Button>

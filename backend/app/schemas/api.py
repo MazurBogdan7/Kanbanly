@@ -222,6 +222,20 @@ class CardOut(BaseModel):
     tags: list[UUID] = []
 
 
+class BoardImportResult(BaseModel):
+    boards: list[BoardOut]
+    warnings: list[str] = []
+
+
+class BoardPreview(BaseModel):
+    """Миниатюра доски: настройки и первые карточки каждой колонки."""
+
+    id: UUID
+    name: str
+    config: BoardConfig
+    cards: list[CardOut]
+
+
 class CardCreate(BaseModel):
     column: KeyStr
     title: Title

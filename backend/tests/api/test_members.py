@@ -13,6 +13,7 @@ from app.models import ProjectInvite, UserSession
 from app.services.mailer import MemoryMailer
 from tests.api.test_boards import add_card, make_board, make_project
 from tests.conftest import Api
+from tests.reference import zif_template
 
 
 def token_of(link: str) -> str:
@@ -208,7 +209,7 @@ async def test_csv_archive_of_all_boards(client: Api, other: Api) -> None:
     import zipfile
 
     mine = await make_project(client, "Игра: релиз/2026")
-    await make_board(client, mine["id"], name="ZIF", preset="zif-gamedev")
+    await make_board(client, mine["id"], name="ZIF", template=zif_template())
     await make_board(client, mine["id"], name="ZIF", preset="personal")
     await make_board(client, mine["id"], name="Пустая")
     foreign = await make_project(other, "Студия")
