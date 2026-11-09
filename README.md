@@ -46,6 +46,20 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 Миграции применяются при старте `api`, HTTPS-сертификат Caddy получает сам. С заглушками вместо секретов приложение в `prod` не запустится.
 
+### Сервер, где уже есть nginx и другие сайты
+
+Если порты 80 и 443 уже заняты nginx, Caddy не нужен: Kanbanly слушает только `127.0.0.1:8090`, а домен отдаёт nginx сервера.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.nginx.yml up -d --build
+cp deploy/nginx-kanbanly.conf /etc/nginx/sites-available/kanbanly   # вписать свой домен
+ln -s /etc/nginx/sites-available/kanbanly /etc/nginx/sites-enabled/kanbanly
+nginx -t && systemctl reload nginx
+certbot --nginx -d kanban.example.com
+```
+
+Своего домена пока нет — используйте `kanban.<IP-через-дефисы>.sslip.io` (например `kanban.203-0-113-7.sslip.io`): это имя само указывает на IP сервера, и certbot выдаст для него настоящий сертификат. Остальные сайты на сервере это не затрагивает. Обновление: `git pull` и та же команда `docker compose ... up -d --build`.
+
 ### База данных
 
 - **На этом же сервере** (по умолчанию): в `.env` оставьте `COMPOSE_PROFILES=localdb`, Postgres поднимется в контейнере `db`.

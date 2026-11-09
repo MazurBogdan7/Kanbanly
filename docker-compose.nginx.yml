@@ -1,0 +1,13 @@
+# Сервер, где 80/443 уже занимает nginx (рядом живут другие сайты).
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.nginx.yml up -d --build
+# Сайт слушает только 127.0.0.1:${KANBANLY_WEB_PORT}; наружу его отдаёт nginx сервера
+# (пример блока — deploy/nginx-kanbanly.conf), он же держит HTTPS-сертификат.
+services:
+  db:
+    restart: unless-stopped
+
+  api:
+    restart: unless-stopped
+
+  web:
+    restart: unless-stopped
