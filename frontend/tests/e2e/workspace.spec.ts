@@ -208,3 +208,26 @@ test("20 неудачных входов блокируют аккаунт, ад
   await page.goto("/admin");
   await expect(page.getByText("Страница не найдена")).toBeVisible();
 });
+
+test("оглавление документа прокручивает к разделу", async ({ page }) => {
+  await register(page);
+  await projectPage(page);
+  const filler = Array.from({ length: 80 }, (_, index) => `Абзац ${index + 1}.`).join("\n\n");
+  await page
+    .getByTestId("project-documents")
+    .getByTestId("file-input")
+    .setInputFiles({
+      name: "ГДД.md",
+      mimeType: "text/markdown",
+      buffer: Buffer.from(
+        `# Оглавление\n\n- [Механики боя](#механики-боя)\n\n${filler}\n\n## Механики боя\n\nВалун и бросок.`,
+      ),
+    });
+  await page.getByRole("link", { name: /ГДД\.md/ }).click();
+  const heading = page.getByRole("heading", { name: "Механики боя" });
+  await expect(heading).not.toBeInViewport();
+  const pages = page.context().pages().length;
+  await page.getByTestId("document-viewer").getByRole("link", { name: "Механики боя" }).click();
+  await expect(heading).toBeInViewport();
+  expect(page.context().pages()).toHaveLength(pages);
+});

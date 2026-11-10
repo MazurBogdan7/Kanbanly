@@ -7,7 +7,7 @@ import { SWATCHES } from "@/features/workspace/tags";
 import { filenameFrom } from "@/lib/api/client";
 import type { TagOut } from "@/lib/api/types";
 import { AA_NORMAL, contrastRatio, readableText } from "@/lib/contrast";
-import { sanitizeOfficeHtml } from "@/lib/markdown";
+import { renderMarkdown, sanitizeOfficeHtml, slugify } from "@/lib/markdown";
 
 import { card, config } from "./fixtures";
 
@@ -156,5 +156,33 @@ describe("аватар исполнителя", () => {
     expect(initials("Анна Петрова")).toBe("АП");
     expect(initials("mallory@example.com")).toBe("ME");
     expect(initials("")).toBe("?");
+  });
+});
+
+describe("оглавление в документах", () => {
+  it("заголовки Markdown получают метки, внутренние ссылки не открывают вкладку", () => {
+    const html = renderMarkdown(
+      "- [Введение](#введение)\n- [Механики боя!](#механики-боя)\n\n# Введение\n\n## Механики боя!\n\n## Введение\n\n[сайт](https://example.com)",
+    );
+    expect(html).toContain('id="doc-введение"');
+    expect(html).toContain('id="doc-механики-боя"');
+    expect(html).toContain('id="doc-введение-1"');
+    expect(html).toContain(`<a href="${encodeURI("#введение")}">`);
+    expect(html).toContain('href="https://example.com" target="_blank"');
+  });
+
+  it("в Word остаются только метки документа", () => {
+    const html = sanitizeOfficeHtml(
+      '<p><a href="#doc-_Toc1">1. Введение</a></p><h1><a id="doc-_Toc1"></a>Введение</h1>' +
+        '<div id="root">x</div><a href="#root">y</a>',
+    );
+    expect(html).toContain('<a href="#doc-_Toc1">');
+    expect(html).toContain('id="doc-_Toc1"');
+    expect(html).not.toMatch(/id="root"|href="#root"/);
+    expect(html).not.toMatch(/href="#doc-_Toc1" target/);
+  });
+
+  it("slugify как на GitHub", () => {
+    expect(slugify(" Механики боя: v2! ")).toBe("механики-боя-v2");
   });
 });

@@ -345,7 +345,7 @@ async def version_preview(
     version = await _version(db, current, document_id, number)
     preview = version.preview or {"kind": "none", "reason": "unsupported"}
     # Word, загруженный до выноса картинок из HTML, пересобирается при первом открытии.
-    if version.kind == "docx" and preview.get("format") != 2:
+    if version.kind == "docx" and preview.get("format") != service.PREVIEW_FORMAT:
         preview = await asyncio.to_thread(service.build_preview, version.kind, version.data)
         version.preview = preview
     markup = preview.get("html")

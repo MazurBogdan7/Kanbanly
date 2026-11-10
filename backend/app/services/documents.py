@@ -9,6 +9,7 @@ import asyncio
 import hashlib
 import html
 import io
+import re
 import zipfile
 from typing import Any
 from urllib.parse import quote, unquote
@@ -26,6 +27,11 @@ MAX_PREVIEW_HTML = 5 * 1024 * 1024
 # в разметке остаётся ссылка «kanbanly-image:N», а сам файл берётся из архива docx по запросу.
 IMAGE_SCHEME = "kanbanly-image"
 MAX_DOC_IMAGES = 500
+# Метки разделов (оглавление, сноски) получают префикс: так они не совпадут с id самой страницы.
+ANCHOR_PREFIX = "doc-"
+ANCHOR = re.compile(r"^doc-[\w.\-]{1,120}$")
+# Версия формата просмотра: при изменении старые просмотры Word пересобираются при открытии.
+PREVIEW_FORMAT = 3
 MAX_PREVIEW_TEXT = 1024 * 1024
 XLSX_ROWS = 300
 XLSX_COLUMNS = 40
@@ -40,10 +46,11 @@ ALLOWED_TAGS = {
     "hr", "span", "caption",
 }  # fmt: skip
 ALLOWED_ATTRIBUTES = {
-    "a": {"href"},
+    "a": {"href", "id"},
     "img": {"src", "alt"},
     "td": {"colspan", "rowspan"},
     "th": {"colspan", "rowspan"},
+    **{tag: {"id"} for tag in ("h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "sup", "span")},
 }
 
 
@@ -102,6 +109,11 @@ def _attribute_filter(tag: str, attribute: str, value: str) -> str | None:
     # data: допустим только для картинок, не для ссылок.
     if tag == "a" and attribute == "href" and value.lower().startswith("data:"):
         return None
+    # Внутренние ссылки — только на метки самого документа.
+    if tag == "a" and attribute == "href" and value.startswith("#") and not ANCHOR.match(value[1:]):
+        return None
+    if attribute == "id" and not ANCHOR.match(value):
+        return None
     return value
 
 
@@ -143,7 +155,9 @@ def _docx_html(data: bytes) -> tuple[str, list[dict[str, str]]]:
         images.append({"sha256": hashlib.sha256(raw).hexdigest(), "type": media_type})
         return {"src": f"{IMAGE_SCHEME}:{len(images) - 1}", "alt": alt}
 
-    result = mammoth.convert_to_html(io.BytesIO(data), convert_image=mammoth.images.img_element(convert))
+    result = mammoth.convert_to_html(
+        io.BytesIO(data), convert_image=mammoth.images.img_element(convert), id_prefix=ANCHOR_PREFIX
+    )
     return sanitize(result.value), images
 
 
@@ -198,7 +212,7 @@ def build_preview(kind: str, data: bytes) -> dict[str, Any]:
                 markup = _xlsx_html(data)
             if len(markup) > MAX_PREVIEW_HTML:
                 return {"kind": "none", "reason": "too_large"}
-            return {"kind": "html", "html": markup, "images": images, "format": 2}
+            return {"kind": "html", "html": markup, "images": images, "format": PREVIEW_FORMAT}
         if kind in {"text", "markdown"}:
             return {"kind": kind, "text": data[:MAX_PREVIEW_TEXT].decode("utf-8", errors="replace")}
         if kind == "pdf":

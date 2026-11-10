@@ -122,3 +122,23 @@ async def test_old_too_large_preview_is_rebuilt(client: Api, engine: AsyncEngine
     preview: dict[str, Any] = (await client.get(f"/documents/{document['id']}/versions/1/preview")).json()
     assert preview["kind"] == "html"
     assert "/images/0" in (preview["html"] or "")
+
+
+async def test_word_table_of_contents_links_to_headings(client: Api) -> None:
+    from app.services.documents import sanitize
+    from tests.api.test_workspace import docx
+
+    project = await make_project(client)
+    body = (
+        '<w:p><w:hyperlink w:anchor="_Toc1"><w:r><w:t>1. Введение</w:t></w:r></w:hyperlink></w:p>'
+        '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:bookmarkStart w:id="0" w:name="_Toc1"/>'
+        '<w:r><w:t>Введение</w:t></w:r><w:bookmarkEnd w:id="0"/></w:p>'
+    )
+    document = (await upload(client, project["id"], "ГДД.docx", docx(body))).json()
+    html = (await client.get(f"/documents/{document['id']}/versions/1/preview")).json()["html"]
+    assert 'href="#doc-_Toc1"' in html
+    assert 'id="doc-_Toc1"' in html
+    # Метки без префикса и ссылки на них вырезаются: id страницы документом не перекрыть.
+    dirty = sanitize('<h1 id="root">x</h1><a href="#root">y</a><a id="doc-ok" href="#doc-ok">z</a>')
+    assert 'id="root"' not in dirty and 'href="#root"' not in dirty
+    assert 'id="doc-ok"' in dirty and 'href="#doc-ok"' in dirty
