@@ -5,9 +5,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Download, History, Pencil, Trash2 } from "lucide-react";
-import { lazy, Suspense, useState, type FormEvent } from "react";
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 
-import { Button, ErrorNote, Input, Section, Select, Skeleton, Textarea } from "@/components/ui";
+import { Button, cx, ErrorNote, Input, Section, Select, Skeleton, Textarea } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import { useLocale, useT } from "@/i18n";
 import { api, downloadFrom } from "@/lib/api/client";
@@ -27,11 +27,43 @@ import {
   workspaceKeys,
 } from "./api";
 import { DropZone, KindIcon } from "./Documents";
+import { headingsOf, OutlineBar, OutlineSidebar, type OutlineItem } from "./Outline";
 import { TagChip, TagPicker } from "./tags";
 
 const PdfViewer = lazy(() => import("./PdfViewer"));
 
-function Viewer({ document, number }: { document: DocumentDetail; number: number }) {
+/** Документ, отрисованный из HTML: после вставки разметки собираем его заголовки. */
+function Rendered({
+  source,
+  onOutline,
+  children,
+  className,
+}: {
+  source: string;
+  onOutline: (items: OutlineItem[]) => void;
+  children: React.ReactNode;
+  className: string;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current) onOutline(headingsOf(ref.current));
+  }, [source, onOutline]);
+  return (
+    <article ref={ref} className={className}>
+      {children}
+    </article>
+  );
+}
+
+function Viewer({
+  document,
+  number,
+  onOutline,
+}: {
+  document: DocumentDetail;
+  number: number;
+  onOutline: (items: OutlineItem[]) => void;
+}) {
   const { t } = useT();
   const preview = usePreview(document.id, number);
   const version = document.versions.find((item) => item.number === number) ?? document.current;
@@ -43,7 +75,7 @@ function Viewer({ document, number }: { document: DocumentDetail; number: number
     case "pdf":
       return (
         <Suspense fallback={<Skeleton className="h-96" />}>
-          <PdfViewer path={contentPath(document.id, number)} />
+          <PdfViewer path={contentPath(document.id, number)} onOutline={onOutline} />
         </Suspense>
       );
     case "image":
@@ -56,15 +88,23 @@ function Viewer({ document, number }: { document: DocumentDetail; number: number
       );
     case "html":
       return (
-        <article className="doc-preview overflow-x-auto rounded-md border border-line bg-white p-6 text-[#111]">
+        <Rendered
+          source={data.html ?? ""}
+          onOutline={onOutline}
+          className="doc-preview overflow-x-auto rounded-md border border-line bg-white p-6 text-[#111]"
+        >
           <SafeOfficeHtml html={data.html ?? ""} />
-        </article>
+        </Rendered>
       );
     case "markdown":
       return (
-        <article className="rounded-md border border-line bg-panel p-6">
+        <Rendered
+          source={data.text ?? ""}
+          onOutline={onOutline}
+          className="rounded-md border border-line bg-panel p-6"
+        >
           <SafeMarkdown source={data.text ?? ""} className="prose-card" />
-        </article>
+        </Rendered>
       );
     case "text":
       return (
@@ -335,6 +375,9 @@ export function DocumentPage() {
   const tags = useTags(document.data?.project_id);
   const [selected, setSelected] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
+  // Содержание показывается, когда в документе нашлось хотя бы два раздела.
+  const [outline, setOutline] = useState<OutlineItem[]>([]);
+  const hasOutline = outline.length >= 2;
   const newVersion = useMutation({
     mutationFn: (file: File) =>
       uploadFile<DocumentDetail>(`/documents/${documentId}/versions`, file),
@@ -395,7 +438,12 @@ export function DocumentPage() {
   const download = (n: number) => void downloadFrom(contentPath(data.id, n)).catch(toast.error);
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-6 p-4 md:p-8">
+    <div
+      className={cx(
+        "mx-auto grid w-full gap-6 p-4 md:p-8",
+        hasOutline ? "max-w-[1680px]" : "max-w-7xl",
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Link
@@ -419,7 +467,10 @@ export function DocumentPage() {
             <Select
               aria-label={t("docs.versions")}
               value={number}
-              onChange={(event) => setSelected(Number(event.target.value))}
+              onChange={(event) => {
+                setOutline([]);
+                setSelected(Number(event.target.value));
+              }}
               className="h-9 w-auto"
             >
               {data.versions.map((item) => (
@@ -443,14 +494,29 @@ export function DocumentPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div
+        className={cx(
+          "grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]",
+          hasOutline && "xl:grid-cols-[260px_minmax(0,1fr)_320px]",
+        )}
+      >
+        {hasOutline && (
+          <aside className="hidden xl:block">
+            <OutlineSidebar items={outline} />
+          </aside>
+        )}
         <div className="min-w-0" data-testid="document-viewer">
+          {hasOutline && (
+            <div className="xl:hidden">
+              <OutlineBar items={outline} />
+            </div>
+          )}
           {number !== data.current.number && (
             <p className="mb-3 rounded-md bg-warning/15 px-3 py-2 text-sm">
               {t("docs.oldVersion", { number, current: data.current.number })}
             </p>
           )}
-          <Viewer key={number} document={data} number={number} />
+          <Viewer key={number} document={data} number={number} onOutline={setOutline} />
         </div>
 
         <aside className="grid content-start gap-6">

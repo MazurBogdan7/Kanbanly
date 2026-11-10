@@ -613,6 +613,7 @@ export const en: Record<keyof typeof ru, string> = {
   "docs.versions": "Versions",
   "docs.current": "current",
   "docs.download": "Download",
+  "docs.outline": "Contents",
   "docs.readOnly": "view only",
   "docs.backToProject": "Back to project",
   "docs.about": "About",

@@ -10,9 +10,53 @@ import { ErrorNote, Skeleton } from "@/components/ui";
 import { useT } from "@/i18n";
 import { send } from "@/lib/api/client";
 
+import type { OutlineItem } from "./Outline";
+
 GlobalWorkerOptions.workerSrc = workerUrl;
 
 const MAX_PAGES = 200;
+const MAX_OUTLINE = 400;
+
+type OutlineNode = Awaited<ReturnType<PDFDocumentProxy["getOutline"]>>[number];
+
+export function pageAnchor(number: number): string {
+  return `pdf-page-${number}`;
+}
+
+/** Закладки PDF → пункты содержания с номером страницы. Закладки без страницы пропускаются. */
+async function outlineOf(pdf: PDFDocumentProxy): Promise<OutlineItem[]> {
+  const items: OutlineItem[] = [];
+  const pageOf = async (node: OutlineNode): Promise<number | null> => {
+    try {
+      const dest = typeof node.dest === "string" ? await pdf.getDestination(node.dest) : node.dest;
+      const ref = dest?.[0];
+      if (ref === undefined || ref === null) return null;
+      const index = typeof ref === "number" ? ref : await pdf.getPageIndex(ref);
+      return index + 1;
+    } catch {
+      return null;
+    }
+  };
+  const walk = async (nodes: OutlineNode[], level: number) => {
+    for (const node of nodes) {
+      if (items.length >= MAX_OUTLINE) return;
+      const page = await pageOf(node);
+      const title = node.title.replace(/\s+/g, " ").trim();
+      if (page !== null && page <= MAX_PAGES && title) {
+        items.push({ anchor: pageAnchor(page), title, level });
+      }
+      if (node.items?.length) await walk(node.items, level + 1);
+    }
+  };
+  await walk((await pdf.getOutline()) ?? [], 1);
+  // Несколько закладок на одной странице ведут к ней же; ключ должен быть уникален.
+  const seen = new Map<string, number>();
+  return items.map((item) => {
+    const count = seen.get(item.anchor) ?? 0;
+    seen.set(item.anchor, count + 1);
+    return count ? { ...item, key: `${item.anchor}#${count}` } : item;
+  });
+}
 
 function Page({ pdf, number, width }: { pdf: PDFDocumentProxy; number: number; width: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -58,7 +102,8 @@ function Page({ pdf, number, width }: { pdf: PDFDocumentProxy; number: number; w
   return (
     <div
       ref={holder}
-      className="mx-auto bg-white shadow-sm"
+      id={pageAnchor(number)}
+      className="mx-auto scroll-mt-4 bg-white shadow-sm"
       style={{ minHeight: visible ? undefined : width * 1.3 }}
     >
       <canvas ref={canvas} aria-label={`${number}`} />
@@ -66,7 +111,13 @@ function Page({ pdf, number, width }: { pdf: PDFDocumentProxy; number: number; w
   );
 }
 
-export default function PdfViewer({ path }: { path: string }) {
+export default function PdfViewer({
+  path,
+  onOutline,
+}: {
+  path: string;
+  onOutline?: (items: OutlineItem[]) => void;
+}) {
   const { t } = useT();
   const box = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
@@ -101,6 +152,17 @@ export default function PdfViewer({ path }: { path: string }) {
     observer.observe(box.current);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!pdf || !onOutline) return;
+    let cancelled = false;
+    void outlineOf(pdf)
+      .then((items) => !cancelled && onOutline(items))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [pdf, onOutline]);
 
   const pages = pdf ? Math.min(pdf.numPages, MAX_PAGES) : 0;
   return (

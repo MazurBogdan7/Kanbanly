@@ -231,3 +231,116 @@ test("оглавление документа прокручивает к раз
   await expect(heading).toBeInViewport();
   expect(page.context().pages()).toHaveLength(pages);
 });
+
+/** PDF из трёх страниц с закладками «Part 1/2/3» — как оглавление в Acrobat. */
+function pdfWithBookmarks(): Buffer {
+  // 1 каталог, 2 страницы, 3 закладки; 4–9 страницы и их содержимое; 10–12 пункты; 13 шрифт.
+  const objects: Record<number, string> = {
+    1: "<< /Type /Catalog /Pages 2 0 R /Outlines 3 0 R /PageMode /UseOutlines >>",
+    2: "<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>",
+    3: "<< /Type /Outlines /First 10 0 R /Last 12 0 R /Count 3 >>",
+    13: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  };
+  for (let index = 0; index < 3; index += 1) {
+    const page = 4 + index * 2;
+    const stream = `BT /F1 24 Tf 40 700 Td (Page ${index + 1}) Tj ET`;
+    objects[page] =
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${page + 1} 0 R /Resources << /Font << /F1 13 0 R >> >> >>`;
+    objects[page + 1] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+    const item = 10 + index;
+    const prev = index > 0 ? `/Prev ${item - 1} 0 R ` : "";
+    const next = index < 2 ? `/Next ${item + 1} 0 R ` : "";
+    objects[item] =
+      `<< /Title (Part ${index + 1}) /Parent 3 0 R ${prev}${next}/Dest [${page} 0 R /Fit] >>`;
+  }
+  let body = "%PDF-1.4\n";
+  const offsets: number[] = [];
+  for (let id = 1; id <= 13; id += 1) {
+    offsets.push(body.length);
+    body += `${id} 0 obj\n${objects[id]}\nendobj\n`;
+  }
+  const xref = body.length;
+  body += "xref\n0 14\n0000000000 65535 f \n";
+  body += offsets.map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("");
+  body += `trailer\n<< /Size 14 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(body, "latin1");
+}
+
+test("содержание слева: собирается из заголовков, ведёт к разделу и подсвечивает текущий", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await register(page);
+  await projectPage(page);
+  const filler = (name: string) =>
+    Array.from({ length: 40 }, (_, index) => `${name}: абзац ${index + 1}.`).join("\n\n");
+  await page
+    .getByTestId("project-documents")
+    .getByTestId("file-input")
+    .setInputFiles({
+      name: "ГДД.md",
+      mimeType: "text/markdown",
+      buffer: Buffer.from(
+        `# Введение\n\n${filler("Введение")}\n\n## Механики боя\n\n${filler("Бой")}\n\n### Валун\n\n${filler("Валун")}\n\n# Финал\n\nКонец.`,
+      ),
+    });
+  await page.getByRole("link", { name: /ГДД\.md/ }).click();
+  const outline = page.getByTestId("document-outline");
+  await expect(outline.getByRole("button")).toHaveText([
+    "Введение",
+    "Механики боя",
+    "Валун",
+    "Финал",
+  ]);
+  await expect(outline.getByRole("button", { name: "Введение" })).toHaveAttribute(
+    "aria-current",
+    "location",
+  );
+  const target = page.getByTestId("document-viewer").getByRole("heading", { name: "Валун" });
+  await expect(target).not.toBeInViewport();
+  await outline.getByRole("button", { name: "Валун" }).click();
+  await expect(target).toBeInViewport();
+  await expect(outline.getByRole("button", { name: "Валун" })).toHaveAttribute(
+    "aria-current",
+    "location",
+  );
+  // Панель закреплена: после прокрутки остаётся на экране.
+  await expect(outline).toBeInViewport();
+});
+
+test("содержание PDF строится из закладок файла", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await register(page);
+  await projectPage(page);
+  await page
+    .getByTestId("project-documents")
+    .getByTestId("file-input")
+    .setInputFiles({ name: "book.pdf", mimeType: "application/pdf", buffer: pdfWithBookmarks() });
+  await page.getByRole("link", { name: /book\.pdf/ }).click();
+  const outline = page.getByTestId("document-outline");
+  await expect(outline.getByRole("button")).toHaveText(["Part 1", "Part 2", "Part 3"]);
+  await outline.getByRole("button", { name: "Part 3" }).click();
+  await expect(page.locator("#pdf-page-3")).toBeInViewport();
+});
+
+test("на узком экране содержание — закреплённая кнопка над документом", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 800 });
+  await register(page);
+  await projectPage(page);
+  await page
+    .getByTestId("project-documents")
+    .getByTestId("file-input")
+    .setInputFiles({
+      name: "notes.md",
+      mimeType: "text/markdown",
+      buffer: Buffer.from(`# Первый\n\n${"текст\n\n".repeat(60)}# Второй\n\nконец`),
+    });
+  await page.getByRole("link", { name: /notes\.md/ }).click();
+  await expect(page.getByTestId("document-outline")).toBeHidden();
+  const bar = page.getByRole("button", { name: /Содержание/ });
+  await bar.click();
+  await page.getByRole("button", { name: "Второй" }).click();
+  await expect(
+    page.getByTestId("document-viewer").getByRole("heading", { name: "Второй" }),
+  ).toBeInViewport();
+});

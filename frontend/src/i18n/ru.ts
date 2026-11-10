@@ -611,6 +611,7 @@ export const ru = {
   "docs.versions": "Версии",
   "docs.current": "текущая",
   "docs.download": "Скачать",
+  "docs.outline": "Содержание",
   "docs.readOnly": "только просмотр",
   "docs.backToProject": "К проекту",
   "docs.about": "О документе",
