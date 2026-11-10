@@ -76,6 +76,43 @@ async def create_board(
     return board, warnings
 
 
+def fit_samples(samples: list[SampleCard], index: BoardIndex) -> tuple[list[SampleCard], list[str]]:
+    """Карточки шаблона под текущую доску: чужие колонки пропускаются, неизвестные значения и поля
+    отбрасываются — импорт не падает из-за того, что структура доски отличается от шаблона."""
+    fitted: list[SampleCard] = []
+    no_column = 0
+    dropped: set[str] = set()
+    for sample in samples:
+        if sample.column not in index.columns_by_key:
+            no_column += 1
+            continue
+        values: dict[str, str | list[str]] = {}
+        for key, selection in sample.values.items():
+            dimension = index.dimensions_by_key.get(key)
+            if dimension is None:
+                dropped.add(key)
+                continue
+            known = {value.key for value in dimension.values}
+            chosen = [
+                item for item in ([selection] if isinstance(selection, str) else selection) if item in known
+            ]
+            if len(chosen) != len([selection] if isinstance(selection, str) else selection):
+                dropped.add(dimension.name)
+            if dimension.type != "multi_select":
+                chosen = chosen[:1]
+            if chosen:
+                values[key] = chosen if dimension.type == "multi_select" else chosen[0]
+        fields = {key: value for key, value in sample.fields.items() if key in index.fields_by_key}
+        dropped.update(key for key in sample.fields if key not in index.fields_by_key)
+        fitted.append(sample.model_copy(update={"values": values, "fields": fields}))
+    notes = []
+    if no_column:
+        notes.append(f"Пропущено карточек без подходящей колонки: {no_column}")
+    if dropped:
+        notes.append("Значения не перенесены (нет на доске): " + ", ".join(sorted(dropped)))
+    return fitted, notes
+
+
 async def create_sample_cards(
     db: AsyncSession,
     board: Board,

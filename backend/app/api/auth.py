@@ -124,6 +124,8 @@ async def me(current: Current) -> UserOut:
 async def update_me(payload: ProfileUpdate, current: Current, db: Db) -> UserOut:
     if payload.username is not None:
         current.user.username = await service.set_username(db, current.user, payload.username)
+    if payload.presence is not None:
+        current.user.presence = payload.presence
     if payload.display_name is not None:
         current.user.display_name = payload.display_name
     if payload.locale is not None:

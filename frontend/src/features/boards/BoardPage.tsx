@@ -42,7 +42,7 @@ import {
   useLiveBoard,
   useMoveCard,
 } from "./api";
-import { ProjectMembersContext, useMemberIndex } from "../projects/people";
+import { ProjectMembersContext, TeamAvatars, useMemberIndex } from "../projects/people";
 import { ProjectTagsContext, useTagIndex } from "../workspace/tags";
 import { BoardCanvas } from "./engine/BoardCanvas";
 import type { MoveRequest } from "./engine/KanbanView";
@@ -346,6 +346,7 @@ export function BoardPage() {
                 <PaletteIcon className="size-4" aria-hidden />
               </Button>
             )}
+            <TeamAvatars projectId={board.data.project_id} />
             <Button
               variant="ghost"
               size="icon"
@@ -497,14 +498,19 @@ export function BoardPage() {
         <TemplateImportDialog
           file={importing}
           onClose={() => setImporting(null)}
-          confirmLabel={t("common.continue")}
-          onConfirm={async (document) => {
+          confirmLabel={t("templates.applyToBoard")}
+          withChoices
+          onConfirm={async (document, _raw, choices) => {
             const saved = await api.post<BoardOut>(`/boards/${boardId}/template/apply`, {
               template: document,
-              parts: ["theme", "typography", "layout", "structure"],
+              parts: choices.look ? ["theme", "typography", "layout", "structure"] : [],
+              cards: choices.cards,
             });
             queryClient.setQueryData(keys.board(boardId), saved);
             void queryClient.invalidateQueries({ queryKey: keys.cards(boardId) });
+            void queryClient.invalidateQueries({ queryKey: keys.projects });
+            for (const warning of saved.warnings ?? []) toast.info(warning);
+            toast.info(t("templates.applied"));
             setImporting(null);
           }}
         />

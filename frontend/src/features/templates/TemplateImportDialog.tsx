@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 
-import { Button, ErrorNote, Modal } from "@/components/ui";
+import { Button, ErrorNote, Modal, Toggle } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import { useT } from "@/i18n";
 import { api, request } from "@/lib/api/client";
 import type { TemplatePreview } from "@/lib/api/types";
 import { parseTemplateText, type FileProblem } from "@/lib/templateFile";
+
+/** Что взять из файла при импорте на существующую доску. */
+export interface ImportChoices {
+  look: boolean;
+  cards: boolean;
+}
 
 interface Loaded {
   raw: string;
@@ -32,14 +38,22 @@ export function TemplateImportDialog({
   onClose,
   onConfirm,
   confirmLabel,
+  withChoices,
 }: {
   file: File;
   onClose: () => void;
-  onConfirm: (document: Record<string, unknown>, raw: string) => Promise<unknown>;
+  onConfirm: (
+    document: Record<string, unknown>,
+    raw: string,
+    choices: ImportChoices,
+  ) => Promise<unknown>;
   confirmLabel: string;
+  /** Импорт на доску: можно взять оформление со структурой, карточки или и то и другое. */
+  withChoices?: boolean;
 }) {
   const { t } = useT();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [choices, setChoices] = useState<ImportChoices>({ look: true, cards: true });
   const [problems, setProblems] = useState<FileProblem[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -104,12 +118,31 @@ export function TemplateImportDialog({
                 </ul>
               </details>
             )}
+            {withChoices && (
+              <div className="grid gap-2 rounded-md border border-line p-3">
+                <Toggle
+                  label={t("templates.applyLook")}
+                  checked={choices.look}
+                  onChange={(look) => setChoices({ ...choices, look })}
+                />
+                <Toggle
+                  label={t("templates.applyCards", { count: counts.cards ?? 0 })}
+                  checked={choices.cards && (counts.cards ?? 0) > 0}
+                  disabled={(counts.cards ?? 0) === 0}
+                  onChange={(cards) => setChoices({ ...choices, cards })}
+                />
+              </div>
+            )}
             <Button
               variant="primary"
               loading={busy}
+              disabled={withChoices && !choices.look && !(choices.cards && (counts.cards ?? 0) > 0)}
               onClick={() => {
                 setBusy(true);
-                onConfirm(loaded.document, loaded.raw)
+                onConfirm(loaded.document, loaded.raw, {
+                  look: choices.look,
+                  cards: choices.cards && (counts.cards ?? 0) > 0,
+                })
                   .catch(toast.error)
                   .finally(() => setBusy(false));
               }}

@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { cardColorVars } from "@/features/boards/engine/CardFace";
 import { overflowSource, splitOverflow } from "@/features/boards/engine/model";
-import { AVATAR_COLORS, avatarColor, initials } from "@/features/projects/people";
+import { AVATAR_COLORS, avatarColor, avatarUrl, initials } from "@/features/projects/people";
+import { centeredCrop, clampCrop, zoomCrop } from "@/features/settings/AvatarEditor";
 import { SWATCHES } from "@/features/workspace/tags";
 import { filenameFrom } from "@/lib/api/client";
 import type { TagOut } from "@/lib/api/types";
@@ -184,5 +185,32 @@ describe("оглавление в документах", () => {
 
   it("slugify как на GitHub", () => {
     expect(slugify(" Механики боя: v2! ")).toBe("механики-боя-v2");
+  });
+});
+
+describe("кадрирование аватара", () => {
+  it("по умолчанию круг по центру и вписан в меньшую сторону", () => {
+    // Круг 240 px, картинка 800×400: масштаб 0.6, ширина на экране 480.
+    expect(centeredCrop(800, 400)).toEqual({ zoom: 1, x: -120, y: 0 });
+  });
+
+  it("картинка всегда закрывает круг целиком", () => {
+    expect(clampCrop({ zoom: 1, x: 50, y: -10 }, 800, 400)).toEqual({ zoom: 1, x: 0, y: 0 });
+    expect(clampCrop({ zoom: 1, x: -999, y: 0 }, 800, 400).x).toBe(-240);
+    expect(clampCrop({ zoom: 0.2, x: 0, y: 0 }, 800, 400).zoom).toBe(1);
+    expect(clampCrop({ zoom: 99, x: 0, y: 0 }, 800, 400).zoom).toBe(5);
+  });
+
+  it("масштаб вокруг центра круга", () => {
+    const start = centeredCrop(400, 400);
+    const zoomed = zoomCrop(start, 2, 400, 400);
+    // Центр картинки остаётся в центре круга: (240/2 - x) / масштаб = 200.
+    expect((120 - zoomed.x) / (0.6 * 2)).toBeCloseTo(200);
+    expect((120 - zoomed.y) / (0.6 * 2)).toBeCloseTo(200);
+  });
+
+  it("адрес аватара меняется с версией", () => {
+    expect(avatarUrl("u1", 0)).toBeNull();
+    expect(avatarUrl("u1", 3)).toBe("/api/v1/users/u1/avatar?v=3");
   });
 });

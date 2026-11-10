@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -34,7 +35,7 @@ from app.schemas.api import (
 )
 from app.schemas.auth import Ok
 from app.schemas.template import DEFAULT_TOKENS
-from app.services import members
+from app.services import members, people
 from app.services.audit import audit
 
 router = APIRouter(tags=["projects"])
@@ -182,8 +183,12 @@ async def restore_project(project_id: UUID, current: Current, db: Db) -> Project
     return _out(found.project, found.role)
 
 
-def _member_out(member: ProjectMember, user: User, current_id: UUID) -> MemberOut:
+def _member_out(
+    member: ProjectMember, user: User, current_id: UUID, seen: dict[UUID, datetime] | None = None
+) -> MemberOut:
     return MemberOut(
+        avatar_version=user.avatar_version,
+        status=people.status_of(user, (seen or {}).get(user.id)),
         user_id=user.id,
         display_name=user.display_name,
         email=user.email,
@@ -197,7 +202,8 @@ def _member_out(member: ProjectMember, user: User, current_id: UUID) -> MemberOu
 async def list_members(project_id: UUID, current: Current, db: Db) -> list[MemberOut]:
     await access.get_project(db, current.id, project_id)
     rows = await members.list_members(db, project_id)
-    return [_member_out(member, user, current.id) for member, user in rows]
+    seen = await people.last_seen(db, [user.id for _, user in rows])
+    return [_member_out(member, user, current.id, seen) for member, user in rows]
 
 
 @router.patch("/projects/{project_id}/members/{user_id}")

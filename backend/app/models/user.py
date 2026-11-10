@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base, IdMixin, JsonType, TimestampMixin, utcnow
@@ -26,6 +26,21 @@ class User(IdMixin, TimestampMixin, Base):
     failed_logins: Mapped[int] = mapped_column(default=0)
     locked_at: Mapped[datetime | None] = mapped_column(default=None)
     last_login_at: Mapped[datetime | None] = mapped_column(default=None)
+    # Номер версии аватара (0 — нет): входит в адрес картинки, поэтому кэш браузера сбрасывается сам.
+    avatar_version: Mapped[int] = mapped_column(default=0, server_default="0")
+    # Выбранный статус: auto (онлайн/офлайн по активности), busy (занят), invisible (всегда офлайн).
+    presence: Mapped[str] = mapped_column(String(16), default="auto", server_default="auto")
+
+
+class UserAvatar(Base):
+    """Аватар отдельно от пользователя: таблица users читается на каждом запросе."""
+
+    __tablename__ = "user_avatars"
+
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    media_type: Mapped[str] = mapped_column(String(32))
+    updated_at: Mapped[datetime] = mapped_column(default=utcnow)
 
 
 class UserSession(IdMixin, Base):

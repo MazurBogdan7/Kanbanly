@@ -1,0 +1,114 @@
+{
+  "$schema": "https://kanbanly.local/schemas/board-template.v1.json",
+  "format": "kanbanly.board-template",
+  "version": 1,
+  "meta": { "name": "Genesis — разработка", "author": "Богдан", "tags": ["genesis", "godot", "gamedev"] },
+  "theme": {
+    "mode": "dark",
+    "density": "comfortable",
+    "tokens": {
+      "bg": "#14110E", "surface": "#1D1915", "surface-2": "#26211B", "border": "#3A3128",
+      "border-strong": "#544638", "muted-strong": "#8C7D6B", "accent": "#C9A04A", "accent-hover": "#DDB561",
+      "accent-soft": "#3A2F1C", "accent-dim": "#8F7436", "danger": "#C2554A", "danger-hover": "#D66A5F",
+      "text": "#EDE4D6", "text-muted": "#B0A390"
+    },
+    "header_background": { "type": "linear-gradient", "angle": 180, "stops": ["{surface-2}", "{bg}"] },
+    "board_background": { "type": "radial-gradient", "stops": ["{surface}", "{bg}"] }
+  },
+  "typography": {
+    "board_title": { "font": "Cormorant SC", "weight": 700, "size": 30, "letter_spacing": 0.06, "color": "{accent}" },
+    "card_title": { "font": "Inter", "weight": 600, "size": 13, "color": "{text}" },
+    "badge": { "font": "JetBrains Mono", "weight": 500, "size": 10.5 }
+  },
+  "layout": {
+    "header": {
+      "subtitle": "Жизнь одного человека и его рода — картами",
+      "widgets": [
+        { "type": "title", "enabled": true },
+        { "type": "actions", "add_card": true, "export": true, "import": true, "reset": true },
+        { "type": "progress_by_dimension", "dimension": "milestone", "done_rule": "column_kind:done", "show_hint": true, "show_counter": true, "bar_color": "{accent}" },
+        { "type": "filter_bar", "search": true, "selects": ["milestone", "owner", "priority"] },
+        { "type": "filter_chips", "dimension": "epic", "multi": true, "chip_style": "left-border-color" },
+        { "type": "filter_chips", "dimension": "tags", "multi": true, "chip_style": "dot" },
+        { "type": "stats", "metrics": ["total", "in_progress", "overdue", "wip_exceeded"] },
+        { "type": "legend", "dimension": "epic" }
+      ]
+    },
+    "column": {
+      "min_width": 260, "fixed_width": 290, "radius": 10, "header_style": "flat-with-divider",
+      "show_count": true, "show_wip": true, "collapsible": true, "empty_text": "Пусто",
+      "overflow": { "enabled": true, "threshold": 20, "visible": 8, "by": "dimension:milestone" }
+    },
+    "card": {
+      "accent": { "source": "dimension:epic", "style": "left-border", "width": 3 },
+      "face": ["title", "description", "badges", "fields", "checklist_progress"],
+      "badges": [
+        { "dimension": "milestone", "display": "short", "style": "per-value", "radius": 4, "size": "sm" },
+        { "dimension": "priority", "display": "short", "style": "per-value", "size": "sm" },
+        { "dimension": "tags", "display": "icon", "style": "outlined" },
+        { "dimension": "owner", "display": "icon", "style": "neutral" }
+      ]
+    },
+    "editor": { "type": "drawer", "fields_grid": 2, "fields": ["title", "description", "epic", "milestone", "priority", "tags", "owner", "status"] }
+  },
+  "columns": [
+    { "key": "backlog", "name": "Бэклог", "kind": "backlog", "icon": "📥", "color": "{muted-strong}" },
+    { "key": "todo", "name": "К работе", "kind": "todo", "icon": "🃏" },
+    { "key": "doing", "name": "В работе", "kind": "in_progress", "icon": "⏳", "color": "{accent}", "wip_limit": 3, "header_style": "color-bar" },
+    { "key": "check", "name": "Проверка в игре", "kind": "review", "icon": "🔍", "wip_limit": 3 },
+    { "key": "done", "name": "Готово", "kind": "done", "icon": "✅", "card_style": { "opacity": 0.65, "title_strikethrough": true, "strikethrough_color": "{muted-strong}", "mute_badges": true } }
+  ],
+  "dimensions": [
+    { "key": "epic", "name": "Направление", "type": "select", "required": true, "default": "core", "roles": ["accent", "filter_chips", "legend", "table_group"],
+      "values": [
+        { "key": "core", "name": "Код игры", "short": "CODE", "color": "#C9A04A", "icon": "⚙️" },
+        { "key": "docs", "name": "Дизайн-документ", "short": "GDD", "color": "#A4566C", "icon": "📜" },
+        { "key": "site", "name": "Сайт-анализатор", "short": "WEB", "color": "#4F8A55", "icon": "🕸️" }
+      ] },
+    { "key": "milestone", "name": "Веха", "type": "select", "ordered": true, "required": true, "default": "m0", "roles": ["badge", "filter_select", "progress", "table_group"],
+      "values": [
+        { "key": "m0", "name": "M0 · Подготовка", "short": "M0", "hint": "Контекст для ИИ", "badge": { "bg": "#3A2F1C", "fg": "#EDE4D6", "border": "#C9A04A" } },
+        { "key": "m1", "name": "M1 · Прототип жизни", "short": "M1", "badge": { "bg": "#C9A04A", "fg": "#14110E" } }
+      ] },
+    { "key": "priority", "name": "Приоритет", "type": "ordered_select", "default": "p2", "roles": ["badge", "filter_select"],
+      "values": [
+        { "key": "p1", "name": "Высокий", "short": "!!!", "color": "#C2554A" },
+        { "key": "p2", "name": "Обычный", "short": "!!", "color": "#C9A04A" }
+      ] },
+    { "key": "tags", "name": "Метки", "type": "multi_select", "roles": ["badge", "filter_chips"],
+      "values": [
+        { "key": "ai", "name": "Делает ИИ", "icon": "🤖", "color": "#3E8C8C" },
+        { "key": "manual", "name": "Руками", "icon": "✋", "color": "#B0663A" }
+      ] },
+    { "key": "owner", "name": "Исполнитель", "type": "user", "default": "ai", "roles": ["filter_select", "badge"],
+      "values": [ { "key": "me", "name": "Богдан", "icon": "🧑" }, { "key": "ai", "name": "ИИ-ассистент", "icon": "🤖" } ] }
+  ],
+  "fields": [
+    { "key": "gdd", "name": "Раздел ГДД", "type": "text", "show_on_face": true, "validation": { "max_length": 60 } },
+    { "key": "done_when", "name": "Готово, когда", "type": "text", "show_on_face": false, "validation": { "max_length": 200 } },
+    { "key": "steps", "name": "Шаги", "type": "checklist", "show_on_face": true }
+  ],
+  "rules": [
+    { "key": "completed", "type": "set_completed_on_kind", "column_kind": "done", "enabled": true },
+    { "key": "wip", "type": "highlight_wip_exceeded" },
+    { "key": "missing", "type": "warn_missing_required", "enabled": true }
+  ],
+  "views": [
+    { "key": "board", "name": "Канбан", "type": "kanban", "is_default": true },
+    { "key": "by-ms", "name": "По вехам", "type": "table", "group_by": "milestone", "sort": { "by": "dimension:priority", "direction": "asc" } }
+  ],
+  "sample_cards": [
+    { "key": "gdd-v1", "column": "done", "title": "Дизайн-документ Genesis v1",
+      "description": "ГДД написан целиком.\n\n**Шаги:**\n- [x] Концепция",
+      "values": { "epic": "docs", "milestone": "m0", "tags": ["manual"], "owner": "me", "priority": "p1" },
+      "fields": { "done_when": "Документ готов как основа для разработки", "steps": [ { "text": "Концепция и геймплей (разделы 1–3)", "done": true }, { "text": "Механики и каталог карт (4)", "done": true } ], "gdd": "весь" } },
+    { "key": "ctx-packs", "column": "todo", "title": "Разрезать ГДД на контекст-пакеты для ИИ",
+      "description": "ГДД — около 850 тыс. знаков.",
+      "values": { "epic": "docs", "milestone": "m0", "tags": ["ai"], "owner": "ai", "priority": "p1" },
+      "fields": { "done_when": "Есть core.md + 10 пакетов этапов", "steps": [ { "text": "core.md — выжимка ядра", "done": false }, { "text": "stage-01…stage-10.md", "done": false } ], "gdd": "9.4" } },
+    { "key": "site-kanban", "column": "backlog", "title": "Сайт: кнопка «в канбан»",
+      "description": "Любой найденный минус одной кнопкой выгружается карточкой.",
+      "values": { "epic": "site", "milestone": "m1", "tags": ["ai"], "owner": "ai", "priority": "p2" },
+      "fields": { "done_when": "Минус с сайта появляется карточкой в доске", "steps": [ { "text": "Кнопка у каждого минуса", "done": false } ] } }
+  ]
+}

@@ -217,10 +217,27 @@ async def apply_template_parts(
     check_depth(payload.template, settings.json_max_depth)
     template, warnings = validate_template(payload.template)
     board = await load_board(db, board_id)
-    config = template_service.overlay(export_config(board), template, payload.parts)
-    warnings += await apply_config(db, board, config)
+    if payload.parts:
+        config = template_service.overlay(export_config(board), template, payload.parts)
+        warnings += await apply_config(db, board, config)
+    added = 0
+    if payload.cards and template.sample_cards:
+        board = await load_board(db, board_id)
+        index = build_index(board)
+        samples, notes = template_service.fit_samples(template.sample_cards, index)
+        await template_service.create_sample_cards(db, board, index, samples, current.id)
+        added = len(samples)
+        warnings += notes
     bump(board, response)
-    audit(db, current.id, "template.applied", target_type="board", target_id=board_id, parts=payload.parts)
+    audit(
+        db,
+        current.id,
+        "template.applied",
+        target_type="board",
+        target_id=board_id,
+        parts=payload.parts,
+        cards=added,
+    )
     await db.flush()
     return board_out(await load_board(db, board_id), found.role, warnings)
 

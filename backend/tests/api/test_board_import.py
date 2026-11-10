@@ -1,6 +1,7 @@
 """Импорт доски из CSV и JSON, превью доски для главной страницы."""
 
 import json
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
@@ -172,3 +173,45 @@ async def test_board_preview_limits_cards(client: Api) -> None:
     for card in preview["cards"]:
         per_column[card["column"]] = per_column.get(card["column"], 0) + 1
     assert per_column and max(per_column.values()) <= 6
+
+
+GENESIS = Path(__file__).resolve().parent.parent / "fixtures" / "genesis-short.json"
+
+
+async def test_board_import_button_adds_template_cards(client: Api) -> None:
+    """Кнопка «Импорт» на доске: шаблон с карточками добавляет и карточки, а не только оформление."""
+    template = json.loads(GENESIS.read_text(encoding="utf-8"))
+    project = await make_project(client)
+    board = await make_board(client, project["id"], template=template, include_samples=False)
+    assert await all_cards(client, board["id"]) == []
+    response = await client.post(
+        f"/boards/{board['id']}/template/apply",
+        json={"template": template, "parts": ["theme", "typography", "layout", "structure"], "cards": True},
+    )
+    assert response.status_code == 200, response.text
+    cards = {card["title"]: card for card in await all_cards(client, board["id"])}
+    assert set(cards) == {
+        "Дизайн-документ Genesis v1",
+        "Разрезать ГДД на контекст-пакеты для ИИ",
+        "Сайт: кнопка «в канбан»",
+    }
+    done = cards["Дизайн-документ Genesis v1"]
+    assert done["column"] == "done"
+    assert done["values"]["tags"] == ["manual"]
+    assert done["fields"]["gdd"] == "весь"
+
+
+async def test_cards_only_into_other_structure_skip_what_does_not_fit(client: Api) -> None:
+    template = json.loads(GENESIS.read_text(encoding="utf-8"))
+    project = await make_project(client)
+    board = await make_board(client, project["id"], preset="personal", include_samples=False)
+    before = board["config"]
+    response = await client.post(
+        f"/boards/{board['id']}/template/apply", json={"template": template, "cards": True}
+    )
+    assert response.status_code == 200, response.text
+    # Оформление не тронуто, карточки из чужих колонок пропущены с объяснением.
+    assert response.json()["config"]["theme"] == before["theme"]
+    assert any("без подходящей колонки" in note for note in response.json()["warnings"])
+    nothing = await client.post(f"/boards/{board['id']}/template/apply", json={"template": template})
+    assert nothing.status_code == 422

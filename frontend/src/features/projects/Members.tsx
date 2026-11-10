@@ -20,7 +20,7 @@ import { api, ApiError } from "@/lib/api/client";
 import type { InviteOut, InvitePreview, MemberOut, ProjectOut } from "@/lib/api/types";
 
 import { keys } from "../boards/api";
-import { Avatar, membersKey } from "./people";
+import { Avatar, membersKey, STATUS_LABEL } from "./people";
 
 type Role = "editor" | "viewer";
 
@@ -108,13 +108,14 @@ export function ProjectMembers({ project }: { project: ProjectOut }) {
               key={member.user_id}
               className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-panel p-2"
             >
-              <Avatar member={member} className="size-8 text-xs" />
+              <Avatar member={member} showStatus className="size-9 text-xs" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">
                   {member.display_name}
                   {member.is_you && ` (${t("members.you")})`}
                 </span>
                 <span className="block truncate text-xs text-ink-soft">
+                  {t(STATUS_LABEL[member.status ?? "offline"])} ·{" "}
                   {member.username ? `@${member.username} · ` : ""}
                   {member.email}
                 </span>

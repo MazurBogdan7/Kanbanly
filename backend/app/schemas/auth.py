@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -27,6 +27,8 @@ class UserOut(BaseModel):
     email: str
     display_name: str
     username: str | None = None
+    avatar_version: int = 0
+    presence: str = "auto"
     locale: str
     totp_enabled: bool
     is_admin: bool
@@ -41,6 +43,8 @@ class ProfileUpdate(BaseModel):
     display_name: Annotated[str, Field(min_length=1, max_length=120)] | None = None
     # Пустая строка снимает ник.
     username: Annotated[str, Field(max_length=33)] | None = None
+    # auto — онлайн/офлайн по активности, busy — занят, invisible — всегда офлайн.
+    presence: Literal["auto", "busy", "invisible"] | None = None
     locale: Annotated[str, Field(pattern=r"^(ru|en)$")] | None = None
 
 

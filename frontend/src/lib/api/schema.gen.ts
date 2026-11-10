@@ -301,6 +301,44 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/auth/me/avatar": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Put Avatar
+     * @description Тело запроса — сама картинка (PNG, JPEG или WebP, до 1 МБ).
+     */
+    put: operations["put_avatar_api_v1_auth_me_avatar_put"];
+    post?: never;
+    /** Delete Avatar */
+    delete: operations["delete_avatar_api_v1_auth_me_avatar_delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/users/{user_id}/avatar": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Avatar */
+    get: operations["get_avatar_api_v1_users__user_id__avatar_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/projects": {
     parameters: {
       query?: never;
@@ -1425,6 +1463,23 @@ export interface paths {
     };
     /** Version Preview */
     get: operations["version_preview_api_v1_documents__document_id__versions__number__preview_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/versions/{number}/images/{index}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Version Image */
+    get: operations["version_image_api_v1_documents__document_id__versions__number__images__index__get"];
     put?: never;
     post?: never;
     delete?: never;
@@ -3651,6 +3706,17 @@ export interface components {
       is_you?: boolean;
       /** Username */
       username?: string | null;
+      /**
+       * Avatar Version
+       * @default 0
+       */
+      avatar_version?: number;
+      /**
+       * Status
+       * @default offline
+       * @enum {string}
+       */
+      status?: "online" | "busy" | "offline";
     };
     /** MemberUpdate */
     MemberUpdate: {
@@ -3751,6 +3817,8 @@ export interface components {
       display_name?: string | null;
       /** Username */
       username?: string | null;
+      /** Presence */
+      presence?: ("auto" | "busy" | "invisible") | null;
       /** Locale */
       locale?: string | null;
     };
@@ -4099,14 +4167,24 @@ export interface components {
     /**
      * TemplateApply
      * @description Частичный импорт: взять указанные разделы шаблона и наложить на доску.
+     *
+     *     cards=true добавляет на доску карточки шаблона (sample_cards) к уже существующим.
      */
     TemplateApply: {
       /** Template */
       template: {
         [key: string]: unknown;
       };
-      /** Parts */
-      parts: string[];
+      /**
+       * Parts
+       * @default []
+       */
+      parts?: string[];
+      /**
+       * Cards
+       * @default false
+       */
+      cards?: boolean;
     };
     /** TemplateFromBoard */
     TemplateFromBoard: {
@@ -4373,6 +4451,16 @@ export interface components {
       display_name: string;
       /** Username */
       username?: string | null;
+      /**
+       * Avatar Version
+       * @default 0
+       */
+      avatar_version?: number;
+      /**
+       * Presence
+       * @default auto
+       */
+      presence?: string;
       /** Locale */
       locale: string;
       /** Totp Enabled */
@@ -5068,6 +5156,77 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  put_avatar_api_v1_auth_me_avatar_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserOut"];
+        };
+      };
+    };
+  };
+  delete_avatar_api_v1_auth_me_avatar_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserOut"];
+        };
+      };
+    };
+  };
+  get_avatar_api_v1_users__user_id__avatar_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
         };
       };
       /** @description Validation Error */
@@ -7851,6 +8010,39 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["DocumentPreview"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  version_image_api_v1_documents__document_id__versions__number__images__index__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+        number: number;
+        index: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
         };
       };
       /** @description Validation Error */

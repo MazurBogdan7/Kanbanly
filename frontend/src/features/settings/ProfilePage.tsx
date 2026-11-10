@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImagePlus } from "lucide-react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 
 import {
   Button,
@@ -15,12 +16,15 @@ import {
 } from "@/components/ui";
 import { toast } from "@/components/ui/toast";
 import { useLocale, useT, type Locale } from "@/i18n";
-import { api, ApiError } from "@/lib/api/client";
+import { api, ApiError, send } from "@/lib/api/client";
 import type { RecoveryCodesOut, SessionOut, TotpSetupOut, UserOut } from "@/lib/api/types";
 
 import { PasswordMeter } from "../auth/AuthPages";
 import { useMe, useSignOut } from "../auth/session";
 import { DataBackups } from "../backup/DataBackups";
+import { Avatar } from "../projects/people";
+import { AvatarEditor } from "./AvatarEditor";
+import { PresencePicker } from "./Presence";
 import { keys } from "../boards/api";
 import { IncomingInvites, useIncomingInvites } from "../projects/Inbox";
 
@@ -41,6 +45,8 @@ function Account({ user }: { user: UserOut }) {
   });
   return (
     <div className="grid gap-4">
+      <AvatarSection user={user} />
+      <PresencePicker user={user} />
       <TextField label={t("auth.email")} value={user.email} readOnly />
       <TextField
         label={t("auth.displayName")}
@@ -74,6 +80,85 @@ function Account({ user }: { user: UserOut }) {
       >
         {t("common.save")}
       </Button>
+    </div>
+  );
+}
+
+/** Фото профиля: выбрать любую картинку, кадрировать под круг, сохранить. */
+function AvatarSection({ user }: { user: UserOut }) {
+  const { t } = useT();
+  const queryClient = useQueryClient();
+  const input = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const done = (saved: UserOut) => {
+    queryClient.setQueryData(keys.me, saved);
+    // Аватар виден в списках участников всех проектов.
+    void queryClient.invalidateQueries({ queryKey: ["projects"] });
+  };
+  const save = useMutation({
+    mutationFn: async (image: Blob) => {
+      const response = await send("PUT", "/auth/me/avatar", {
+        body: image,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
+      return (await response.json()) as UserOut;
+    },
+    onSuccess: (saved) => {
+      done(saved);
+      setFile(null);
+      toast.info(t("avatar.saved"));
+    },
+    onError: toast.error,
+  });
+  const remove = useMutation({
+    mutationFn: () => api.delete<UserOut>("/auth/me/avatar"),
+    onSuccess: done,
+    onError: toast.error,
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-4" data-testid="avatar-section">
+      <Avatar member={{ ...user, user_id: user.id }} className="size-20 text-2xl" />
+      <div className="grid gap-2">
+        <span className="text-sm font-medium">{t("avatar.title")}</span>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => input.current?.click()}>
+            <ImagePlus className="size-4" aria-hidden />
+            {user.avatar_version ? t("avatar.change") : t("avatar.upload")}
+          </Button>
+          {user.avatar_version ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={remove.isPending}
+              onClick={() => remove.mutate()}
+            >
+              {t("avatar.remove")}
+            </Button>
+          ) : null}
+        </div>
+        <span className="text-xs text-ink-soft">{t("avatar.hint")}</span>
+      </div>
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        hidden
+        aria-label={t("avatar.upload")}
+        data-testid="avatar-input"
+        onChange={(event) => {
+          const picked = event.target.files?.[0];
+          if (picked) setFile(picked);
+          event.target.value = "";
+        }}
+      />
+      {file && (
+        <AvatarEditor
+          file={file}
+          saving={save.isPending}
+          onCancel={() => setFile(null)}
+          onSave={(image) => save.mutate(image)}
+        />
+      )}
     </div>
   );
 }

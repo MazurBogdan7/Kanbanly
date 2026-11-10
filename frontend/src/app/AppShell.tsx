@@ -20,6 +20,7 @@ import type { SearchHit } from "@/lib/api/types";
 import { useHotkeys } from "@/lib/hotkeys";
 
 import { useMe, useSignOut } from "../features/auth/session";
+import { UserMenu } from "../features/settings/Presence";
 
 const NAV: { to: string; label: MessageKey; icon: typeof FolderKanban }[] = [
   { to: "/", label: "app.home", icon: FolderKanban },
@@ -265,6 +266,7 @@ export function AppShell() {
             <span className="hidden sm:inline">{t("app.search")}</span>
             <kbd className="hidden font-mono text-xs sm:inline">Ctrl K</kbd>
           </Button>
+          <UserMenu user={me.data} onLogout={logout} />
           <Button variant="ghost" size="icon" aria-label={t("app.logout")} onClick={logout}>
             <LogOut className="size-4" aria-hidden />
           </Button>

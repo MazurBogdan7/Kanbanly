@@ -19,7 +19,15 @@ from app.models.board import (
     ProjectMember,
     Template,
 )
-from app.models.user import ApiToken, AuditLog, PasswordResetToken, RecoveryCode, User, UserSession
+from app.models.user import (
+    ApiToken,
+    AuditLog,
+    PasswordResetToken,
+    RecoveryCode,
+    User,
+    UserAvatar,
+    UserSession,
+)
 from app.models.workspace import (
     AppSetting,
     CardTag,
@@ -62,5 +70,6 @@ __all__ = [
     "RecoveryCode",
     "Template",
     "User",
+    "UserAvatar",
     "UserSession",
 ]

@@ -1011,7 +1011,7 @@ describe("совместная работа", () => {
   it("владелец видит участников, меняет роль, приглашает и отзывает", async () => {
     const user = userEvent.setup();
     renderAt("/projects/p1");
-    expect(await screen.findByText("sergo@example.com")).toBeInTheDocument();
+    expect(await screen.findByText(/sergo@example.com/)).toBeInTheDocument();
     expect(screen.getByText(/Анна \(вы\)/)).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Роль: Сергей"), "viewer");
     await waitFor(() =>

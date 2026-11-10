@@ -61,6 +61,9 @@ class MemberOut(BaseModel):
     role: str
     is_you: bool = False
     username: str | None = None
+    avatar_version: int = 0
+    # Статус: online, busy (занят) или offline. Невидимка показывается как offline.
+    status: Literal["online", "busy", "offline"] = "offline"
 
 
 AssignableRole = Literal["editor", "viewer"]
@@ -429,10 +432,20 @@ class TemplatePreview(BaseModel):
 
 
 class TemplateApply(BaseModel):
-    """Частичный импорт: взять указанные разделы шаблона и наложить на доску."""
+    """Частичный импорт: взять указанные разделы шаблона и наложить на доску.
+
+    cards=true добавляет на доску карточки шаблона (sample_cards) к уже существующим.
+    """
 
     template: dict[str, Any]
-    parts: Annotated[list[str], Field(min_length=1, max_length=6)]
+    parts: Annotated[list[str], Field(max_length=6)] = []
+    cards: bool = False
+
+    @model_validator(mode="after")
+    def _something(self) -> "TemplateApply":
+        if not self.parts and not self.cards:
+            raise ValueError("Выберите, что взять из шаблона: разделы или карточки")
+        return self
 
 
 class BoardReset(BaseModel):

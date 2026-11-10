@@ -598,6 +598,82 @@
         }
       }
     },
+    "/api/v1/auth/me/avatar": {
+      "put": {
+        "tags": ["people"],
+        "summary": "Put Avatar",
+        "description": "Тело запроса — сама картинка (PNG, JPEG или WebP, до 1 МБ).",
+        "operationId": "put_avatar_api_v1_auth_me_avatar_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["people"],
+        "summary": "Delete Avatar",
+        "operationId": "delete_avatar_api_v1_auth_me_avatar_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/avatar": {
+      "get": {
+        "tags": ["people"],
+        "summary": "Get Avatar",
+        "operationId": "get_avatar_api_v1_users__user_id__avatar_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects": {
       "get": {
         "tags": ["projects"],
@@ -4671,6 +4747,67 @@
                 "schema": {
                   "$ref": "#/components/schemas/DocumentPreview"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{number}/images/{index}": {
+      "get": {
+        "tags": ["workspace"],
+        "summary": "Version Image",
+        "operationId": "version_image_api_v1_documents__document_id__versions__number__images__index__get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Number"
+            }
+          },
+          {
+            "name": "index",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 0,
+              "title": "Index"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -9336,6 +9473,17 @@
               }
             ],
             "title": "Username"
+          },
+          "avatar_version": {
+            "type": "integer",
+            "title": "Avatar Version",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": ["online", "busy", "offline"],
+            "title": "Status",
+            "default": "offline"
           }
         },
         "type": "object",
@@ -9607,6 +9755,18 @@
               }
             ],
             "title": "Username"
+          },
+          "presence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["auto", "busy", "invisible"]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presence"
           },
           "locale": {
             "anyOf": [
@@ -10250,14 +10410,19 @@
             },
             "type": "array",
             "maxItems": 6,
-            "minItems": 1,
-            "title": "Parts"
+            "title": "Parts",
+            "default": []
+          },
+          "cards": {
+            "type": "boolean",
+            "title": "Cards",
+            "default": false
           }
         },
         "type": "object",
-        "required": ["template", "parts"],
+        "required": ["template"],
         "title": "TemplateApply",
-        "description": "Частичный импорт: взять указанные разделы шаблона и наложить на доску."
+        "description": "Частичный импорт: взять указанные разделы шаблона и наложить на доску.\n\ncards=true добавляет на доску карточки шаблона (sample_cards) к уже существующим."
       },
       "TemplateFromBoard": {
         "properties": {
@@ -10854,6 +11019,16 @@
               }
             ],
             "title": "Username"
+          },
+          "avatar_version": {
+            "type": "integer",
+            "title": "Avatar Version",
+            "default": 0
+          },
+          "presence": {
+            "type": "string",
+            "title": "Presence",
+            "default": "auto"
           },
           "locale": {
             "type": "string",

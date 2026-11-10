@@ -1,4 +1,7 @@
 /** Главная: раскрывающиеся проекты с живыми превью досок, импорт доски из CSV и JSON. */
+import fs from "node:fs";
+import path from "node:path";
+
 import { expect, test } from "@playwright/test";
 
 import { api, createBoardViaApi, register, ZIF_TEMPLATE } from "./helpers";
@@ -113,4 +116,28 @@ test("галерея шаблонов — сетка в несколько ко�
     nodes.map((node) => Math.round(node.getBoundingClientRect().top)),
   );
   expect(new Set(tops).size).toBe(1);
+});
+
+test("кнопка «Импорт» на доске добавляет карточки из шаблона, а не только оформление", async ({
+  page,
+}) => {
+  const file = path.resolve(
+    import.meta.dirname,
+    "../../../backend/tests/fixtures/genesis-short.json",
+  );
+  const template = JSON.parse(fs.readFileSync(file, "utf-8")) as Record<string, unknown>;
+  await register(page);
+  const boardId = await createBoardViaApi(page, {
+    template,
+    name: "Genesis",
+    includeSamples: false,
+  });
+  await page.goto(`/boards/${boardId}`);
+  await expect(page.locator(".kb-card")).toHaveCount(0);
+  await page.getByLabel("Импорт").setInputFiles(file);
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("Карточки из файла: 3")).toBeVisible();
+  await dialog.getByRole("button", { name: "Импортировать на доску" }).click();
+  await expect(page.locator(".kb-card")).toHaveCount(3);
+  await expect(page.locator(".kb-card", { hasText: "Разрезать ГДД" })).toBeVisible();
 });

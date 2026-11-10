@@ -14,7 +14,7 @@ import type {
 } from "@/lib/api/types";
 import { blend, ensureContrast, readableOpacity, readableText, strongText } from "@/lib/contrast";
 
-import { avatarColor, initials, memberLabel, useMember } from "../../projects/people";
+import { Avatar, initials, memberLabel, useMember } from "../../projects/people";
 import { ProjectTagsContext } from "../../workspace/tags";
 import { isSafeImageUrl } from "@/lib/templateFile";
 
@@ -179,12 +179,7 @@ function CardAssignee({ id }: { id: string }) {
   const label = memberLabel(member);
   return (
     <span className="kb-assignee" data-testid="card-assignee" title={label}>
-      <span
-        className="kb-avatar"
-        style={{ background: avatarColor(member.user_id), color: "#FFFFFF" }}
-      >
-        {initials(label)}
-      </span>
+      <Avatar member={member} showStatus className="size-[22px] text-[9px]" />
       <span className="kb-assignee-name">{label}</span>
     </span>
   );

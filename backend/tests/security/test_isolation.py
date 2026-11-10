@@ -124,6 +124,10 @@ async def victim(client: Api) -> dict[str, str]:
         await client.post(f"/cards/{card_id}/attachments", json={"name": "A", "url": "https://e.com/a"})
     ).json()
     template = (await client.get("/templates")).json()["items"][0]
+    # Аватар владельца: /users/{user_id}/avatar должен отвечать ему 200, остальным 404.
+    await client.put(
+        "/auth/me/avatar", content=PNG + b"avatar", headers={"Content-Type": "application/octet-stream"}
+    )
     member = (await client.get("/auth/me")).json()
     invite = (
         await client.post(f"/projects/{project['id']}/invites", json={"email": "bob@example.com"})
