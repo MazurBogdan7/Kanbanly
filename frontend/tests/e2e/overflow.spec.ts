@@ -74,3 +74,25 @@ test("на телефоне низ конструктора не закрыт н
   await last.click();
   await expect(panel.getByLabel("Показывать сверху")).toBeVisible();
 });
+
+test("наведение на колонку не сдвигает карточки (кнопка «Добавить карточку» не раздвигает список)", async ({
+  page,
+}) => {
+  await register(page);
+  const boardId = await createBoardViaApi(page, { template: ZIF_TEMPLATE, name: "ZIF" });
+  await openBoard(page, boardId);
+  const todo = column(page, "todo");
+  const last = todo.locator(".kb-card").last();
+  const list = todo.locator(".kb-list");
+  await page.mouse.move(5, 5);
+  const before = await last.boundingBox();
+  const listBefore = await list.boundingBox();
+  const columnBefore = await todo.boundingBox();
+  await todo.locator(".kb-col-head").hover();
+  await expect(todo.getByRole("button", { name: "Добавить карточку" })).toHaveCSS("opacity", "1");
+  const after = await last.boundingBox();
+  expect(after?.y).toBe(before?.y);
+  expect(after?.height).toBe(before?.height);
+  expect((await list.boundingBox())?.height).toBe(listBefore?.height);
+  expect((await todo.boundingBox())?.height).toBe(columnBefore?.height);
+});

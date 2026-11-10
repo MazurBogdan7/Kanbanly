@@ -733,7 +733,8 @@
   align-items: center;
   gap: 4px;
   width: 100%;
-  max-height: 0;
+  /* Место под кнопку занято всегда: при наведении она лишь проявляется и не сдвигает карточки. */
+  height: 34px;
   padding: 0 14px;
   overflow: hidden;
   border: 0;
@@ -742,7 +743,8 @@
   font: inherit;
   font-size: 12px;
   cursor: pointer;
-  transition: max-height 120ms;
+  opacity: 0;
+  transition: opacity 120ms;
 }
 
 .kb-add svg {
@@ -751,9 +753,9 @@
 }
 
 .kb-col:hover .kb-add,
+.kb-col:focus-within .kb-add,
 .kb-add:focus-visible {
-  max-height: 34px;
-  padding-block: 7px;
+  opacity: 1;
 }
 
 .kb-add:hover {
@@ -824,8 +826,7 @@
 
 @media (hover: none) {
   .kb-add {
-    max-height: 34px;
-    padding-block: 7px;
+    opacity: 1;
   }
 }
 
